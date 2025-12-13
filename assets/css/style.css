@@ -1024,6 +1024,13 @@ body {
         color: var(--text-dark);
     }
     .game-over h2 { color: var(--text-dark); }
+
+    /* Prevent double-tap text selection/callouts while playing on mobile. */
+    .game-container, .game-container * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
 }
 
 /* Prevent accidental page scroll while playing on mobile */
