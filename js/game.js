@@ -21,6 +21,8 @@ class Game {
         this.score = 0;
         this.level = 1;
         this.lines = 0;
+        this.highScore = 0;
+        this.isNewHighScore = false;
         this.gameOver = false;
         this.paused = false;
         this.currentPiece = null;
@@ -31,6 +33,11 @@ class Game {
         this.isAnimating = false;
         this.showGhostPiece = true;
         this.lockDelay = 0;
+
+        // Time tracking (mm:ss) - counts only while playing (not paused / not game over)
+        this.elapsedMs = 0;
+        this.lastFrameTime = 0;
+        this.lastTimeUiUpdate = 0;
         
         this.init();
     }
@@ -64,6 +71,11 @@ class Game {
         document.getElementById('volume-slider').addEventListener('input', (e) => {
             this.audio.setVolume(e.target.value / 100);
         });
+
+        const resetHighBtn = document.getElementById('reset-high-btn');
+        if (resetHighBtn) {
+            resetHighBtn.addEventListener('click', () => this.resetHighScore());
+        }
     }
     
     startNewGame() {
@@ -71,6 +83,7 @@ class Game {
         this.score = 0;
         this.level = 1;
         this.lines = 0;
+        this.isNewHighScore = false;
         this.gameOver = false;
         this.paused = false;
         this.isAnimating = false;
@@ -78,11 +91,17 @@ class Game {
         this.dropTime = this.calcDropTime();
         this.lockDelay = 0;
         this.hardDropGrace = false;
+
+        this.elapsedMs = 0;
+        this.lastFrameTime = 0;
+        this.lastTimeUiUpdate = 0;
         
         this.currentPiece = this.pieces.getRandomPiece();
         this.nextPiece = this.pieces.getRandomPiece();
         
         this.updateUI();
+        this.updateTimeUI();
+        this.updateHighScoreUI();
         this.hideGameOver();
         this.hidePaused();
         
@@ -94,8 +113,47 @@ class Game {
         
         console.log('New game started');
     }
+
+    loadHighScore() {
+        try {
+            const v = localStorage.getItem('patriotic_tetris_high_score');
+            const n = Number(v);
+            this.highScore = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        } catch {
+            this.highScore = 0;
+        }
+    }
+
+    saveHighScore() {
+        try {
+            localStorage.setItem('patriotic_tetris_high_score', String(this.highScore));
+        } catch {
+            // ignore
+        }
+    }
+
+    resetHighScore() {
+        this.highScore = 0;
+        this.isNewHighScore = false;
+        try {
+            localStorage.removeItem('patriotic_tetris_high_score');
+        } catch {
+            // ignore
+        }
+        this.updateHighScoreUI();
+    }
     
     gameLoop(currentTime = 0) {
+        if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
+
+        if (!this.gameOver && !this.paused) {
+            this.elapsedMs += Math.max(0, currentTime - this.lastFrameTime);
+            if (currentTime - this.lastTimeUiUpdate > 250) {
+                this.lastTimeUiUpdate = currentTime;
+                this.updateTimeUI();
+            }
+        }
+
         if (!this.gameOver && !this.paused && !this.isAnimating) {
             // Handle automatic piece dropping
             if (currentTime - this.lastDrop > this.dropTime) {
@@ -112,6 +170,8 @@ class Game {
         
         // Always render game
         this.render();
+
+        this.lastFrameTime = currentTime;
         
         requestAnimationFrame((time) => this.gameLoop(time));
     }
@@ -216,6 +276,13 @@ class Game {
         const points = [0, 100, 300, 500, 800];
         this.score += points[clearedLines] * this.level;
         this.lines += clearedLines;
+
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.isNewHighScore = true;
+            this.saveHighScore();
+            this.updateHighScoreUI();
+        }
         
         // Level up every 10 lines
         const newLevel = Math.floor(this.lines / 10) + 1;
@@ -232,6 +299,21 @@ class Game {
         const boostPct = this.speedBoost * 20;
         document.getElementById('level').textContent = boostPct > 0 ? `${this.level} (+${boostPct}%)` : `${this.level}`;
         document.getElementById('lines').textContent = this.lines;
+    }
+
+    updateHighScoreUI() {
+        const el = document.getElementById('high-score');
+        if (el) el.textContent = this.highScore;
+    }
+
+    updateTimeUI() {
+        const totalSeconds = Math.floor(this.elapsedMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const timeEl = document.getElementById('time');
+        if (timeEl) {
+            timeEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
     }
     
     render() {
@@ -260,6 +342,9 @@ class Game {
     
     pause() {
         this.paused = !this.paused;
+
+        // Prevent a large delta on resume.
+        this.lastFrameTime = performance.now();
         
         if (this.paused) {
             this.showPaused();
@@ -288,6 +373,15 @@ class Game {
     showGameOver() {
         document.getElementById('final-score').textContent = this.score;
         document.getElementById('game-over').classList.remove('hidden');
+
+        const banner = document.getElementById('new-high-score');
+        if (banner) {
+            banner.classList.toggle('hidden', !this.isNewHighScore);
+        }
+
+        if (this.isNewHighScore) {
+            this.audio.playHighScore();
+        }
     }
     
     hideGameOver() {
@@ -307,7 +401,9 @@ class Game {
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    new Game();
+    const game = new Game();
+    game.loadHighScore();
+    game.updateHighScoreUI();
 });
 
 export { Game };

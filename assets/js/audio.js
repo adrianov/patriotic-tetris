@@ -131,6 +131,36 @@ export class AudioEngine {
             timeOffset += note.duration * 0.8; // Swing timing
         });
     }
+
+    playHighScore() {
+        this.resumeContext();
+
+        // Short jubilant fanfare (major arpeggio + bright accent)
+        const notes = [
+            { freq: 523.25, dur: 0.12 },  // C5
+            { freq: 659.25, dur: 0.12 },  // E5
+            { freq: 783.99, dur: 0.14 },  // G5
+            { freq: 1046.50, dur: 0.20 }, // C6
+            { freq: 987.77, dur: 0.14 },  // B5
+            { freq: 1046.50, dur: 0.28 }  // C6
+        ];
+
+        let t = 0;
+        notes.forEach((n, i) => {
+            setTimeout(() => {
+                this.createOscillator(n.freq, 'triangle', 0, n.dur, 0.7);
+                // sparkle layer
+                if (i >= 2) {
+                    this.createOscillator(n.freq * 2, 'sine', 0, Math.max(0.08, n.dur * 0.8), 0.25);
+                }
+                // simple harmony on the last two notes
+                if (i >= notes.length - 2) {
+                    this.createOscillator(n.freq * 0.75, 'sine', 0, n.dur * 0.9, 0.25);
+                }
+            }, t * 1000);
+            t += n.dur * 0.9;
+        });
+    }
     
     setVolume(volume) {
         this.masterVolume = Math.max(0, Math.min(1, volume));
