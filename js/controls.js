@@ -2,7 +2,6 @@
 export class Controls {
     constructor() {
         this.game = null;
-        this.keys = {};
 
         this.setupKeyboardListeners();
     }
@@ -14,12 +13,11 @@ export class Controls {
 
     setupKeyboardListeners() {
         document.addEventListener('keydown', (e) => {
-            this.keys[e.key] = true;
             this.handleKeyPress(e);
         });
 
         document.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
+            // no-op: we handle keydown actions immediately (no held-key repeat logic)
         });
     }
 
@@ -114,6 +112,7 @@ export class Controls {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
             this.game.audio.playDrop();
+            this.game.addDropPoints(1);
             return;
         }
 
@@ -156,6 +155,7 @@ export class Controls {
 
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
+            this.game.addDropPoints(dropDistance * 2);
             // Animate the drop
             this.animateHardDrop(startY, tempPiece.y);
         } else {

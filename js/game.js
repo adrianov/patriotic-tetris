@@ -43,7 +43,6 @@ class Game {
     }
     
     init() {
-        console.log('Patriotic Tetris initialized');
         this.updateViewportUnits();
         this.setupEventListeners();
         this.board.setupCanvas(this.canvas);
@@ -65,7 +64,8 @@ class Game {
         });
         
         document.getElementById('volume-slider').addEventListener('input', (e) => {
-            this.audio.setVolume(e.target.value / 100);
+            const value = Number(e.target.value);
+            this.audio.setVolume(Number.isFinite(value) ? value / 100 : 0.5);
         });
 
         const resetHighBtn = document.getElementById('reset-high-btn');
@@ -155,7 +155,6 @@ class Game {
         this.speedBoost = 0;
         this.dropTime = this.calcDropTime();
         this.lockDelay = 0;
-        this.hardDropGrace = false;
 
         this.elapsedMs = 0;
         this.lastFrameTime = 0;
@@ -177,7 +176,6 @@ class Game {
             ghostStatus.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
         
-        console.log('New game started');
     }
 
     loadHighScore() {
@@ -340,15 +338,8 @@ class Game {
     
     updateScore(clearedLines) {
         const points = [0, 100, 300, 500, 800];
-        this.score += points[clearedLines] * this.level;
+        this.addPoints(points[clearedLines] * this.level);
         this.lines += clearedLines;
-
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            this.isNewHighScore = true;
-            this.saveHighScore();
-            this.updateHighScoreUI();
-        }
         
         // Level up every 10 lines
         const newLevel = Math.floor(this.lines / 10) + 1;
@@ -357,6 +348,24 @@ class Game {
             this.applyDropTime();
         }
         
+        this.updateUI();
+    }
+
+    addPoints(points) {
+        const p = Math.floor(Number(points));
+        if (!Number.isFinite(p) || p <= 0) return;
+        this.score += p;
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.isNewHighScore = true;
+            this.saveHighScore();
+            this.updateHighScoreUI();
+        }
+    }
+
+    addDropPoints(points) {
+        if (this.gameOver || this.paused) return;
+        this.addPoints(points);
         this.updateUI();
     }
     
@@ -444,8 +453,6 @@ class Game {
         }
 
         this.setScrollLock();
-        
-        console.log(this.paused ? 'Game paused' : 'Game resumed');
     }
     
     showPaused() {
@@ -461,7 +468,6 @@ class Game {
         this.setScrollLock();
         this.audio.playGameOver();
         this.showGameOver();
-        console.log('Game Over - Final Score:', this.score);
     }
 
     setScrollLock() {
@@ -494,7 +500,6 @@ class Game {
         if (statusElement) {
             statusElement.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
-        console.log(this.showGhostPiece ? 'Ghost piece enabled' : 'Ghost piece disabled');
     }
 }
 
