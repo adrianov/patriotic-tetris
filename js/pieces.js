@@ -1,8 +1,6 @@
 // Pieces Module - Tetromino Definitions and Rendering
 export class Pieces {
     constructor() {
-        this.patrioticColors = ['#FFFFFF', '#0039A6', '#D52B1E']; // White, Blue, Red
-        
         this.pieceTypes = {
             I: {
                 shape: [
@@ -52,12 +50,12 @@ export class Pieces {
         const types = Object.keys(this.pieceTypes);
         const randomType = types[Math.floor(Math.random() * types.length)];
         const pieceData = this.pieceTypes[randomType];
-        const randomColor = this.patrioticColors[Math.floor(Math.random() * this.patrioticColors.length)];
+        const color = this.board?.getRandomPaletteColor?.() || '#FFFFFF';
         
         return {
             type: randomType,
             shape: pieceData.shape,
-            color: randomColor,
+            color,
             x: Math.floor(10 / 2) - Math.floor(pieceData.shape[0].length / 2),
             y: 0
         };
@@ -79,37 +77,39 @@ export class Pieces {
     }
     
     renderPiece(ctx, piece, board) {
+        const color = piece.color || '#FFFFFF';
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    this.drawCell(ctx, piece.x + x, piece.y + y, piece.color, board.cellSize);
+                    this.drawCell(ctx, piece.x + x, piece.y + y, color, board);
                 }
             }
         }
     }
     
-    renderNextPiece(ctx, piece) {
+    renderNextPiece(ctx, piece, board) {
         const cellSize = 20;
         const offsetX = (ctx.canvas.width - piece.shape[0].length * cellSize) / 2;
         const offsetY = (ctx.canvas.height - piece.shape.length * cellSize) / 2;
+        const color = piece.color || '#FFFFFF';
         
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    this.drawCellScaled(ctx, offsetX + x * cellSize, offsetY + y * cellSize, cellSize, piece.color);
+                    this.drawCellScaled(ctx, offsetX + x * cellSize, offsetY + y * cellSize, cellSize, color, board);
                 }
             }
         }
     }
     
-    drawCell(ctx, x, y, color, cellSize) {
-        const pixelX = x * cellSize;
-        const pixelY = y * cellSize;
+    drawCell(ctx, x, y, color, board) {
+        const pixelX = x * board.cellSize;
+        const pixelY = y * board.cellSize;
         
-        this.drawCellScaled(ctx, pixelX, pixelY, cellSize, color);
+        this.drawCellScaled(ctx, pixelX, pixelY, board.cellSize, color, board);
     }
     
-    drawCellScaled(ctx, x, y, size, color) {
+    drawCellScaled(ctx, x, y, size, color, board) {
         // Glow effect - outer glow
         ctx.shadowColor = color;
         ctx.shadowBlur = 6;
@@ -125,17 +125,17 @@ export class Pieces {
         ctx.shadowBlur = 0;
         
         // Cell border
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.strokeStyle = board.theme.cellBorder;
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, size, size);
         
         // Inner highlight
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fillStyle = board.theme.cellHighlight;
         ctx.fillRect(x + 2, y + 2, size - 4, 2);
         ctx.fillRect(x + 2, y + 2, 2, size - 4);
         
         // Inner shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillStyle = board.theme.cellShadow;
         ctx.fillRect(x + size - 3, y + 2, 1, size - 4);
         ctx.fillRect(x + 2, y + size - 3, size - 4, 1);
     }
@@ -166,6 +166,7 @@ export class Pieces {
         const ghostPiece = this.getGhostPiece(piece, board);
         
         if (!ghostPiece) return;
+        const color = ghostPiece.color || '#FFFFFF';
         
         // Only render ghost piece if it's within board bounds and not colliding with existing pieces
         for (let y = 0; y < ghostPiece.shape.length; y++) {
@@ -177,32 +178,28 @@ export class Pieces {
                     // Only draw if within board boundaries and cell is not occupied
                     if (boardX >= 0 && boardX < board.width && boardY >= 0 && boardY < board.height && 
                         board.grid[boardY] && !board.grid[boardY][boardX]) {
-                        this.drawGhostCell(ctx, boardX, boardY, ghostPiece.color, board.cellSize);
+                        this.drawGhostCell(ctx, boardX, boardY, color, board);
                     }
                 }
             }
         }
     }
     
-    drawGhostCell(ctx, x, y, color, cellSize) {
-        const pixelX = x * cellSize;
-        const pixelY = y * cellSize;
-        
-        // Ghost piece - more opaque for better contrast with gray field
-        if (color === '#FFFFFF') {
-            ctx.fillStyle = '#FFFFFFCC'; // More white, less transparent
-        } else {
-            ctx.fillStyle = color + '50';
-        }
-        ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
-        
-        // Border - gray for white pieces, color-matched for others
-        if (color === '#FFFFFF') {
-            ctx.strokeStyle = '#808080'; // Solid gray border for white pieces
-        } else {
-            ctx.strokeStyle = color + '60'; // Color-matched border for colored pieces
-        }
+    drawGhostCell(ctx, x, y, color, board) {
+        const pixelX = x * board.cellSize;
+        const pixelY = y * board.cellSize;
+
+        const c = color.toUpperCase();
+        const isLight = c === '#FFFFFF' || c === '#FFFDF6' || c === '#FFF3E0';
+        ctx.save();
+        ctx.globalAlpha = isLight ? board.theme.ghostAlphaLight : board.theme.ghostAlpha;
+        ctx.fillStyle = color;
+        ctx.fillRect(pixelX, pixelY, board.cellSize, board.cellSize);
+
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = board.theme.cellBorder;
         ctx.lineWidth = 1;
-        ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+        ctx.strokeRect(pixelX, pixelY, board.cellSize, board.cellSize);
+        ctx.restore();
     }
 }

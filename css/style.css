@@ -1,6 +1,6 @@
-/* Patriotic Tetris - Russian Flag Color Scheme */
+/* Patriotic Tetris - Themeable UI (Modern / Imperial / Soviet) */
 
-/* CSS Variables for Russian Flag Colors - Harmonized Palette */
+/* CSS Variables - default theme: Modern Russia */
 :root {
     --white: #FFFFFF;
     --blue: #0039A6;
@@ -19,6 +19,173 @@
     --bg-dark: #8BB4D0;       /* Darker blue - for UI elements */
     --text-dark: #1A365D;       /* Dark blue text - good contrast */
     --border-light: #7AA3C0;    /* Medium blue borders */
+
+    /* Layout colors */
+    --page-bg-light: var(--bg-light);
+    --page-bg-dark: var(--bg-dark);
+    --panel-bg: var(--white);
+    --panel-inner-bg: var(--white);
+    --control-bg: var(--bg-medium);
+    --footer-bg: var(--red);
+    --footer-text: var(--white);
+
+    /* Overlays */
+    --overlay-gameover: rgba(0, 57, 166, 0.95);
+    --overlay-paused: rgba(211, 43, 30, 0.9);
+    --overlay-text: var(--white);
+    --overlay-accent: var(--gold);
+
+    /* Slider (audio) */
+    --slider-track: var(--bg-medium);
+    --slider-thumb: var(--red);
+    --slider-thumb-border: transparent;
+
+    /* Buttons */
+    --btn-bg: #F4F7FB;
+    --btn-border: var(--border-light);
+    --btn-border-active: var(--blue);
+
+    /* Shadows */
+    --shadow-ui: rgba(0, 57, 166, 0.2);
+    --shadow-board: rgba(211, 43, 30, 0.3);
+    --shadow-accent: rgba(0, 57, 166, 0.3);
+
+    /* Canvas (board) theme */
+    --board-bg: #A8C5E0;
+    --board-grid: #7AA3C0;
+    --cell-border: #000000;
+    --cell-highlight: rgba(255, 255, 255, 0.3);
+    --cell-shadow: rgba(0, 0, 0, 0.3);
+
+    /* Tetromino palette (random pick per piece) */
+    --piece-1: #FFFFFF;
+    --piece-2: #0039A6;
+    --piece-3: #D52B1E;
+    --piece-4: #FFFFFF;
+    --piece-5: #0039A6;
+    --piece-6: #D52B1E;
+    --piece-7: #FFFFFF;
+
+    /* Ghost piece opacity */
+    --ghost-alpha: 0.30;
+    --ghost-alpha-light: 0.55;
+}
+
+/* Theme: Imperial Russia (black / gold / white) */
+:root[data-theme="imperial"] {
+    /* Imperial: white page, gold panels, gold playfield, black footer */
+    --white: #FFFFFF;
+    --blue: #B58E24;          /* borders / accents */
+    --red: #1A1A1A;           /* avoid red dominance in imperial */
+    --gold: #D4AF37;
+    --dark-blue: #0B0B0B;     /* footer black */
+    --light-red: #C9B07A;
+
+    /* Page background */
+    --bg-light: #0B0B0B;
+    --bg-medium: #121212;
+    --bg-dark: #0B0B0B;
+    --text-dark: #1B1B1E;
+    --border-light: #B58E24;
+
+    --page-bg-light: #0B0B0B;
+    --page-bg-dark: #141414;
+
+    /* Panels */
+    --panel-bg: #D4AF37;
+    --panel-inner-bg: #FFFFFF;
+    --control-bg: #FFFFFF;
+
+    /* Footer */
+    --footer-bg: #0B0B0B;
+    --footer-text: #D4AF37;
+
+    --overlay-gameover: rgba(11, 11, 11, 0.92);
+    --overlay-paused: rgba(212, 175, 55, 0.88);
+    --overlay-text: #0B0B0B;
+    --overlay-accent: #0B0B0B;
+
+    --slider-track: #2B2B2B;
+    --slider-thumb: #0B0B0B;
+    --slider-thumb-border: #D4AF37;
+
+    --btn-bg: #FFF2CF;
+    --btn-border: #8C6A1B;
+    --btn-border-active: #D4AF37;
+
+    --shadow-ui: rgba(0, 0, 0, 0.18);
+    --shadow-board: rgba(0, 0, 0, 0.22);
+    --shadow-accent: rgba(0, 0, 0, 0.18);
+
+    /* Board/playfield background: mid-tone for contrast with white/gold/black pieces */
+    --board-bg: #1B5E3B;   /* roulette green */
+    --board-grid: #164A2F; /* darker green grid */
+    --cell-border: rgba(0, 0, 0, 0.35);
+    --cell-highlight: rgba(255, 255, 255, 0.18);
+    --cell-shadow: rgba(0, 0, 0, 0.22);
+
+    /* Pieces (imperial gold / white / black-ish) */
+    --piece-1: #FFFFFF;
+    --piece-2: #B58E24;
+    --piece-3: #0B0B0B;
+    --piece-4: #FFFFFF;
+    --piece-5: #B58E24;
+    --piece-6: #0B0B0B;
+    --piece-7: #FFFFFF;
+
+    --ghost-alpha: 0.22;
+    --ghost-alpha-light: 0.34;
+}
+
+/* Theme: Soviet (deep red / gold / warm cream + Moscow accent) */
+:root[data-theme="soviet"] {
+    --white: #FFF3E0;
+    --blue: #00796B; /* Moscow accent */
+    --red: #8A0303;
+    --gold: #D4AF37;
+    --dark-blue: #4E0000;
+    --light-red: #B71C1C;
+
+    --bg-light: #FFF3E0;
+    --bg-medium: #F0D6BF;
+    --bg-dark: #8A0303;
+    --text-dark: #3B1B12;
+    --border-light: #C9B08E;
+
+    --shadow-ui: rgba(59, 27, 18, 0.18);
+    --shadow-board: rgba(59, 27, 18, 0.28);
+    --shadow-accent: rgba(0, 121, 107, 0.25);
+
+    --board-bg: #F0D6BF;
+    --board-grid: #C9B08E;
+    --cell-border: rgba(59, 27, 18, 0.35);
+    --cell-highlight: rgba(255, 243, 224, 0.25);
+    --cell-shadow: rgba(59, 27, 18, 0.28);
+
+    /* Pieces: all red shades (compatible gamma) */
+    --piece-1: #B64F4F;
+    --piece-2: #C85A5A;
+    --piece-3: #E53935;
+    --piece-4: #D32F2F;
+    --piece-5: #C62828;
+    --piece-6: #B71C1C;
+    --piece-7: #8A0303;
+
+    --ghost-alpha: 0.30;
+    --ghost-alpha-light: 0.45;
+
+    --slider-track: #C9B08E;
+    --slider-thumb: #8A0303;
+    --slider-thumb-border: #D4AF37;
+
+    --btn-bg: #FFF0E2;
+    --btn-border: var(--border-light);
+    --btn-border-active: var(--gold);
+
+    --overlay-gameover: rgba(138, 3, 3, 0.92);
+    --overlay-paused: rgba(138, 3, 3, 0.88);
+    --overlay-text: #FFF3E0;
+    --overlay-accent: #D4AF37;
 }
 
 /* Reset and Base Styles */
@@ -30,7 +197,7 @@
 
 body {
     font-family: var(--font-display);
-    background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+    background: linear-gradient(135deg, var(--page-bg-light) 0%, var(--page-bg-dark) 100%);
     color: var(--text-dark);
     min-height: 100vh;
     display: flex;
@@ -52,11 +219,11 @@ body {
 
 /* Sidebar Styles */
 .game-sidebar {
-    background: var(--white);
+    background: var(--panel-bg);
     border: 3px solid var(--blue);
     border-radius: 10px;
     padding: 0.8rem;
-    box-shadow: 0 4px 15px rgba(0, 57, 166, 0.2);
+    box-shadow: 0 4px 15px var(--shadow-ui);
     min-width: 160px;
     max-width: 180px;
     overflow: hidden;
@@ -64,7 +231,7 @@ body {
 
 .game-sidebar h2 {
     font-family: inherit;
-    color: var(--blue);
+    color: var(--text-dark);
     font-size: 0.9rem;
     margin-bottom: 0.4rem;
     text-align: center;
@@ -74,6 +241,83 @@ body {
 }
 
 /* Brand Block (right sidebar) */
+.theme-panel {
+    margin-bottom: 0.8rem;
+}
+
+.theme-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.theme-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+.theme-btn[aria-pressed="true"] {
+    border-color: var(--btn-border-active);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.theme-flag {
+    width: 28px;
+    height: 18px;
+    border-radius: 4px;
+    border: 0;
+    flex: 0 0 28px;
+}
+
+.theme-flag-modern {
+    background: linear-gradient(to bottom, #FFFFFF 0 33%, #0039A6 33% 66%, #D52B1E 66% 100%);
+}
+
+.theme-flag-imperial {
+    background: linear-gradient(to bottom, #111111 0 33%, #D4AF37 33% 66%, #FFFDF6 66% 100%);
+}
+
+.theme-flag-soviet {
+    position: relative;
+    overflow: hidden;
+    background: #B00020;
+}
+
+.theme-flag-soviet::before {
+    content: "☭";
+    position: absolute;
+    left: 3px;
+    top: 4px;
+    font-size: 10px;
+    line-height: 1;
+    color: #D4AF37;
+    opacity: 0.95;
+}
+
+.theme-flag-soviet::after {
+    content: "★";
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    font-size: 7px;
+    line-height: 1;
+    color: #D4AF37;
+    opacity: 0.95;
+}
+
 .brand-panel {
     margin-bottom: 0.8rem;
     text-align: center;
@@ -81,7 +325,7 @@ body {
 
 .brand-title {
     font-family: var(--font-display);
-    color: var(--blue);
+    color: var(--text-dark);
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
@@ -110,7 +354,7 @@ body {
     font-weight: bold;
     color: var(--red);
     text-align: center;
-    background: var(--white);
+    background: var(--panel-inner-bg);
     border: 1px solid var(--blue);
     border-radius: 3px;
     padding: 0.2rem;
@@ -122,7 +366,7 @@ body {
     border-radius: 5px;
     display: block;
     margin: 0 auto;
-    background: var(--white);
+    background: var(--panel-inner-bg);
 }
 
 /* Controls */
@@ -137,7 +381,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0.2rem 0.4rem;
-    background: var(--bg-medium);
+    background: var(--control-bg);
     border-radius: 3px;
     border-left: 3px solid var(--red);
     font-size: 0.8rem;
@@ -157,10 +401,10 @@ body {
 /* Game Board */
 .game-board-container {
     position: relative;
-    background: var(--white);
+    background: var(--panel-inner-bg);
     border: 4px solid var(--red);
     border-radius: 10px;
-    box-shadow: 0 8px 25px rgba(211, 43, 30, 0.3);
+    box-shadow: 0 8px 25px var(--shadow-board);
     padding: 0;
 }
 
@@ -177,8 +421,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 57, 166, 0.95);
-    color: var(--white);
+    background: var(--overlay-gameover);
+    color: var(--overlay-text);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -190,7 +434,7 @@ body {
 .game-over h2 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    color: var(--gold);
+    color: var(--overlay-accent);
 }
 
 .game-over p {
@@ -205,8 +449,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(211, 43, 30, 0.9);
-    color: var(--white);
+    background: var(--overlay-paused);
+    color: var(--overlay-text);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -219,7 +463,7 @@ body {
 .paused-overlay h2 {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: var(--gold);
+    color: var(--overlay-accent);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -295,7 +539,7 @@ body {
     width: 100%;
     height: 8px;
     border-radius: 4px;
-    background: var(--bg-medium);
+    background: var(--slider-track);
     outline: none;
     -webkit-appearance: none;
 }
@@ -306,7 +550,8 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--red);
+    background: var(--slider-thumb);
+    border: 2px solid var(--slider-thumb-border);
     cursor: pointer;
 }
 
@@ -314,9 +559,9 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--red);
+    background: var(--slider-thumb);
     cursor: pointer;
-    border: none;
+    border: 2px solid var(--slider-thumb-border);
 }
 
 /* Statistics */
@@ -330,15 +575,15 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem;
-    background: var(--bg-medium);
+    background: var(--panel-inner-bg);
     border-radius: 5px;
     border-left: 4px solid var(--blue);
 }
 
 /* Footer */
 .game-footer {
-    background: var(--red);
-    color: var(--white);
+    background: var(--footer-bg);
+    color: var(--footer-text);
     text-align: center;
     padding: 1rem;
     font-weight: bold;
@@ -547,7 +792,7 @@ body {
     background: linear-gradient(145deg, var(--blue), #002880);
     color: var(--white);
     border-color: var(--blue);
-    box-shadow: 0 3px 6px rgba(0, 57, 166, 0.3);
+    box-shadow: 0 3px 6px var(--shadow-accent);
 }
 
 .touch-toggle-icon {

@@ -7,17 +7,64 @@ export class Board {
         this.grid = [];
         this.canvas = null;
         this.ctx = null;
-        this.colors = {
-            I: '#FFFFFF', // Default fallback
-            O: '#0039A6', // Default fallback
-            T: '#D52B1E', // Default fallback
-            S: '#FFFFFF', // Default fallback
-            Z: '#0039A6', // Default fallback
-            J: '#D52B1E', // Default fallback
-            L: '#FFFFFF'  // Default fallback
-        };
+
+        this.theme = this.readTheme();
         
         this.reset();
+    }
+
+    readTheme() {
+        const styles = window.getComputedStyle(document.documentElement);
+        const getVar = (name, fallback) => {
+            const v = styles.getPropertyValue(name);
+            return (v && v.trim()) ? v.trim() : fallback;
+        };
+
+        return {
+            themeName: document.documentElement.getAttribute('data-theme') || 'modern',
+            boardBg: getVar('--board-bg', '#A8C5E0'),
+            boardGrid: getVar('--board-grid', '#7AA3C0'),
+            cellBorder: getVar('--cell-border', '#000000'),
+            cellHighlight: getVar('--cell-highlight', 'rgba(255, 255, 255, 0.3)'),
+            cellShadow: getVar('--cell-shadow', 'rgba(0, 0, 0, 0.3)'),
+            ghostAlpha: Number.parseFloat(getVar('--ghost-alpha', '0.30')) || 0.30,
+            ghostAlphaLight: Number.parseFloat(getVar('--ghost-alpha-light', '0.55')) || 0.55,
+            gold: getVar('--gold', '#D4AF37'),
+            palette: [
+                getVar('--piece-1', '#FFFFFF'),
+                getVar('--piece-2', '#0039A6'),
+                getVar('--piece-3', '#D52B1E'),
+                getVar('--piece-4', '#FFFFFF'),
+                getVar('--piece-5', '#0039A6'),
+                getVar('--piece-6', '#D52B1E'),
+                getVar('--piece-7', '#FFFFFF')
+            ]
+        };
+    }
+
+    refreshTheme() {
+        // Freeze any legacy numeric cells to their current palette color so they won't
+        // recolor on future theme switches.
+        if (this.theme?.palette) {
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width; x++) {
+                    const cell = this.grid?.[y]?.[x];
+                    if (typeof cell === 'number' && cell !== 0) {
+                        const idx = cell - 1;
+                        const color = this.theme.palette[idx] || '#FFFFFF';
+                        this.grid[y][x] = color;
+                    }
+                }
+            }
+        }
+
+        this.theme = this.readTheme();
+    }
+
+    getRandomPaletteColor() {
+        const palette = this.theme?.palette;
+        if (!Array.isArray(palette) || palette.length === 0) return '#FFFFFF';
+        return palette[Math.floor(Math.random() * palette.length)];
     }
     
     reset() {
@@ -28,6 +75,9 @@ export class Board {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.resizeCanvas();
+
+        // Update canvas theme immediately when UI theme changes.
+        window.addEventListener('themechange', () => this.refreshTheme());
         
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -121,7 +171,7 @@ export class Board {
                     const boardX = piece.x + x;
                     
                     if (boardY >= 0) {
-                        // Store the color directly, not the piece type
+                        // Store actual color so already-placed blocks do NOT change on theme switch.
                         this.grid[boardY][boardX] = piece.color;
                     }
                 }
@@ -159,11 +209,23 @@ export class Board {
         ctx.clearRect(0, 0, boardWidth, boardHeight);
         
         // Draw grid background
-        ctx.fillStyle = '#A8C5E0'; // Medium blue - high contrast with white pieces
+        ctx.fillStyle = this.theme.boardBg;
         ctx.fillRect(0, 0, boardWidth, boardHeight);
+
+        // Soviet theme: subtle gold ☭ watermark (requested accent)
+        if (this.theme.themeName === 'soviet') {
+            ctx.save();
+            ctx.globalAlpha = 0.08;
+            ctx.fillStyle = this.theme.gold;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${Math.floor(this.cellSize * 5)}px ${getComputedStyle(document.body).fontFamily}`;
+            ctx.fillText('☭', boardWidth / 2, boardHeight * 0.35);
+            ctx.restore();
+        }
         
         // Draw grid lines
-        ctx.strokeStyle = '#7AA3C0'; // Darker blue for better contrast
+        ctx.strokeStyle = this.theme.boardGrid;
         ctx.lineWidth = 1;
         
         // Vertical lines
@@ -186,7 +248,16 @@ export class Board {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 if (this.grid[y][x]) {
-                    this.drawCell(ctx, x, y, this.grid[y][x]);
+                    const color = this.grid[y][x];
+                    // Back-compat: if a numeric index sneaks in, resolve once using current palette.
+                    if (typeof color === 'number') {
+                        const idx = color - 1;
+                        const resolved = this.theme.palette?.[idx] || '#FFFFFF';
+                        this.grid[y][x] = resolved;
+                        this.drawCell(ctx, x, y, resolved);
+                    } else {
+                        this.drawCell(ctx, x, y, color);
+                    }
                 }
             }
         }
@@ -202,17 +273,17 @@ export class Board {
         ctx.fillRect(pixelX, pixelY, size, size);
         
         // Cell border
-        ctx.strokeStyle = '#000000';
+        ctx.strokeStyle = this.theme.cellBorder;
         ctx.lineWidth = 1;
         ctx.strokeRect(pixelX, pixelY, size, size);
         
         // Highlight effect
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillStyle = this.theme.cellHighlight;
         ctx.fillRect(pixelX + 2, pixelY + 2, size - 4, 2);
         ctx.fillRect(pixelX + 2, pixelY + 2, 2, size - 4);
         
         // Shadow effect
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillStyle = this.theme.cellShadow;
         ctx.fillRect(pixelX + size - 4, pixelY + 2, 2, size - 4);
         ctx.fillRect(pixelX + 2, pixelY + size - 4, size - 4, 2);
     }
