@@ -75,10 +75,13 @@ export class Controls {
     movePiece(dx, dy) {
         if (this.game.paused || this.game.isAnimating) return;
         
-        if (dy > 0 && !this.game.board.canMove(this.game.currentPiece, 0, 1)) {
-            // Trying to move down but can't move down at all - lock immediately
-            this.game.lockPiece();
-            return;
+        // If piece can't move down and trying any action, lock immediately
+        if (!this.game.board.canMove(this.game.currentPiece, 0, 1)) {
+            if (dx !== 0 || dy > 0) {
+                // Trying to move horizontally or down when can't move down
+                this.game.lockPiece();
+                return;
+            }
         }
         
         if (this.game.board.canMove(this.game.currentPiece, dx, dy)) {
@@ -95,6 +98,13 @@ export class Controls {
     
     rotatePiece() {
         if (this.game.paused || this.game.isAnimating) return;
+        
+        // If piece can't move down and trying to rotate, lock immediately
+        if (!this.game.board.canMove(this.game.currentPiece, 0, 1)) {
+            this.game.lockPiece();
+            return;
+        }
+        
         const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
         
         if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
