@@ -16,6 +16,35 @@ export class AudioEngine {
     // Tiny ramps prevent audible "clicks" caused by discontinuities at start/stop.
     static RAMP_ATTACK_S = 0.004;
     static RAMP_RELEASE_S = 0.012;
+    static START_LOOKAHEAD_S = 0.002;
+
+    scheduleOneShotGain(gainParam, now, duration, level) {
+        const dur = Math.max(0.001, Number(duration) || 0);
+        const end = now + dur;
+
+        const attack = Math.min(AudioEngine.RAMP_ATTACK_S, dur * 0.35);
+        const release = Math.min(AudioEngine.RAMP_RELEASE_S, dur * 0.45);
+        const sustainAt = Math.max(now + attack, end - release);
+
+        // Keep it robust across browsers: avoid exponential ramps for ultra-short sounds.
+        const useExpo = dur >= 0.03;
+        const peak = Math.max(0, level);
+        const mid = peak * 0.35;
+
+        try { gainParam.cancelScheduledValues(now); } catch { /* ignore */ }
+        gainParam.setValueAtTime(0, now);
+        gainParam.linearRampToValueAtTime(peak, now + attack);
+
+        if (useExpo && sustainAt > now + attack + 0.003) {
+            gainParam.exponentialRampToValueAtTime(Math.max(0.0001, mid), sustainAt);
+        } else {
+            gainParam.setValueAtTime(peak, sustainAt);
+        }
+
+        // Always end at exactly 0 (some devices click if left at tiny epsilon).
+        gainParam.linearRampToValueAtTime(0, end + release);
+        return { end: end + release };
+    }
     
     initAudioContext() {
         if (this.audioContext && this.audioContext.state !== 'closed') {
@@ -137,19 +166,16 @@ export class AudioEngine {
             osc.frequency.setValueAtTime(freq, 0);
 
             // Match our live ADSR-ish shape but with normalized amplitude.
-            gain.gain.setValueAtTime(0, 0);
-            gain.gain.linearRampToValueAtTime(0.3, AudioEngine.RAMP_ATTACK_S);
-            gain.gain.exponentialRampToValueAtTime(0.1, 0.02);
-            const end = Math.max(0.02, dur);
+            const end = Math.max(0.008, Number(dur) || 0);
             const stopAt = Math.min(lengthSec, end + tail);
-            gain.gain.exponentialRampToValueAtTime(0.0001, end);
-            gain.gain.linearRampToValueAtTime(0, stopAt);
+            this.scheduleOneShotGain(gain.gain, 0, end, 0.3);
+            gain.gain.setValueAtTime(0, stopAt);
 
             osc.connect(gain);
             gain.connect(ctx.destination);
 
             osc.start(0);
-            osc.stop(Math.min(lengthSec, Math.max(0.02, dur) + tail));
+            osc.stop(stopAt);
 
             return await ctx.startRendering();
         } catch {
@@ -173,22 +199,16 @@ export class AudioEngine {
         src.buffer = buffer;
 
         // Avoid start/end clicks on browsers/devices that are sensitive to discontinuities.
-        const now = this.audioContext.currentTime;
+        const now = this.audioContext.currentTime + AudioEngine.START_LOOKAHEAD_S;
         const target = this.masterVolume * volume;
-        const attack = AudioEngine.RAMP_ATTACK_S;
-        const release = AudioEngine.RAMP_RELEASE_S;
-        const end = now + Math.max(0, buffer.duration);
-        const releaseStart = Math.max(now, end - release);
-
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(target, now + attack);
-        gain.gain.setValueAtTime(target, releaseStart);
-        gain.gain.linearRampToValueAtTime(0, end);
+        const dur = Math.max(0.001, buffer.duration || 0);
+        const env = this.scheduleOneShotGain(gain.gain, now, dur, target);
         src.connect(gain);
         if (this.masterGain) gain.connect(this.masterGain);
         else gain.connect(this.audioContext.destination);
 
-        src.start(this.audioContext.currentTime);
+        src.start(now);
+        try { src.stop(env.end); } catch { /* ignore */ }
         return true;
     }
     
@@ -209,17 +229,10 @@ export class AudioEngine {
         
         // Professional ADSR Envelope - smooth and pleasant
         const softVolume = this.masterVolume * volume;
-        const now = this.audioContext.currentTime + startTime;
-        const attack = AudioEngine.RAMP_ATTACK_S;
-        const release = AudioEngine.RAMP_RELEASE_S;
-        const end = now + Math.max(0.01, duration);
+        const now = this.audioContext.currentTime + startTime + AudioEngine.START_LOOKAHEAD_S;
+        const dur = Math.max(0.01, Number(duration) || 0);
         
-        // Very smooth attack to avoid harshness
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(softVolume * 0.3, now + attack); // Gentle attack
-        gainNode.gain.exponentialRampToValueAtTime(softVolume * 0.1, now + 0.02); // Quick decay
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, end); // Smooth release
-        gainNode.gain.linearRampToValueAtTime(0, end + release);
+        const env = this.scheduleOneShotGain(gainNode.gain, now, dur, softVolume * 0.3);
         
         oscillator.connect(gainNode);
         if (this.masterGain) {
@@ -229,7 +242,7 @@ export class AudioEngine {
         }
         
         oscillator.start(now);
-        oscillator.stop(end + release);
+        oscillator.stop(env.end);
         
         return oscillator;
     }
