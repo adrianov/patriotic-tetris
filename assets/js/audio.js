@@ -2,16 +2,17 @@
 export class AudioEngine {
     constructor() {
         this.audioContext = null;
+        this.didInit = false;
         this.masterVolume = 0.5;
         this.isMuted = false;
-        
-        this.initAudioContext();
     }
     
     initAudioContext() {
+        if (this.didInit) return;
         try {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
+            this.didInit = true;
             console.log('Audio context initialized');
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
@@ -20,12 +21,14 @@ export class AudioEngine {
     
     // Resume audio context on user interaction (required by some browsers)
     resumeContext() {
+        this.initAudioContext();
         if (this.audioContext && this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }
     }
     
     createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1) {
+        this.initAudioContext();
         if (!this.audioContext || this.isMuted) return null;
         
         const oscillator = this.audioContext.createOscillator();
