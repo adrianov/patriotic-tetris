@@ -26,6 +26,7 @@ class Game {
         this.dropTime = 1000;
         this.lastDrop = 0;
         this.isAnimating = false;
+        this.showGhostPiece = true;
         
         this.init();
     }
@@ -33,6 +34,7 @@ class Game {
     init() {
         console.log('Patriotic Tetris initialized');
         this.setupEventListeners();
+        this.board.setupCanvas(this.canvas);
         this.startNewGame();
         this.gameLoop();
     }
@@ -71,6 +73,12 @@ class Game {
         this.updateUI();
         this.hideGameOver();
         this.hidePaused();
+        
+        // Initialize ghost piece status
+        const ghostStatus = document.getElementById('ghost-toggle');
+        if (ghostStatus) {
+            ghostStatus.textContent = this.showGhostPiece ? 'ON' : 'OFF';
+        }
         
         console.log('New game started');
     }
@@ -148,9 +156,14 @@ class Game {
         // Draw board
         this.board.render(this.ctx);
         
+        // Draw ghost piece
+        if (this.showGhostPiece && this.currentPiece && !this.gameOver && !this.paused && !this.isAnimating && this.currentPiece.shape) {
+            this.pieces.renderGhostPiece(this.ctx, this.currentPiece, this.board);
+        }
+        
         // Draw current piece
         if (this.currentPiece && !this.gameOver && !this.paused) {
-            this.pieces.renderPiece(this.ctx, this.currentPiece);
+            this.pieces.renderPiece(this.ctx, this.currentPiece, this.board);
         }
         
         // Draw next piece
@@ -194,6 +207,15 @@ class Game {
     
     hideGameOver() {
         document.getElementById('game-over').classList.add('hidden');
+    }
+    
+    toggleGhostPiece() {
+        this.showGhostPiece = !this.showGhostPiece;
+        const statusElement = document.getElementById('ghost-toggle');
+        if (statusElement) {
+            statusElement.textContent = this.showGhostPiece ? 'ON' : 'OFF';
+        }
+        console.log(this.showGhostPiece ? 'Ghost piece enabled' : 'Ghost piece disabled');
     }
 }
 
