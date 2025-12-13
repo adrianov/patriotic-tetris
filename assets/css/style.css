@@ -913,7 +913,8 @@ body {
         height: calc(var(--vh) * 100);
         overflow: hidden;
         display: grid;
-        grid-template-rows: auto auto;
+        /* Keep controls row always visible; first row takes remaining height. */
+        grid-template-rows: 1fr auto;
         grid-template-columns: 1fr var(--panel-w);
         align-items: start;
         align-content: start;
@@ -954,6 +955,8 @@ body {
         border-left: 2px solid var(--blue);
         align-self: start;
         overflow: auto;
+        min-height: 0;
+        max-height: 100%;
         color: var(--mobile-panel-text);
     }
 
@@ -990,8 +993,12 @@ body {
     }
 
     .touch-toggle-btn {
-        min-width: clamp(56px, calc(var(--vh) * 8), 70px);
-        padding: 0.45rem 0.4rem;
+        min-width: clamp(50px, calc(var(--vh) * 7.2), 64px);
+        padding: 0.4rem 0.35rem;
+    }
+
+    .touch-toggle-icon {
+        font-size: 1.05rem;
     }
 
     .touch-toggles {
@@ -1022,8 +1029,25 @@ body {
     }
 
     .touch-toggle-btn {
-        min-width: 52px;
-        padding: 0.4rem 0.35rem;
+        min-width: 46px;
+        padding: 0.34rem 0.3rem;
+    }
+
+    .mobile-side-panel {
+        gap: 0.35rem;
+        padding: 0.25rem 0.25rem 0.2rem;
+    }
+
+    .mobile-flags .theme-btn {
+        min-height: 34px;
+    }
+
+    .touch-toggle-icon {
+        font-size: 0.95rem;
+    }
+
+    .touch-toggle-label {
+        font-size: 0.52rem;
     }
 }
 
