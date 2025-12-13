@@ -116,9 +116,11 @@ export class Pieces {
     }
     
     drawCellScaled(ctx, x, y, size, color, board) {
-        // Glow effect - outer glow
+        // Glow effect is expensive on mobile GPUs; reduce it on small screens.
+        const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        const blur = isMobile ? 2 : 6;
         ctx.shadowColor = color;
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = blur;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
