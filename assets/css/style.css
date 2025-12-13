@@ -908,7 +908,9 @@ body {
         position: static;
         margin-top: 0;
         padding: 0.35rem;
-        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom));
+        /* Extra baseline padding helps on browsers where bottom bars overlap content but don't
+           report a safe-area inset (common on some Android WebViews). */
+        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom) + 12px);
         border-radius: 14px;
         height: auto;
     }
@@ -916,6 +918,7 @@ body {
 
     /* Fit board + controls on one screen */
     body {
+        height: 100dvh;
         height: calc(var(--vh) * 100);
         overflow: hidden;
     }
@@ -927,6 +930,7 @@ body {
     .game-container {
         padding: 0;
         gap: var(--mobile-gap);
+        height: 100dvh;
         height: calc(var(--vh) * 100);
         overflow: hidden;
         display: grid;

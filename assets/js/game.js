@@ -46,6 +46,39 @@ class Game {
         this.init();
     }
 
+    getViewportHeight() {
+        const vvH = window.visualViewport?.height;
+        if (Number.isFinite(vvH) && vvH > 0) return Math.min(window.innerHeight, vvH);
+
+        // Some mobile browsers don't expose visualViewport but still report a layout viewport
+        // that better matches what's actually visible (excluding URL/address bars).
+        const docH = document.documentElement?.clientHeight;
+        if (Number.isFinite(docH) && docH > 0) return Math.min(window.innerHeight, docH);
+
+        return window.innerHeight;
+    }
+
+    syncControlsHeight(isMobileLayout) {
+        if (!isMobileLayout) {
+            document.documentElement.style.removeProperty('--controls-h');
+            return;
+        }
+
+        const controls = document.querySelector('.touch-controls');
+        const rect = controls?.getBoundingClientRect();
+        if (rect?.height) {
+            document.documentElement.style.setProperty('--controls-h', `${rect.height}px`);
+        }
+    }
+
+    resizeAfterViewportChange() {
+        if (!this.board || typeof this.board.resizeCanvas !== 'function') return;
+        requestAnimationFrame(() => {
+            this.board.resizeCanvas();
+            this.requestRender();
+        });
+    }
+
     requestRender() {
         this.needsRender = true;
     }
@@ -56,6 +89,9 @@ class Game {
         this.board.setupCanvas(this.canvas);
         this.startNewGame();
         this.gameLoop();
+
+        // Some browsers settle the final viewport size shortly after load (URL bar state).
+        setTimeout(() => this.updateViewportUnits(true), 250);
     }
     
     setupEventListeners() {
@@ -148,42 +184,17 @@ class Game {
     }
 
     updateViewportUnits(force = false) {
-        // Mobile browsers can shrink/grow the visible viewport when the URL bar appears.
         // Use a CSS var for stable layout: height = calc(var(--vh) * 100).
-        const vvH = window.visualViewport?.height;
-        const viewportH = Number.isFinite(vvH) && vvH > 0 ? Math.min(window.innerHeight, vvH) : window.innerHeight;
-        const vhPx = viewportH * 0.01;
-
-        // Avoid thrashing styles; only update if it meaningfully changed or forced.
+        const vhPx = this.getViewportHeight() * 0.01;
         const diff = Math.abs(vhPx - (this.lastVhPx || 0));
-        const shouldUpdate = force || diff >= 0.5;
-        if (shouldUpdate) {
+        if (force || diff >= 0.5) {
             this.lastVhPx = vhPx;
             document.documentElement.style.setProperty('--vh', `${vhPx}px`);
         }
 
-        // Also measure the actual controls height so the board can take the *remaining* space
-        // precisely (avoids wasting space on iOS where safe areas / bars vary).
-        const isMobileLayout = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-        if (isMobileLayout) {
-            const controls = document.querySelector('.touch-controls');
-            if (controls) {
-                const rect = controls.getBoundingClientRect();
-                if (rect && rect.height) {
-                    document.documentElement.style.setProperty('--controls-h', `${rect.height}px`);
-                }
-            }
-        } else {
-            document.documentElement.style.removeProperty('--controls-h');
-        }
-
-        // Recompute the canvas size after layout vars change.
-        if (this.board && typeof this.board.resizeCanvas === 'function') {
-            requestAnimationFrame(() => {
-                this.board.resizeCanvas();
-                this.requestRender();
-            });
-        }
+        const isMobileLayout = !!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+        this.syncControlsHeight(isMobileLayout);
+        this.resizeAfterViewportChange();
     }
     
     startNewGame() {
