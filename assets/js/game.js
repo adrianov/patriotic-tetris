@@ -40,6 +40,8 @@ class Game {
         this.lastTimeUiUpdate = 0;
         this.lastNextKey = '';
         this.needsRender = true;
+        this.lastVhPx = 0;
+        this.lastViewportCheck = 0;
         
         this.init();
     }
@@ -102,6 +104,10 @@ class Game {
             setTimeout(() => this.updateViewportUnits(), 50);
         });
 
+        // BFCache restore / app-switch return sometimes doesn't fire resize consistently.
+        window.addEventListener('pageshow', () => this.updateViewportUnits(true));
+        window.addEventListener('focus', () => this.updateViewportUnits(true));
+
         // Prevent accidental scroll gestures during play on mobile.
         document.addEventListener('touchmove', (e) => {
             if (!document.body.classList.contains('no-scroll')) return;
@@ -141,12 +147,20 @@ class Game {
         document.addEventListener('touchstart', onFirst, { passive: true });
     }
 
-    updateViewportUnits() {
+    updateViewportUnits(force = false) {
         // Mobile browsers can shrink/grow the visible viewport when the URL bar appears.
         // Use a CSS var for stable layout: height = calc(var(--vh) * 100).
-        const viewportH = window.visualViewport?.height || window.innerHeight;
-        const vh = viewportH * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        const vvH = window.visualViewport?.height;
+        const viewportH = Number.isFinite(vvH) && vvH > 0 ? Math.min(window.innerHeight, vvH) : window.innerHeight;
+        const vhPx = viewportH * 0.01;
+
+        // Avoid thrashing styles; only update if it meaningfully changed or forced.
+        const diff = Math.abs(vhPx - (this.lastVhPx || 0));
+        const shouldUpdate = force || diff >= 0.5;
+        if (shouldUpdate) {
+            this.lastVhPx = vhPx;
+            document.documentElement.style.setProperty('--vh', `${vhPx}px`);
+        }
 
         // Also measure the actual controls height so the board can take the *remaining* space
         // precisely (avoids wasting space on iOS where safe areas / bars vary).
@@ -239,6 +253,12 @@ class Game {
     
     gameLoop(currentTime = 0) {
         if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
+
+        // Watchdog: if viewport events don't fire (mobile browser quirks), re-sync periodically.
+        if (currentTime - this.lastViewportCheck > 1000) {
+            this.lastViewportCheck = currentTime;
+            this.updateViewportUnits();
+        }
 
         if (!this.gameOver && !this.paused) {
             this.elapsedMs += Math.max(0, currentTime - this.lastFrameTime);

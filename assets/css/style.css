@@ -898,19 +898,19 @@ body {
         --mobile-gap: 0px;
         /* Keep side panel compact so board+panel fit on narrow devices (iPhone 12 Pro etc.) */
         --panel-w: clamp(92px, 24vw, 150px);
-        /* Make arrows more usable on touch */
-        --btn: clamp(48px, calc(var(--vh) * 6.8), 62px);
+        /* Make arrows more usable on touch (and still fit short viewports). */
+        --btn: clamp(40px, calc(var(--vh) * 6.0), 60px);
         --dpad: calc(var(--btn) * 3 + 4px);
         /* Approx bottom bar height (arrows + padding + border) */
-        --bottom-h: calc(var(--btn) * 2.85 + 2.2rem);
+        --bottom-h: calc(var(--btn) * 2.6 + 1.6rem);
     }
 
     .touch-controls {
         display: block;
         position: static;
         margin-top: 0;
-        padding: 0.5rem;
-        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        padding: 0.35rem;
+        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom));
         border-radius: 14px;
         height: auto;
     }
@@ -972,7 +972,7 @@ body {
         background: transparent;
         border-left: 2px solid var(--blue);
         align-self: start;
-        overflow: hidden;
+        overflow: auto;
         color: var(--mobile-panel-text);
     }
 
@@ -999,7 +999,7 @@ body {
     .touch-dpad {
         width: var(--dpad);
         height: calc(var(--btn) * 2 + 2px);
-        margin: 0.35rem auto 0.25rem;
+        margin: 0.25rem auto 0.15rem;
     }
 
     .touch-dpad-btn {
@@ -1030,6 +1030,19 @@ body {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
+    }
+}
+
+/* Short mobile viewports: shrink controls further so the D-pad fits fully. */
+@media (max-width: 768px) and (max-height: 650px) {
+    :root {
+        --btn: clamp(36px, calc(var(--vh) * 5.2), 54px);
+        --bottom-h: calc(var(--btn) * 2.4 + 1.4rem);
+    }
+
+    .touch-toggle-btn {
+        min-width: 52px;
+        padding: 0.4rem 0.35rem;
     }
 }
 
