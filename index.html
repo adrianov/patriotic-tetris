@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patriotic Tetris</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="game-header">
+        <div class="eagle-container">
+            <img src="assets/svg/eagle.svg" alt="Russian Two-Headed Eagle" class="eagle-logo">
+        </div>
+        <h1 class="game-title">Patriotic Tetris</h1>
+    </header>
+
+    <main class="game-container">
+        <section class="game-sidebar">
+            <div class="score-panel">
+                <h2>Score</h2>
+                <div id="score" class="score-value">0</div>
+            </div>
+            
+            <div class="level-panel">
+                <h2>Level</h2>
+                <div id="level" class="level-value">1</div>
+            </div>
+
+            <div class="next-piece-panel">
+                <h2>Next Piece</h2>
+                <canvas id="next-piece" width="80" height="80"></canvas>
+            </div>
+
+            <div class="controls-panel">
+                <h2>Controls</h2>
+                <div class="controls-list">
+                    <div class="control-item">
+                        <span class="key">←→</span> Move
+                    </div>
+                    <div class="control-item">
+                        <span class="key">↑</span> Rotate
+                    </div>
+                    <div class="control-item">
+                        <span class="key">↓</span> Soft Drop
+                    </div>
+                    <div class="control-item">
+                        <span class="key">Space</span> Hard Drop
+                    </div>
+                    <div class="control-item">
+                        <span class="key">P</span> Pause
+                    </div>
+                    <div class="control-item">
+                        <span class="key">R</span> Restart
+                    </div>
+                    <div class="control-item">
+                        <span class="key">M</span> Mute
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="game-board-container">
+            <canvas id="game-board" width="300" height="600"></canvas>
+            <div id="game-over" class="game-over hidden">
+                <h2>Game Over</h2>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="restart-btn">Play Again</button>
+            </div>
+            <div id="paused" class="paused-overlay hidden">
+                <h2>PAUSED</h2>
+                <p>Press P to resume</p>
+            </div>
+        </section>
+
+        <section class="game-sidebar">
+            <div class="audio-controls">
+                <h2>Audio</h2>
+                <button id="mute-btn" class="audio-btn">🔊 Sound On</button>
+                <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+            </div>
+
+            <div class="stats-panel">
+                <h2>Statistics</h2>
+                <div class="stat-item">
+                    <span>Lines:</span>
+                    <span id="lines">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Time:</span>
+                    <span id="time">00:00</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="game-footer">
+        <p>&copy; 2025 Patriotic Tetris</p>
+    </footer>
+
+    <!-- JavaScript modules -->
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>
