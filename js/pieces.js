@@ -88,9 +88,15 @@ export class Pieces {
     }
     
     renderNextPiece(ctx, piece, board) {
-        const cellSize = 20;
-        const offsetX = (ctx.canvas.width - piece.shape[0].length * cellSize) / 2;
-        const offsetY = (ctx.canvas.height - piece.shape.length * cellSize) / 2;
+        // Scale to the preview canvas size so it always fits (mobile preview is smaller).
+        const cols = piece.shape?.[0]?.length || 4;
+        const rows = piece.shape?.length || 4;
+        const padding = 6;
+        const availableW = Math.max(1, ctx.canvas.width - padding * 2);
+        const availableH = Math.max(1, ctx.canvas.height - padding * 2);
+        const cellSize = Math.max(8, Math.floor(Math.min(availableW / cols, availableH / rows)));
+        const offsetX = Math.floor((ctx.canvas.width - cols * cellSize) / 2);
+        const offsetY = Math.floor((ctx.canvas.height - rows * cellSize) / 2);
         const color = piece.color || '#FFFFFF';
         
         for (let y = 0; y < piece.shape.length; y++) {

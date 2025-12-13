@@ -90,7 +90,7 @@ export class Controls {
     }
 
     moveSide(dx) {
-        if (this.game.paused || this.game.isAnimating) return;
+        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         // Locking rule:
         // - If the piece is already on the ground (can't move down) and the player tries an
@@ -108,7 +108,7 @@ export class Controls {
     }
 
     softDrop() {
-        if (this.game.paused || this.game.isAnimating) return;
+        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
             this.game.currentPiece.y++;
@@ -122,7 +122,7 @@ export class Controls {
     }
 
     rotatePiece() {
-        if (this.game.paused || this.game.isAnimating) return;
+        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
         const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
@@ -138,7 +138,7 @@ export class Controls {
     }
 
     hardDrop() {
-        if (this.game.paused || this.game.isAnimating) return;
+        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
         let dropDistance = 0;
         const startY = this.game.currentPiece.y;
 
@@ -200,25 +200,17 @@ export class Controls {
 
     setupTouchControls() {
         // Movement controls
-        document.getElementById('touch-left').addEventListener('click', () => {
-            this.movePiece(-1, 0);
-        });
+        const leftBtn = document.getElementById('touch-left');
+        const rightBtn = document.getElementById('touch-right');
+        const downBtn = document.getElementById('touch-down');
+        const rotateBtn = document.getElementById('touch-rotate');
 
-        document.getElementById('touch-right').addEventListener('click', () => {
-            this.movePiece(1, 0);
-        });
+        if (leftBtn) leftBtn.addEventListener('click', () => this.movePiece(-1, 0));
+        if (rightBtn) rightBtn.addEventListener('click', () => this.movePiece(1, 0));
 
-        document.getElementById('touch-down').addEventListener('click', () => {
-            this.movePiece(0, 1);
-        });
-
-        document.getElementById('touch-rotate').addEventListener('click', () => {
-            this.rotatePiece();
-        });
-
-        document.getElementById('touch-drop').addEventListener('click', () => {
-            this.hardDrop();
-        });
+        // Mobile: use ↓ as hard drop (no separate DROP button).
+        if (downBtn) downBtn.addEventListener('click', () => this.hardDrop());
+        if (rotateBtn) rotateBtn.addEventListener('click', () => this.rotatePiece());
 
         // Toggle controls
         const ghostBtn = document.getElementById('touch-ghost');
@@ -226,28 +218,28 @@ export class Controls {
         const restartBtn = document.getElementById('touch-restart');
         const soundBtn = document.getElementById('touch-sound');
 
-        ghostBtn.addEventListener('click', () => {
-            this.game.toggleGhostPiece();
-            ghostBtn.classList.toggle('active', this.game.showGhostPiece);
-        });
+        if (ghostBtn) {
+            ghostBtn.addEventListener('click', () => {
+                this.game.toggleGhostPiece();
+                ghostBtn.classList.toggle('active', this.game.showGhostPiece);
+            });
+        }
 
-        pauseBtn.addEventListener('click', () => {
-            this.game.pause();
-        });
+        if (pauseBtn) pauseBtn.addEventListener('click', () => this.game.pause());
 
-        restartBtn.addEventListener('click', () => {
-            this.game.startNewGame();
-        });
+        if (restartBtn) restartBtn.addEventListener('click', () => this.game.startNewGame());
 
-        soundBtn.addEventListener('click', () => {
-            this.game.audio.toggleMute();
-            const isMuted = this.game.audio.isMuted;
-            soundBtn.querySelector('.touch-toggle-icon').textContent = isMuted ? '🔇' : '🔊';
-            soundBtn.classList.toggle('active', !isMuted);
-        });
+        if (soundBtn) {
+            soundBtn.addEventListener('click', () => {
+                this.game.audio.toggleMute();
+                const isMuted = this.game.audio.isMuted;
+                soundBtn.querySelector('.touch-toggle-icon').textContent = isMuted ? '🔇' : '🔊';
+                soundBtn.classList.toggle('active', !isMuted);
+            });
+        }
 
         // Initialize toggle states
-        ghostBtn.classList.toggle('active', this.game.showGhostPiece);
-        soundBtn.classList.toggle('active', !this.game.audio.isMuted);
+        if (ghostBtn) ghostBtn.classList.toggle('active', this.game.showGhostPiece);
+        if (soundBtn) soundBtn.classList.toggle('active', !this.game.audio.isMuted);
     }
 }
