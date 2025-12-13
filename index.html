@@ -5,17 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patriotic Tetris</title>
+    <!-- Arcade display font (Tetris vibe, less pixelated) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <header class="game-header">
-        <div class="eagle-container">
-            <img src="assets/svg/eagle.svg" alt="Russian Two-Headed Eagle" class="eagle-logo">
-        </div>
-        <h1 class="game-title">Patriotic Tetris</h1>
-    </header>
-
     <main class="game-container">
         <section class="game-sidebar">
             <div class="score-panel">
@@ -116,6 +113,11 @@
         </div>
 
         <section class="game-sidebar">
+            <div class="brand-panel">
+                <h2 class="brand-title">Patriotic Tetris</h2>
+                <img src="assets/svg/eagle.svg" alt="Imperial Eagle" class="brand-eagle">
+            </div>
+
             <div class="audio-controls">
                 <h2>Audio</h2>
                 <button id="mute-btn" class="audio-btn">🔊 Sound On</button>
