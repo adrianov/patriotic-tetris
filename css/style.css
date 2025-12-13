@@ -240,18 +240,39 @@ body {
 .restart-btn {
     background: var(--red);
     color: var(--white);
-    border: none;
+    border: 2px solid var(--gold);
     padding: 1rem 2rem;
     font-size: 1.2rem;
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: bold;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    position: relative;
+}
+
+.restart-btn::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--gold), var(--blue), var(--gold));
+    border-radius: 5px;
+    z-index: -1;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
 }
 
 .restart-btn:hover {
     background: var(--light-red);
     transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+}
+
+.restart-btn:hover::before {
+    opacity: 1;
 }
 
 /* Audio Controls */
