@@ -140,7 +140,7 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                this.game.lockPiece();
+                // Don't lock immediately - let it behave like naturally fallen piece
                 // Clear animation flag
                 this.game.isAnimating = false;
             }

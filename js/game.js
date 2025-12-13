@@ -66,6 +66,7 @@ class Game {
         this.paused = false;
         this.isAnimating = false;
         this.dropTime = 1000;
+        this.hardDropGrace = false;
         
         this.currentPiece = this.pieces.getRandomPiece();
         this.nextPiece = this.pieces.getRandomPiece();
