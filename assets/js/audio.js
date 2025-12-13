@@ -34,48 +34,50 @@ export class AudioEngine {
         oscillator.type = type;
         oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + startTime);
         
-        // Softer ADSR Envelope with logarithmic scaling
+        // Professional ADSR Envelope - smooth and pleasant
         const softVolume = this.masterVolume * volume;
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime + startTime);
-        gainNode.gain.linearRampToValueAtTime(softVolume * 0.5, this.audioContext.currentTime + startTime + 0.01); // Quick attack
-        gainNode.gain.exponentialRampToValueAtTime(softVolume * 0.2, this.audioContext.currentTime + startTime + 0.03); // Quick decay
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + startTime + duration); // Smooth release
+        const now = this.audioContext.currentTime + startTime;
+        
+        // Very smooth attack to avoid harshness
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(softVolume * 0.3, now + 0.005); // Gentle attack
+        gainNode.gain.exponentialRampToValueAtTime(softVolume * 0.1, now + 0.02); // Quick decay
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Smooth release
         
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
         
-        oscillator.start(this.audioContext.currentTime + startTime);
-        oscillator.stop(this.audioContext.currentTime + startTime + duration);
+        oscillator.start(now);
+        oscillator.stop(now + duration);
         
         return oscillator;
     }
     
     playMove() {
         this.resumeContext();
-        // Jazzy staccato - C5 with quick decay
-        this.createOscillator(523.25, 'sine', 0, 0.015, 0.2);
+        // Professional click - higher frequency, smooth envelope
+        this.createOscillator(1046.50, 'sine', 0, 0.02, 0.4); // C6 - octave higher
     }
     
     playRotate() {
         this.resumeContext();
-        // Jazzy grace note - E5 with syncopated feel
-        this.createOscillator(659.25, 'triangle', 0, 0.035, 0.25);
-        setTimeout(() => this.createOscillator(523.25, 'sine', 0, 0.02, 0.15), 15);
+        // Professional click - crisp but smooth
+        this.createOscillator(1318.51, 'sine', 0, 0.018, 0.5); // E6 - octave higher
     }
     
     playDrop() {
         this.resumeContext();
-        // Jazzy brush - G4 with swing feel
-        this.createOscillator(392, 'triangle', 0, 0.08, 0.6);
-        setTimeout(() => this.createOscillator(329.63, 'sine', 0, 0.04, 0.3), 25);
+        // Professional tap - pleasant mid-range
+        this.createOscillator(783.99, 'sine', 0, 0.04, 0.6); // G5 - octave higher
     }
     
     playHardDrop() {
         this.resumeContext();
-        // Jazzy accent - C4 with rhythmic punch
-        this.createOscillator(261.63, 'triangle', 0, 0.12, 0.8);
-        setTimeout(() => this.createOscillator(392, 'sine', 0, 0.06, 0.4), 40);
+        // Professional impact - solid but not harsh
+        this.createOscillator(523.25, 'sine', 0, 0.06, 0.7); // C5 - original root
     }
+    
+
     
     playLineClear(lines) {
         this.resumeContext();
