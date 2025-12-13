@@ -78,11 +78,11 @@ export class Pieces {
         return rotated;
     }
     
-    renderPiece(ctx, piece) {
+    renderPiece(ctx, piece, board) {
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    this.drawCell(ctx, piece.x + x, piece.y + y, piece.color);
+                    this.drawCell(ctx, piece.x + x, piece.y + y, piece.color, board.cellSize);
                 }
             }
         }
@@ -102,8 +102,7 @@ export class Pieces {
         }
     }
     
-    drawCell(ctx, x, y, color) {
-        const cellSize = 30;
+    drawCell(ctx, x, y, color, cellSize) {
         const pixelX = x * cellSize;
         const pixelY = y * cellSize;
         
@@ -129,5 +128,71 @@ export class Pieces {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(x + size - 4, y + 2, 2, size - 4);
         ctx.fillRect(x + 2, y + size - 4, size - 4, 2);
+    }
+    
+    getGhostPiece(piece, board) {
+        if (!piece || !piece.shape || !board || !board.canMove) return null;
+        
+        // Check if current piece position is valid
+        if (!board.canMove(piece, 0, 0)) return null;
+        
+        // Ensure piece has valid coordinates
+        if (typeof piece.x !== 'number' || typeof piece.y !== 'number') return null;
+        
+        const ghostPiece = {
+            ...piece,
+            y: piece.y
+        };
+        
+        // Move ghost piece down until it can't move further
+        while (board.canMove(ghostPiece, 0, 1)) {
+            ghostPiece.y++;
+        }
+        
+        return ghostPiece;
+    }
+    
+    renderGhostPiece(ctx, piece, board) {
+        const ghostPiece = this.getGhostPiece(piece, board);
+        
+        if (!ghostPiece) return;
+        
+        // Only render ghost piece if it's within board bounds and not colliding with existing pieces
+        for (let y = 0; y < ghostPiece.shape.length; y++) {
+            for (let x = 0; x < ghostPiece.shape[y].length; x++) {
+                if (ghostPiece.shape[y][x]) {
+                    const boardX = ghostPiece.x + x;
+                    const boardY = ghostPiece.y + y;
+                    
+                    // Only draw if within board boundaries and cell is not occupied
+                    if (boardX >= 0 && boardX < board.width && boardY >= 0 && boardY < board.height && 
+                        board.grid[boardY] && !board.grid[boardY][boardX]) {
+                        this.drawGhostCell(ctx, boardX, boardY, ghostPiece.color, board.cellSize);
+                    }
+                }
+            }
+        }
+    }
+    
+    drawGhostCell(ctx, x, y, color, cellSize) {
+        const pixelX = x * cellSize;
+        const pixelY = y * cellSize;
+        
+        // Ghost piece - more opaque for better contrast with gray field
+        if (color === '#FFFFFF') {
+            ctx.fillStyle = '#FFFFFFCC'; // More white, less transparent
+        } else {
+            ctx.fillStyle = color + '50';
+        }
+        ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+        
+        // Border - gray for white pieces, color-matched for others
+        if (color === '#FFFFFF') {
+            ctx.strokeStyle = '#808080'; // Solid gray border for white pieces
+        } else {
+            ctx.strokeStyle = color + '60'; // Color-matched border for colored pieces
+        }
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
     }
 }
