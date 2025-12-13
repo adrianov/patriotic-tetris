@@ -2,7 +2,7 @@
 import { Board } from './board.js';
 import { Pieces } from './pieces.js';
 import { Controls } from './controls.js';
-import { AudioEngine } from '../assets/js/audio.js';
+import { AudioEngine } from './audio.js';
 import { initTheme } from './theme.js';
 
 class Game {
@@ -38,6 +38,7 @@ class Game {
         this.elapsedMs = 0;
         this.lastFrameTime = 0;
         this.lastTimeUiUpdate = 0;
+        this.lastNextKey = '';
         
         this.init();
     }
@@ -53,6 +54,12 @@ class Game {
     setupEventListeners() {
         // Game controls will be handled by Controls module
         this.controls.setup(this);
+
+        // Mobile browsers can suspend WebAudio after interruptions; re-resume on any gesture.
+        const resumeAudio = () => this.audio.resumeContext();
+        document.addEventListener('pointerdown', resumeAudio, { passive: true });
+        document.addEventListener('touchstart', resumeAudio, { passive: true });
+        document.addEventListener('keydown', resumeAudio);
         
         // UI controls
         document.getElementById('restart-btn').addEventListener('click', () => {
@@ -78,6 +85,13 @@ class Game {
             this.setScrollLock();
         });
 
+        // iOS Safari/Chrome: visual viewport changes when browser bars show/hide.
+        if (window.visualViewport) {
+            const onVvChange = () => this.updateViewportUnits();
+            window.visualViewport.addEventListener('resize', onVvChange);
+            window.visualViewport.addEventListener('scroll', onVvChange);
+        }
+
         window.addEventListener('orientationchange', () => {
             // Safari needs a beat to settle the new innerHeight.
             setTimeout(() => this.updateViewportUnits(), 50);
@@ -93,6 +107,12 @@ class Game {
 
         // Start audio after first user gesture (required by browsers).
         this.bindFirstAudioGesture();
+
+        // If the browser suspends audio (tab switch / interruption), the next user gesture
+        // will re-arm it via bindFirstAudioGesture listeners; this makes resume quicker.
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) this.audio.resumeContext();
+        });
     }
 
     bindFirstAudioGesture() {
@@ -119,7 +139,8 @@ class Game {
     updateViewportUnits() {
         // Mobile browsers can shrink/grow the visible viewport when the URL bar appears.
         // Use a CSS var for stable layout: height = calc(var(--vh) * 100).
-        const vh = window.innerHeight * 0.01;
+        const viewportH = window.visualViewport?.height || window.innerHeight;
+        const vh = viewportH * 0.01;
         document.documentElement.style.setProperty('--vh', `${vh}px`);
 
         // Also measure the actual controls height so the board can take the *remaining* space
@@ -421,20 +442,28 @@ class Game {
             this.pieces.renderPiece(this.ctx, this.currentPiece, this.board);
         }
         
-        // Draw next piece
-        this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
-        if (this.nextPiece) {
-            this.pieces.renderNextPiece(this.nextCtx, this.nextPiece, this.board);
-        }
+        // Draw next piece only when it changes (saves CPU/GPU on mobile).
+        const nextKey = this.nextPiece
+            ? `${this.nextCanvas.width}x${this.nextCanvas.height}:${this.nextPiece.type}:${this.nextPiece.color}`
+            : `${this.nextCanvas.width}x${this.nextCanvas.height}:none`;
 
-        // Mobile next piece (right panel)
-        const mobileNext = document.getElementById('mobile-next-piece');
-        if (mobileNext) {
-            const mctx = mobileNext.getContext('2d');
-            if (mctx) {
-                mctx.clearRect(0, 0, mobileNext.width, mobileNext.height);
-                if (this.nextPiece) {
-                    this.pieces.renderNextPiece(mctx, this.nextPiece, this.board);
+        if (nextKey !== this.lastNextKey) {
+            this.lastNextKey = nextKey;
+
+            this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
+            if (this.nextPiece) {
+                this.pieces.renderNextPiece(this.nextCtx, this.nextPiece, this.board);
+            }
+
+            // Mobile next piece (right panel)
+            const mobileNext = document.getElementById('mobile-next-piece');
+            if (mobileNext) {
+                const mctx = mobileNext.getContext('2d');
+                if (mctx) {
+                    mctx.clearRect(0, 0, mobileNext.width, mobileNext.height);
+                    if (this.nextPiece) {
+                        this.pieces.renderNextPiece(mctx, this.nextPiece, this.board);
+                    }
                 }
             }
         }

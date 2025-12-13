@@ -5,15 +5,22 @@ export class AudioEngine {
         this.didInit = false;
         this.masterVolume = 0.5;
         this.isMuted = false;
+        this.masterGain = null;
+        this.resumePromise = null;
     }
     
     initAudioContext() {
-        if (this.didInit) return;
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            this.didInit = true;
+            return;
+        }
         try {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
+            this.masterGain = this.audioContext.createGain();
+            this.masterGain.gain.value = 1;
+            this.masterGain.connect(this.audioContext.destination);
             this.didInit = true;
-            console.log('Audio context initialized');
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
         }
@@ -22,24 +29,41 @@ export class AudioEngine {
     // Resume audio context on user interaction (required by some browsers)
     resumeContext() {
         this.initAudioContext();
-        if (this.audioContext && this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
+        if (!this.audioContext) return null;
+
+        // Some mobile browsers report "interrupted" (WebKit) when audio is paused by the OS.
+        const state = this.audioContext.state;
+        if (state === 'closed') {
+            this.didInit = false;
+            this.initAudioContext();
         }
+
+        if (this.audioContext && this.audioContext.state !== 'running') {
+            try {
+                this.resumePromise = this.audioContext.resume();
+            } catch {
+                this.resumePromise = null;
+            }
+        }
+        return this.resumePromise;
     }
     
     createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1) {
-        this.initAudioContext();
+        this.resumeContext();
         if (!this.audioContext || this.isMuted) return null;
         
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         
         oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + startTime);
+        // If we just resumed the context, schedule a tiny bit in the future so the first sound
+        // isn't dropped while the browser is transitioning to "running".
+        const safeStart = this.audioContext.state === 'running' ? startTime : Math.max(startTime, 0.06);
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + safeStart);
         
         // Professional ADSR Envelope - smooth and pleasant
         const softVolume = this.masterVolume * volume;
-        const now = this.audioContext.currentTime + startTime;
+        const now = this.audioContext.currentTime + safeStart;
         
         // Very smooth attack to avoid harshness
         gainNode.gain.setValueAtTime(0, now);
@@ -48,7 +72,11 @@ export class AudioEngine {
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Smooth release
         
         oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
+        if (this.masterGain) {
+            gainNode.connect(this.masterGain);
+        } else {
+            gainNode.connect(this.audioContext.destination);
+        }
         
         oscillator.start(now);
         oscillator.stop(now + duration);
@@ -182,6 +210,7 @@ export class AudioEngine {
     
     // Optional: Background music generator
     playBackgroundMusic() {
+        this.resumeContext();
         if (!this.audioContext || this.isMuted) return;
         
         // Jazzy patriotic melody with swing and blue notes
@@ -198,7 +227,7 @@ export class AudioEngine {
             {freq: 261.63, duration: 0.6}, // C4
         ];
         
-        let timeOffset = 0;
+        let timeOffset = 0.05;
         melody.forEach(note => {
             this.createOscillator(note.freq, 'triangle', timeOffset, note.duration);
             timeOffset += note.duration;
