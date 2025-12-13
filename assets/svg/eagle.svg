@@ -1,71 +1,116 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60">
-  <!-- Russian Two-Headed Eagle -->
-  <defs>
-    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  
-  <!-- Shield/Body -->
-  <ellipse cx="100" cy="120" rx="25" ry="35" fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Left Head -->
-  <circle cx="75" cy="85" r="15" fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Right Head -->
-  <circle cx="125" cy="85" r="15" fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Left Eye -->
-  <circle cx="70" cy="82" r="3" fill="#FFFFFF"/>
-  <circle cx="70" cy="82" r="2" fill="#000000"/>
-  
-  <!-- Right Eye -->
-  <circle cx="130" cy="82" r="3" fill="#FFFFFF"/>
-  <circle cx="130" cy="82" r="2" fill="#000000"/>
-  
-  <!-- Left Beak -->
-  <path d="M 65 88 L 60 92 L 65 90 Z" fill="#FF6347" stroke="#8B0000" stroke-width="0.5"/>
-  
-  <!-- Right Beak -->
-  <path d="M 135 88 L 140 92 L 135 90 Z" fill="#FF6347" stroke="#8B0000" stroke-width="0.5"/>
-  
-  <!-- Crown -->
-  <path d="M 85 70 L 90 60 L 95 65 L 100 55 L 105 65 L 110 60 L 115 70 L 115 75 L 85 75 Z" 
-        fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Crown Jewels -->
-  <circle cx="100" cy="60" r="2" fill="#FF0000"/>
-  <circle cx="92" cy="65" r="1.5" fill="#0000FF"/>
-  <circle cx="108" cy="65" r="1.5" fill="#0000FF"/>
-  
-  <!-- Left Wing -->
-  <path d="M 50 100 Q 30 90 20 100 Q 15 110 25 115 Q 35 110 50 105 Z" 
-        fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Right Wing -->
-  <path d="M 150 100 Q 170 90 180 100 Q 185 110 175 115 Q 165 110 150 105 Z" 
-        fill="url(#goldGradient)" stroke="#B8860B" stroke-width="1"/>
-  
-  <!-- Left Talons -->
-  <path d="M 85 150 L 82 160 L 84 162 M 85 150 L 88 160 L 86 162" 
-        stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round"/>
-  
-  <!-- Right Talons -->
-  <path d="M 115 150 L 112 160 L 114 162 M 115 150 L 118 160 L 116 162" 
-        stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round"/>
-  
-  <!-- Scepter (Left) -->
-  <rect x="15" y="140" width="3" height="25" fill="#FFD700"/>
-  <circle cx="16.5" cy="138" r="4" fill="#FF0000"/>
-  
-  <!-- Orb (Right) -->
-  <circle cx="184" cy="150" r="6" fill="#0000FF"/>
-  <path d="M 184 144 L 184 156 M 178 150 L 190 150" stroke="#FFD700" stroke-width="1"/>
-  
-  <!-- Chest Emblem -->
-  <rect x="90" y="110" width="20" height="25" fill="#FFFFFF" stroke="#B8860B" stroke-width="1"/>
-  <rect x="90" y="110" width="20" height="8" fill="#D52B1E"/>
-  <rect x="90" y="118" width="20" height="9" fill="#0039A6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Two-headed eagle (pixel / tetris style)">
+  <!--
+    Patriotic Tetris - Pixel Eagle
+    - Designed to read well at 40–60px
+    - Uses crisp 2px "blocks" (tetris vibe)
+    - Uses project palette (white/blue/red/gold)
+  -->
+  <style>
+    .badge { fill: #002868; }
+    .badge-glow { fill: rgba(255, 255, 255, 0.10); }
+    .gold { fill: #FFD700; }
+    .gold-d { fill: #C99A00; }
+    .gold-l { fill: #FFF2A6; }
+    .ink { fill: #0B1B33; }
+    .white { fill: #FFFFFF; }
+    .blue { fill: #0039A6; }
+    .red { fill: #D52B1E; }
+  </style>
+
+  <!-- Contrast badge (looks good on light panels) -->
+  <circle cx="32" cy="32" r="30" class="badge"/>
+  <circle cx="32" cy="30" r="24" class="badge-glow"/>
+
+  <!-- Pixel art (2px grid) -->
+  <g transform="translate(0 4)">
+    <g transform="translate(32 25) scale(1.45) translate(-32 -25)" shape-rendering="crispEdges">
+    <!-- Crown -->
+    <rect x="28" y="10" width="8" height="2" class="gold"/>
+    <rect x="30" y="8" width="4" height="2" class="gold"/>
+    <rect x="31" y="6" width="2" height="2" class="red"/>
+
+    <!-- Heads (left / right) -->
+    <rect x="20" y="16" width="2" height="2" class="gold-l"/>
+    <rect x="22" y="16" width="6" height="2" class="gold"/>
+    <rect x="18" y="18" width="10" height="2" class="gold"/>
+    <rect x="18" y="20" width="10" height="2" class="gold"/>
+    <rect x="20" y="22" width="8" height="2" class="gold"/>
+    <rect x="22" y="24" width="6" height="2" class="gold-d"/>
+    <rect x="16" y="20" width="2" height="2" class="red"/>
+    <rect x="16" y="22" width="2" height="2" class="red"/>
+    <rect x="22" y="20" width="2" height="2" class="white"/>
+    <rect x="22" y="20" width="1" height="1" class="ink"/>
+
+    <rect x="44" y="16" width="2" height="2" class="gold-l"/>
+    <rect x="36" y="16" width="6" height="2" class="gold"/>
+    <rect x="36" y="18" width="10" height="2" class="gold"/>
+    <rect x="36" y="20" width="10" height="2" class="gold"/>
+    <rect x="36" y="22" width="8" height="2" class="gold"/>
+    <rect x="36" y="24" width="6" height="2" class="gold-d"/>
+    <rect x="46" y="20" width="2" height="2" class="red"/>
+    <rect x="46" y="22" width="2" height="2" class="red"/>
+    <rect x="40" y="20" width="2" height="2" class="white"/>
+    <rect x="41" y="20" width="1" height="1" class="ink"/>
+
+    <!-- Wing left (shaded edge) -->
+    <rect x="22" y="26" width="6" height="2" class="gold"/>
+    <rect x="18" y="28" width="10" height="2" class="gold"/>
+    <rect x="14" y="30" width="14" height="2" class="gold"/>
+    <rect x="10" y="32" width="16" height="2" class="gold"/>
+    <rect x="10" y="34" width="14" height="2" class="gold"/>
+    <rect x="12" y="36" width="10" height="2" class="gold"/>
+    <rect x="14" y="38" width="6" height="2" class="gold"/>
+    <rect x="16" y="40" width="2" height="2" class="gold"/>
+    <rect x="10" y="32" width="2" height="2" class="gold-d"/>
+    <rect x="10" y="34" width="2" height="2" class="gold-d"/>
+    <rect x="12" y="30" width="2" height="2" class="gold-d"/>
+
+    <!-- Wing right (shaded edge) -->
+    <rect x="36" y="26" width="6" height="2" class="gold"/>
+    <rect x="36" y="28" width="10" height="2" class="gold"/>
+    <rect x="36" y="30" width="14" height="2" class="gold"/>
+    <rect x="38" y="32" width="16" height="2" class="gold"/>
+    <rect x="40" y="34" width="14" height="2" class="gold"/>
+    <rect x="42" y="36" width="10" height="2" class="gold"/>
+    <rect x="44" y="38" width="6" height="2" class="gold"/>
+    <rect x="46" y="40" width="2" height="2" class="gold"/>
+    <rect x="52" y="32" width="2" height="2" class="gold-d"/>
+    <rect x="52" y="34" width="2" height="2" class="gold-d"/>
+    <rect x="50" y="30" width="2" height="2" class="gold-d"/>
+
+    <!-- Body -->
+    <rect x="30" y="24" width="4" height="2" class="gold-l"/>
+    <rect x="28" y="26" width="8" height="2" class="gold"/>
+    <rect x="26" y="28" width="12" height="2" class="gold"/>
+    <rect x="26" y="30" width="12" height="2" class="gold"/>
+    <rect x="26" y="32" width="12" height="2" class="gold"/>
+    <rect x="28" y="34" width="8" height="2" class="gold"/>
+    <rect x="30" y="36" width="4" height="2" class="gold"/>
+
+    <!-- Chest shield (flag stripes) -->
+    <rect x="30" y="30" width="4" height="10" class="ink"/>
+    <rect x="31" y="31" width="2" height="8" class="white"/>
+    <rect x="31" y="31" width="2" height="2" class="white"/>
+    <rect x="31" y="33" width="2" height="2" class="blue"/>
+    <rect x="31" y="35" width="2" height="2" class="red"/>
+    <rect x="31" y="37" width="2" height="2" class="white"/>
+
+    <!-- Tail / talons -->
+    <rect x="28" y="38" width="8" height="2" class="gold-d"/>
+    <rect x="26" y="40" width="4" height="2" class="gold"/>
+    <rect x="34" y="40" width="4" height="2" class="gold"/>
+    <rect x="24" y="42" width="2" height="2" class="gold-d"/>
+    <rect x="38" y="42" width="2" height="2" class="gold-d"/>
+    <!-- Extended talons (fill area better) -->
+    <rect x="24" y="44" width="2" height="2" class="gold"/>
+    <rect x="26" y="44" width="2" height="2" class="gold"/>
+    <rect x="22" y="46" width="2" height="2" class="gold-d"/>
+    <rect x="24" y="46" width="2" height="2" class="gold"/>
+
+    <rect x="38" y="44" width="2" height="2" class="gold"/>
+    <rect x="36" y="44" width="2" height="2" class="gold"/>
+    <rect x="40" y="46" width="2" height="2" class="gold-d"/>
+    <rect x="38" y="46" width="2" height="2" class="gold"/>
+    </g>
+  </g>
 </svg>
