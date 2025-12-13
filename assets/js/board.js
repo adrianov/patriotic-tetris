@@ -11,9 +11,13 @@ export class Board {
         this.bgCanvas = null;
         this.bgCtx = null;
         this.bgDirty = true;
+        this.blocksCanvas = null;
+        this.blocksCtx = null;
+        this.blocksDirty = true;
         this.cssWidth = this.width * this.cellSize;
         this.cssHeight = this.height * this.cellSize;
         this.dpr = 1;
+        this.isMobile = false;
 
         this.theme = this.readTheme();
         
@@ -67,6 +71,7 @@ export class Board {
 
         this.theme = this.readTheme();
         this.bgDirty = true;
+        this.blocksDirty = true;
     }
 
     getRandomPaletteColor() {
@@ -77,6 +82,7 @@ export class Board {
     
     reset() {
         this.grid = Array(this.height).fill().map(() => Array(this.width).fill(0));
+        this.blocksDirty = true;
     }
     
     setupCanvas(canvas) {
@@ -84,6 +90,8 @@ export class Board {
         this.ctx = canvas.getContext('2d');
         this.bgCanvas = document.createElement('canvas');
         this.bgCtx = this.bgCanvas.getContext('2d');
+        this.blocksCanvas = document.createElement('canvas');
+        this.blocksCtx = this.blocksCanvas.getContext('2d');
         this.resizeCanvas();
 
         // Update canvas theme immediately when UI theme changes.
@@ -124,6 +132,7 @@ export class Board {
         
         // Handle Retina displays
         const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        this.isMobile = isMobile;
         const maxDpr = isMobile ? 2 : 3;
         const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
         this.dpr = dpr;
@@ -143,6 +152,13 @@ export class Board {
             this.bgCanvas.height = canvasHeight * dpr;
             this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
             this.bgDirty = true;
+        }
+        // Cache placed blocks separately so we don't re-draw them every frame.
+        if (this.blocksCanvas && this.blocksCtx) {
+            this.blocksCanvas.width = canvasWidth * dpr;
+            this.blocksCanvas.height = canvasHeight * dpr;
+            this.blocksCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.blocksDirty = true;
         }
         
         // Set CSS size to match board exactly
@@ -202,6 +218,34 @@ export class Board {
 
         this.bgDirty = false;
     }
+
+    buildBlocks() {
+        if (!this.blocksCtx) return;
+        const ctx = this.blocksCtx;
+        const boardWidth = this.cssWidth;
+        const boardHeight = this.cssHeight;
+
+        ctx.clearRect(0, 0, boardWidth, boardHeight);
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const cell = this.grid?.[y]?.[x];
+                if (!cell) continue;
+
+                // Back-compat: if a numeric index sneaks in, resolve once using current palette.
+                if (typeof cell === 'number') {
+                    const idx = cell - 1;
+                    const resolved = this.theme.palette?.[idx] || '#FFFFFF';
+                    this.grid[y][x] = resolved;
+                    this.drawCell(ctx, x, y, resolved);
+                } else {
+                    this.drawCell(ctx, x, y, cell);
+                }
+            }
+        }
+
+        this.blocksDirty = false;
+    }
     
     canMove(piece, dx, dy, newRotation = null) {
         const testPiece = {
@@ -247,6 +291,7 @@ export class Board {
                 }
             }
         }
+        this.blocksDirty = true;
     }
 
     getFullLines() {
@@ -287,6 +332,7 @@ export class Board {
         }
 
         this.grid = remaining;
+        this.blocksDirty = true;
         return cleared;
     }
     
@@ -306,21 +352,18 @@ export class Board {
         } else {
             ctx.clearRect(0, 0, boardWidth, boardHeight);
         }
-        
-        // Draw placed pieces
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                if (this.grid[y][x]) {
-                    const color = this.grid[y][x];
-                    // Back-compat: if a numeric index sneaks in, resolve once using current palette.
-                    if (typeof color === 'number') {
-                        const idx = color - 1;
-                        const resolved = this.theme.palette?.[idx] || '#FFFFFF';
-                        this.grid[y][x] = resolved;
-                        this.drawCell(ctx, x, y, resolved);
-                    } else {
-                        this.drawCell(ctx, x, y, color);
-                    }
+
+        // Draw cached placed blocks.
+        if (this.blocksCanvas && this.blocksDirty) this.buildBlocks();
+        if (this.blocksCanvas) {
+            ctx.drawImage(this.blocksCanvas, 0, 0, boardWidth, boardHeight);
+        } else {
+            // Fallback: draw placed pieces directly (shouldn't happen in normal flow).
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width; x++) {
+                    const cell = this.grid?.[y]?.[x];
+                    if (!cell) continue;
+                    this.drawCell(ctx, x, y, cell);
                 }
             }
         }
