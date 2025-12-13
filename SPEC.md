@@ -51,6 +51,7 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **Ghost piece** (shows where piece will land)
 - **Pause functionality**
 - **Game over screen with restart option**
+- **3 UI themes** (Modern / Imperial / Soviet) switchable via flags in the right pane
 - **Responsive design** for different screen sizes
 - **Sound effects** for piece movements, rotations, line clears
 - **Background music** (optional, patriotic theme)
@@ -73,7 +74,8 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 │   ├── game.js         # Main game logic
 │   ├── pieces.js       # Tetromino definitions
 │   ├── board.js        # Game board management
-│   └── controls.js     # Input handling
+│   ├── controls.js     # Input handling
+│   └── theme.js        # UI theme switching (Modern/Imperial/Soviet)
 └── assets/
     ├── svg/            # SVG graphics and icons
     │   ├── eagle.svg   # Russian two-headed eagle
@@ -98,10 +100,16 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 ## Design Requirements
 
 ### Color Scheme
-- **Primary colors**: Russian flag colors
-  - **White** (#FFFFFF): Background, text highlights
-  - **Blue** (#0039A6): UI elements, borders, accents
-  - **Red** (#D52B1E): Important elements, alerts, highlights
+- **Themeable UI** (UI only) with 3 presets:
+  - **Modern Russia**: White (#FFFFFF), Blue (#0039A6), Red (#D52B1E)
+  - **Imperial Russia**: Black-ish (#0F0F10), Gold (#D4AF37), White (#FFFDF6)
+  - **Soviet (Moscow accent)**: Deep Red (#8A0303), Gold (#D4AF37), Warm Cream (#FFF3E0), Metro Green (#00796B)
+
+### Theme Switcher
+- Located in the **right pane** above the branding block
+- Uses **flag-style buttons** and persists selection via `localStorage`
+- The **game board canvas** also adapts (grid/background/shading) using theme CSS variables
+- Tetromino colors are chosen **randomly from the active theme palette**; already-placed blocks keep their color when the theme changes
 
 ### Visual Elements
 - **Russian Two-Headed Eagle**: Prominent display in game interface
@@ -129,7 +137,7 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **High contrast** for accessibility
 
 ### Layout Structure
-- **Header**: Eagle emblem + game title
+- **Right pane**: Theme flags + game branding (title + eagle) + audio + stats
 - **Main game area**: Canvas + side panels
 - **Side panels**: Score, level, next piece, controls
 - **Footer**: Optional credits or additional info
