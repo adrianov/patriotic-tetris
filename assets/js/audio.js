@@ -7,6 +7,8 @@ export class AudioEngine {
         this.isMuted = false;
         this.masterGain = null;
         this.resumePromise = null;
+        this.sfxBuffers = new Map();
+        this.isBuildingSfx = false;
     }
     
     initAudioContext() {
@@ -21,6 +23,7 @@ export class AudioEngine {
             this.masterGain.gain.value = 1;
             this.masterGain.connect(this.audioContext.destination);
             this.didInit = true;
+            this.sfxBuffers.clear();
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
         }
@@ -45,7 +48,82 @@ export class AudioEngine {
                 this.resumePromise = null;
             }
         }
+        this.buildSfxBuffers();
         return this.resumePromise;
+    }
+
+    buildSfxBuffers() {
+        if (this.isBuildingSfx || !this.audioContext || this.isMuted) return;
+        if (this.sfxBuffers.size > 0) return;
+
+        this.isBuildingSfx = true;
+
+        const sampleRate = this.audioContext.sampleRate;
+        const tones = [
+            ['move', { freq: 1046.50, type: 'sine', dur: 0.02 }],
+            ['rotate', { freq: 1318.51, type: 'sine', dur: 0.018 }],
+            ['drop', { freq: 783.99, type: 'sine', dur: 0.04 }],
+            ['hardDrop', { freq: 523.25, type: 'sine', dur: 0.06 }]
+        ];
+
+        Promise.all(tones.map(([key, t]) => this.renderToneBuffer(sampleRate, t).then((b) => [key, b])))
+            .then((pairs) => {
+                pairs.forEach(([key, buffer]) => {
+                    if (buffer) this.sfxBuffers.set(key, buffer);
+                });
+            })
+            .finally(() => {
+                this.isBuildingSfx = false;
+            });
+    }
+
+    async renderToneBuffer(sampleRate, { freq, type, dur }) {
+        // Pre-render a short tone with an envelope into an AudioBuffer.
+        try {
+            const tail = 0.03;
+            const lengthSec = Math.max(0.02, dur + tail);
+            const ctx = new OfflineAudioContext(1, Math.ceil(sampleRate * lengthSec), sampleRate);
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, 0);
+
+            // Match our live ADSR-ish shape but with normalized amplitude.
+            gain.gain.setValueAtTime(0, 0);
+            gain.gain.linearRampToValueAtTime(0.3, 0.005);
+            gain.gain.exponentialRampToValueAtTime(0.1, 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, Math.max(0.02, dur));
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(0);
+            osc.stop(Math.max(0.02, dur));
+
+            return await ctx.startRendering();
+        } catch {
+            return null;
+        }
+    }
+
+    playBuffer(key, volume = 0.5) {
+        if (!this.audioContext || this.isMuted) return false;
+        const buffer = this.sfxBuffers.get(key);
+        if (!buffer) return false;
+
+        const src = this.audioContext.createBufferSource();
+        const gain = this.audioContext.createGain();
+        src.buffer = buffer;
+
+        gain.gain.value = this.masterVolume * volume;
+        src.connect(gain);
+        if (this.masterGain) gain.connect(this.masterGain);
+        else gain.connect(this.audioContext.destination);
+
+        const delay = this.audioContext.state === 'running' ? 0 : 0.06;
+        src.start(this.audioContext.currentTime + delay);
+        return true;
     }
     
     createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1) {
@@ -87,24 +165,28 @@ export class AudioEngine {
     playMove() {
         this.resumeContext();
         // Professional click - higher frequency, smooth envelope
+        if (this.playBuffer('move', 0.4)) return;
         this.createOscillator(1046.50, 'sine', 0, 0.02, 0.4); // C6 - octave higher
     }
     
     playRotate() {
         this.resumeContext();
         // Professional click - crisp but smooth
+        if (this.playBuffer('rotate', 0.5)) return;
         this.createOscillator(1318.51, 'sine', 0, 0.018, 0.5); // E6 - octave higher
     }
     
     playDrop() {
         this.resumeContext();
         // Professional tap - pleasant mid-range
+        if (this.playBuffer('drop', 0.6)) return;
         this.createOscillator(783.99, 'sine', 0, 0.04, 0.6); // G5 - octave higher
     }
     
     playHardDrop() {
         this.resumeContext();
         // Professional impact - solid but not harsh
+        if (this.playBuffer('hardDrop', 0.7)) return;
         this.createOscillator(523.25, 'sine', 0, 0.06, 0.7); // C5 - original root
     }
     
