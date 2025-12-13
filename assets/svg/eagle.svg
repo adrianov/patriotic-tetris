@@ -1,116 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Two-headed eagle (pixel / tetris style)">
-  <!--
-    Patriotic Tetris - Pixel Eagle
-    - Designed to read well at 40–60px
-    - Uses crisp 2px "blocks" (tetris vibe)
-    - Uses project palette (white/blue/red/gold)
-  -->
-  <style>
-    .badge { fill: #002868; }
-    .badge-glow { fill: rgba(255, 255, 255, 0.10); }
-    .gold { fill: #FFD700; }
-    .gold-d { fill: #C99A00; }
-    .gold-l { fill: #FFF2A6; }
-    .ink { fill: #0B1B33; }
-    .white { fill: #FFFFFF; }
-    .blue { fill: #0039A6; }
-    .red { fill: #D52B1E; }
-  </style>
+<svg width="512" height="512" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="12" cy="12" r="11" fill="#3498db" />
 
-  <!-- Contrast badge (looks good on light panels) -->
-  <circle cx="32" cy="32" r="30" class="badge"/>
-  <circle cx="32" cy="30" r="24" class="badge-glow"/>
+  <text x="12" y="5.5" font-family="monospace" font-weight="bold" font-size="2.5" 
+        text-anchor="middle" fill="white" stroke="black" stroke-width="0.1">ТЕТРИС</text>
 
-  <!-- Pixel art (2px grid) -->
-  <g transform="translate(0 4)">
-    <g transform="translate(32 25) scale(1.45) translate(-32 -25)" shape-rendering="crispEdges">
-    <!-- Crown -->
-    <rect x="28" y="10" width="8" height="2" class="gold"/>
-    <rect x="30" y="8" width="4" height="2" class="gold"/>
-    <rect x="31" y="6" width="2" height="2" class="red"/>
+  <g transform="translate(0, 1)">
+    <rect x="9" y="7" width="2" height="2" fill="white" stroke="#222" stroke-width="0.1"/>
+    <rect x="13" y="7" width="2" height="2" fill="white" stroke="#222" stroke-width="0.1"/>
+    <rect x="8" y="7" width="1" height="1" fill="#f1c40f" stroke="#222" stroke-width="0.1"/>
+    <rect x="15" y="7" width="1" height="1" fill="#f1c40f" stroke="#222" stroke-width="0.1"/>
+    <rect x="5" y="8" width="2" height="1" fill="white" stroke="#222" stroke-width="0.1"/>
+    <rect x="17" y="8" width="2" height="1" fill="white" stroke="#222" stroke-width="0.1"/>
+    <rect x="11" y="7" width="2" height="2" fill="white" stroke="#222" stroke-width="0.1"/> <rect x="9" y="9" width="6" height="3" fill="#0039a6" stroke="#222" stroke-width="0.1"/>
+    <rect x="6" y="9" width="3" height="2" fill="#0039a6" stroke="#222" stroke-width="0.1"/>
+    <rect x="15" y="9" width="3" height="2" fill="#0039a6" stroke="#222" stroke-width="0.1"/>
 
-    <!-- Heads (left / right) -->
-    <rect x="20" y="16" width="2" height="2" class="gold-l"/>
-    <rect x="22" y="16" width="6" height="2" class="gold"/>
-    <rect x="18" y="18" width="10" height="2" class="gold"/>
-    <rect x="18" y="20" width="10" height="2" class="gold"/>
-    <rect x="20" y="22" width="8" height="2" class="gold"/>
-    <rect x="22" y="24" width="6" height="2" class="gold-d"/>
-    <rect x="16" y="20" width="2" height="2" class="red"/>
-    <rect x="16" y="22" width="2" height="2" class="red"/>
-    <rect x="22" y="20" width="2" height="2" class="white"/>
-    <rect x="22" y="20" width="1" height="1" class="ink"/>
-
-    <rect x="44" y="16" width="2" height="2" class="gold-l"/>
-    <rect x="36" y="16" width="6" height="2" class="gold"/>
-    <rect x="36" y="18" width="10" height="2" class="gold"/>
-    <rect x="36" y="20" width="10" height="2" class="gold"/>
-    <rect x="36" y="22" width="8" height="2" class="gold"/>
-    <rect x="36" y="24" width="6" height="2" class="gold-d"/>
-    <rect x="46" y="20" width="2" height="2" class="red"/>
-    <rect x="46" y="22" width="2" height="2" class="red"/>
-    <rect x="40" y="20" width="2" height="2" class="white"/>
-    <rect x="41" y="20" width="1" height="1" class="ink"/>
-
-    <!-- Wing left (shaded edge) -->
-    <rect x="22" y="26" width="6" height="2" class="gold"/>
-    <rect x="18" y="28" width="10" height="2" class="gold"/>
-    <rect x="14" y="30" width="14" height="2" class="gold"/>
-    <rect x="10" y="32" width="16" height="2" class="gold"/>
-    <rect x="10" y="34" width="14" height="2" class="gold"/>
-    <rect x="12" y="36" width="10" height="2" class="gold"/>
-    <rect x="14" y="38" width="6" height="2" class="gold"/>
-    <rect x="16" y="40" width="2" height="2" class="gold"/>
-    <rect x="10" y="32" width="2" height="2" class="gold-d"/>
-    <rect x="10" y="34" width="2" height="2" class="gold-d"/>
-    <rect x="12" y="30" width="2" height="2" class="gold-d"/>
-
-    <!-- Wing right (shaded edge) -->
-    <rect x="36" y="26" width="6" height="2" class="gold"/>
-    <rect x="36" y="28" width="10" height="2" class="gold"/>
-    <rect x="36" y="30" width="14" height="2" class="gold"/>
-    <rect x="38" y="32" width="16" height="2" class="gold"/>
-    <rect x="40" y="34" width="14" height="2" class="gold"/>
-    <rect x="42" y="36" width="10" height="2" class="gold"/>
-    <rect x="44" y="38" width="6" height="2" class="gold"/>
-    <rect x="46" y="40" width="2" height="2" class="gold"/>
-    <rect x="52" y="32" width="2" height="2" class="gold-d"/>
-    <rect x="52" y="34" width="2" height="2" class="gold-d"/>
-    <rect x="50" y="30" width="2" height="2" class="gold-d"/>
-
-    <!-- Body -->
-    <rect x="30" y="24" width="4" height="2" class="gold-l"/>
-    <rect x="28" y="26" width="8" height="2" class="gold"/>
-    <rect x="26" y="28" width="12" height="2" class="gold"/>
-    <rect x="26" y="30" width="12" height="2" class="gold"/>
-    <rect x="26" y="32" width="12" height="2" class="gold"/>
-    <rect x="28" y="34" width="8" height="2" class="gold"/>
-    <rect x="30" y="36" width="4" height="2" class="gold"/>
-
-    <!-- Chest shield (flag stripes) -->
-    <rect x="30" y="30" width="4" height="10" class="ink"/>
-    <rect x="31" y="31" width="2" height="8" class="white"/>
-    <rect x="31" y="31" width="2" height="2" class="white"/>
-    <rect x="31" y="33" width="2" height="2" class="blue"/>
-    <rect x="31" y="35" width="2" height="2" class="red"/>
-    <rect x="31" y="37" width="2" height="2" class="white"/>
-
-    <!-- Tail / talons -->
-    <rect x="28" y="38" width="8" height="2" class="gold-d"/>
-    <rect x="26" y="40" width="4" height="2" class="gold"/>
-    <rect x="34" y="40" width="4" height="2" class="gold"/>
-    <rect x="24" y="42" width="2" height="2" class="gold-d"/>
-    <rect x="38" y="42" width="2" height="2" class="gold-d"/>
-    <!-- Extended talons (fill area better) -->
-    <rect x="24" y="44" width="2" height="2" class="gold"/>
-    <rect x="26" y="44" width="2" height="2" class="gold"/>
-    <rect x="22" y="46" width="2" height="2" class="gold-d"/>
-    <rect x="24" y="46" width="2" height="2" class="gold"/>
-
-    <rect x="38" y="44" width="2" height="2" class="gold"/>
-    <rect x="36" y="44" width="2" height="2" class="gold"/>
-    <rect x="40" y="46" width="2" height="2" class="gold-d"/>
-    <rect x="38" y="46" width="2" height="2" class="gold"/>
-    </g>
+    <rect x="10" y="12" width="4" height="3" fill="#d52b1e" stroke="#222" stroke-width="0.1"/>
+    <rect x="8" y="13" width="2" height="2" fill="#d52b1e" stroke="#222" stroke-width="0.1"/>
+    <rect x="14" y="13" width="2" height="2" fill="#d52b1e" stroke="#222" stroke-width="0.1"/>
+    <rect x="11" y="15" width="2" height="1" fill="#d52b1e" stroke="#222" stroke-width="0.1"/>
   </g>
+
+  <text x="12" y="19.5" font-family="monospace" font-weight="bold" font-size="2.5" 
+        text-anchor="middle" fill="white" stroke="black" stroke-width="0.1">ПАТРИОТ</text>
 </svg>
