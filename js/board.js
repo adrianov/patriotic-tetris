@@ -159,11 +159,11 @@ export class Board {
         ctx.clearRect(0, 0, boardWidth, boardHeight);
         
         // Draw grid background
-        ctx.fillStyle = '#F0F0F0';
+        ctx.fillStyle = '#A8C5E0'; // Medium blue - high contrast with white pieces
         ctx.fillRect(0, 0, boardWidth, boardHeight);
         
         // Draw grid lines
-        ctx.strokeStyle = '#D0D0D0';
+        ctx.strokeStyle = '#7AA3C0'; // Darker blue for better contrast
         ctx.lineWidth = 1;
         
         // Vertical lines

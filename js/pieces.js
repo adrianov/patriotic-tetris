@@ -110,24 +110,34 @@ export class Pieces {
     }
     
     drawCellScaled(ctx, x, y, size, color) {
+        // Glow effect - outer glow
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
         // Main cell color
         ctx.fillStyle = color;
         ctx.fillRect(x, y, size, size);
         
+        // Reset shadow for border
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        
         // Cell border
-        ctx.strokeStyle = '#000000';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, size, size);
         
-        // Highlight effect
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        // Inner highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.fillRect(x + 2, y + 2, size - 4, 2);
         ctx.fillRect(x + 2, y + 2, 2, size - 4);
         
-        // Shadow effect
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(x + size - 4, y + 2, 2, size - 4);
-        ctx.fillRect(x + 2, y + size - 4, size - 4, 2);
+        // Inner shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(x + size - 3, y + 2, 1, size - 4);
+        ctx.fillRect(x + 2, y + size - 3, size - 4, 1);
     }
     
     getGhostPiece(piece, board) {

@@ -1,6 +1,6 @@
 /* Patriotic Tetris - Russian Flag Color Scheme */
 
-/* CSS Variables for Russian Flag Colors */
+/* CSS Variables for Russian Flag Colors - Harmonized Palette */
 :root {
     --white: #FFFFFF;
     --blue: #0039A6;
@@ -8,8 +8,13 @@
     --gold: #FFD700;
     --dark-blue: #002868;
     --light-red: #E63946;
-    --gray: #F8F9FA;
-    --dark-gray: #343A40;
+    
+    /* High contrast background colors - excellent contrast with white pieces */
+    --bg-light: #C5D9F0;      /* Medium-light blue - strong contrast */
+    --bg-medium: #A8C5E0;     /* Medium blue - very good contrast */
+    --bg-dark: #8BB4D0;       /* Darker blue - for UI elements */
+    --text-dark: #1A365D;       /* Dark blue text - good contrast */
+    --border-light: #7AA3C0;    /* Medium blue borders */
 }
 
 /* Reset and Base Styles */
@@ -21,8 +26,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--white) 0%, var(--gray) 100%);
-    color: var(--dark-gray);
+    background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+    color: var(--text-dark);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -137,7 +142,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0.2rem 0.4rem;
-    background: var(--gray);
+    background: var(--bg-medium);
     border-radius: 3px;
     border-left: 3px solid var(--red);
     font-size: 0.8rem;
@@ -271,7 +276,7 @@ body {
     width: 100%;
     height: 8px;
     border-radius: 4px;
-    background: var(--gray);
+    background: var(--bg-medium);
     outline: none;
     -webkit-appearance: none;
 }
@@ -306,7 +311,7 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem;
-    background: var(--gray);
+    background: var(--bg-medium);
     border-radius: 5px;
     border-left: 4px solid var(--blue);
 }
