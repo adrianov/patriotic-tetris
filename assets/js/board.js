@@ -8,6 +8,12 @@ export class Board {
         this.canvas = null;
         this.ctx = null;
         this.lineClear = null;
+        this.bgCanvas = null;
+        this.bgCtx = null;
+        this.bgDirty = true;
+        this.cssWidth = this.width * this.cellSize;
+        this.cssHeight = this.height * this.cellSize;
+        this.dpr = 1;
 
         this.theme = this.readTheme();
         
@@ -60,6 +66,7 @@ export class Board {
         }
 
         this.theme = this.readTheme();
+        this.bgDirty = true;
     }
 
     getRandomPaletteColor() {
@@ -75,6 +82,8 @@ export class Board {
     setupCanvas(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        this.bgCanvas = document.createElement('canvas');
+        this.bgCtx = this.bgCanvas.getContext('2d');
         this.resizeCanvas();
 
         // Update canvas theme immediately when UI theme changes.
@@ -114,7 +123,12 @@ export class Board {
         const canvasHeight = this.cellSize * this.height;
         
         // Handle Retina displays
-        const dpr = window.devicePixelRatio || 1;
+        const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        const maxDpr = isMobile ? 2 : 3;
+        const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+        this.dpr = dpr;
+        this.cssWidth = canvasWidth;
+        this.cssHeight = canvasHeight;
         
         // Set canvas actual size (for Retina)
         this.canvas.width = canvasWidth * dpr;
@@ -122,6 +136,14 @@ export class Board {
         
         // Scale context for Retina
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Keep a cached background (grid + watermark) to avoid re-drawing it every frame.
+        if (this.bgCanvas && this.bgCtx) {
+            this.bgCanvas.width = canvasWidth * dpr;
+            this.bgCanvas.height = canvasHeight * dpr;
+            this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.bgDirty = true;
+        }
         
         // Set CSS size to match board exactly
         this.canvas.style.width = canvasWidth + 'px';
@@ -137,6 +159,48 @@ export class Board {
         // preventing it from expanding to use available viewport space (notably on desktop).
         container.style.width = '';
         container.style.height = '';
+    }
+
+    buildBackground() {
+        if (!this.bgCtx) return;
+        const ctx = this.bgCtx;
+        const boardWidth = this.cssWidth;
+        const boardHeight = this.cssHeight;
+
+        // Background fill
+        ctx.clearRect(0, 0, boardWidth, boardHeight);
+        ctx.fillStyle = this.theme.boardBg;
+        ctx.fillRect(0, 0, boardWidth, boardHeight);
+
+        // Soviet theme: subtle gold ☭ watermark (requested accent)
+        if (this.theme.themeName === 'soviet') {
+            ctx.save();
+            ctx.globalAlpha = 0.08;
+            ctx.fillStyle = this.theme.gold;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${Math.floor(this.cellSize * 5)}px ${getComputedStyle(document.body).fontFamily}`;
+            ctx.fillText('☭', boardWidth / 2, boardHeight * 0.35);
+            ctx.restore();
+        }
+
+        // Grid lines
+        ctx.strokeStyle = this.theme.boardGrid;
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= this.width; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x * this.cellSize, 0);
+            ctx.lineTo(x * this.cellSize, boardHeight);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= this.height; y++) {
+            ctx.beginPath();
+            ctx.moveTo(0, y * this.cellSize);
+            ctx.lineTo(boardWidth, y * this.cellSize);
+            ctx.stroke();
+        }
+
+        this.bgDirty = false;
     }
     
     canMove(piece, dx, dy, newRotation = null) {
@@ -232,46 +296,15 @@ export class Board {
     }
     
     render(ctx) {
-        const boardWidth = this.width * this.cellSize;
-        const boardHeight = this.height * this.cellSize;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, boardWidth, boardHeight);
-        
-        // Draw grid background
-        ctx.fillStyle = this.theme.boardBg;
-        ctx.fillRect(0, 0, boardWidth, boardHeight);
+        const boardWidth = this.cssWidth;
+        const boardHeight = this.cssHeight;
 
-        // Soviet theme: subtle gold ☭ watermark (requested accent)
-        if (this.theme.themeName === 'soviet') {
-            ctx.save();
-            ctx.globalAlpha = 0.08;
-            ctx.fillStyle = this.theme.gold;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = `bold ${Math.floor(this.cellSize * 5)}px ${getComputedStyle(document.body).fontFamily}`;
-            ctx.fillText('☭', boardWidth / 2, boardHeight * 0.35);
-            ctx.restore();
-        }
-        
-        // Draw grid lines
-        ctx.strokeStyle = this.theme.boardGrid;
-        ctx.lineWidth = 1;
-        
-        // Vertical lines
-        for (let x = 0; x <= this.width; x++) {
-            ctx.beginPath();
-            ctx.moveTo(x * this.cellSize, 0);
-            ctx.lineTo(x * this.cellSize, boardHeight);
-            ctx.stroke();
-        }
-        
-        // Horizontal lines
-        for (let y = 0; y <= this.height; y++) {
-            ctx.beginPath();
-            ctx.moveTo(0, y * this.cellSize);
-            ctx.lineTo(boardWidth, y * this.cellSize);
-            ctx.stroke();
+        // Draw cached background (grid + watermark) for better mobile performance.
+        if (this.bgCanvas && this.bgDirty) this.buildBackground();
+        if (this.bgCanvas) {
+            ctx.drawImage(this.bgCanvas, 0, 0, boardWidth, boardHeight);
+        } else {
+            ctx.clearRect(0, 0, boardWidth, boardHeight);
         }
         
         // Draw placed pieces
