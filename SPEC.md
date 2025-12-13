@@ -145,6 +145,7 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 ### Animation Requirements
 - **Smooth transitions** for UI elements
 - **Piece animations** (rotation, line clearing)
+- **Line clear effect**: brief flash/fade on cleared rows before they disappear
 - **Subtle hover effects** on interactive elements
 - **Performance-optimized** to maintain 60 FPS
 

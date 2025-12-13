@@ -3,6 +3,7 @@ import { Board } from './board.js';
 import { Pieces } from './pieces.js';
 import { Controls } from './controls.js';
 import { AudioEngine } from '../assets/js/audio.js';
+import { initTheme } from './theme.js';
 
 class Game {
     constructor() {
@@ -13,6 +14,7 @@ class Game {
         
         this.board = new Board();
         this.pieces = new Pieces();
+        this.pieces.board = this.board;
         this.controls = new Controls();
         this.audio = new AudioEngine();
         
@@ -168,20 +170,43 @@ class Game {
         // Only lock if piece can't move down
         if (this.board.canMove(this.currentPiece, 0, 1)) return;
         
+        // Lock current piece into the grid
         this.board.lockPiece(this.currentPiece);
-        
-        // Check for completed lines
-        const clearedLines = this.board.checkLines();
-        if (clearedLines > 0) {
-            this.updateScore(clearedLines);
-            this.audio.playLineClear(clearedLines);
+        this.currentPiece = null;
+        this.lockDelay = 0;
+
+        const lines = this.board.getFullLines();
+        if (lines.length > 0) {
+            // Animate line clear before removing rows & spawning the next piece.
+            this.isAnimating = true;
+            this.audio.playLineClear(lines.length);
+            this.board.startLineClear(lines);
+
+            const start = performance.now();
+            const duration = this.board.lineClear?.duration || 260;
+            const step = (now) => {
+                if (now - start >= duration) {
+                    this.board.clearLines(lines);
+                    this.board.stopLineClear();
+                    this.updateScore(lines.length);
+                    this.spawnNextPiece();
+                    this.isAnimating = false;
+                    return;
+                }
+                requestAnimationFrame(step);
+            };
+
+            requestAnimationFrame(step);
+            return;
         }
-        
-        // Get next piece
+
+        this.spawnNextPiece();
+    }
+
+    spawnNextPiece() {
         this.currentPiece = this.nextPiece;
         this.nextPiece = this.pieces.getRandomPiece();
-        
-        // Check game over
+
         if (this.board.checkGameOver(this.currentPiece)) {
             this.endGame();
         }
@@ -229,7 +254,7 @@ class Game {
         // Draw next piece
         this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
         if (this.nextPiece) {
-            this.pieces.renderNextPiece(this.nextCtx, this.nextPiece);
+            this.pieces.renderNextPiece(this.nextCtx, this.nextPiece, this.board);
         }
     }
     
@@ -281,6 +306,7 @@ class Game {
 
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     new Game();
 });
 

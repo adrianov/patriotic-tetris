@@ -7,6 +7,7 @@ export class Board {
         this.grid = [];
         this.canvas = null;
         this.ctx = null;
+        this.lineClear = null;
 
         this.theme = this.readTheme();
         
@@ -178,22 +179,46 @@ export class Board {
             }
         }
     }
-    
-    checkLines() {
-        let linesCleared = 0;
-        
+
+    getFullLines() {
+        const lines = [];
         for (let y = this.height - 1; y >= 0; y--) {
-            if (this.grid[y].every(cell => cell !== 0)) {
-                // Remove the line
-                this.grid.splice(y, 1);
-                // Add empty line at top
-                this.grid.unshift(Array(this.width).fill(0));
-                linesCleared++;
-                y++; // Check the same line again
-            }
+            if (this.grid[y].every((cell) => cell !== 0)) lines.push(y);
         }
-        
-        return linesCleared;
+        return lines;
+    }
+
+    startLineClear(lines) {
+        if (!Array.isArray(lines) || lines.length === 0) return;
+        this.lineClear = {
+            start: performance.now(),
+            duration: 260,
+            lines: new Set(lines)
+        };
+    }
+
+    stopLineClear() {
+        this.lineClear = null;
+    }
+
+    clearLines(lines) {
+        if (!Array.isArray(lines) || lines.length === 0) return 0;
+        // IMPORTANT:
+        // Do a single compaction pass. Repeated splice+unshift shifts indices and can clear
+        // the wrong rows when multiple lines are removed at once.
+        const lineSet = new Set(lines);
+        const remaining = [];
+        for (let y = 0; y < this.height; y++) {
+            if (!lineSet.has(y)) remaining.push(this.grid[y]);
+        }
+
+        const cleared = this.height - remaining.length;
+        for (let i = 0; i < cleared; i++) {
+            remaining.unshift(Array(this.width).fill(0));
+        }
+
+        this.grid = remaining;
+        return cleared;
     }
     
     checkGameOver(piece) {
@@ -259,6 +284,24 @@ export class Board {
                         this.drawCell(ctx, x, y, color);
                     }
                 }
+            }
+        }
+
+        // Line clear effect: flash + fade on full rows before removing them.
+        if (this.lineClear) {
+            const now = performance.now();
+            const t = Math.min((now - this.lineClear.start) / this.lineClear.duration, 1);
+            const pulse = 0.35 + 0.65 * Math.sin(t * Math.PI * 3) * Math.sin(t * Math.PI * 3);
+            const alpha = (1 - t) * 0.6 * pulse;
+
+            if (alpha > 0.01) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = this.theme.gold;
+                for (const y of this.lineClear.lines) {
+                    ctx.fillRect(0, y * this.cellSize, boardWidth, this.cellSize);
+                }
+                ctx.restore();
             }
         }
     }
