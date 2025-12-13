@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patriotic Tetris</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <header class="game-header">
         <div class="eagle-container">
@@ -20,7 +22,7 @@
                 <h2>Score</h2>
                 <div id="score" class="score-value">0</div>
             </div>
-            
+
             <div class="level-panel">
                 <h2>Level</h2>
                 <div id="level" class="level-value">1</div>
@@ -55,6 +57,9 @@
                     <div class="control-item">
                         <span class="key">M</span> Mute
                     </div>
+                    <div class="control-item">
+                        <span class="key">G</span> Ghost Piece <span id="ghost-toggle">ON</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -71,6 +76,44 @@
                 <p>Press P to resume</p>
             </div>
         </section>
+
+        <!-- Touch Controls for Mobile -->
+        <div class="touch-controls">
+            <div class="touch-dpad">
+                <button class="touch-dpad-btn touch-up" id="touch-rotate">↑</button>
+                <div class="touch-dpad-middle">
+                    <button class="touch-dpad-btn touch-left" id="touch-left">←</button>
+                    <button class="touch-dpad-btn touch-down" id="touch-down">↓</button>
+                    <button class="touch-dpad-btn touch-right" id="touch-right">→</button>
+                </div>
+            </div>
+
+            <div class="touch-actions">
+                <button class="touch-action-btn touch-hard-drop" id="touch-drop">
+                    <span class="touch-icon">⬇</span>
+                    <span class="touch-label">DROP</span>
+                </button>
+            </div>
+
+            <div class="touch-toggles">
+                <button class="touch-toggle-btn" id="touch-ghost">
+                    <span class="touch-toggle-icon">👻</span>
+                    <span class="touch-toggle-label">GHOST</span>
+                </button>
+                <button class="touch-toggle-btn" id="touch-pause">
+                    <span class="touch-toggle-icon">⏸️</span>
+                    <span class="touch-toggle-label">PAUSE</span>
+                </button>
+                <button class="touch-toggle-btn" id="touch-restart">
+                    <span class="touch-toggle-icon">🔄</span>
+                    <span class="touch-toggle-label">RESTART</span>
+                </button>
+                <button class="touch-toggle-btn" id="touch-sound">
+                    <span class="touch-toggle-icon">🔊</span>
+                    <span class="touch-toggle-label">SOUND</span>
+                </button>
+            </div>
+        </div>
 
         <section class="game-sidebar">
             <div class="audio-controls">
@@ -100,4 +143,5 @@
     <!-- JavaScript modules -->
     <script type="module" src="js/game.js"></script>
 </body>
+
 </html>

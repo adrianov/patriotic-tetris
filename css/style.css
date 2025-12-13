@@ -150,6 +150,7 @@ body {
     border-radius: 3px;
     font-weight: bold;
     font-size: 0.7rem;
+    margin-right: 0.5rem;
 }
 
 /* Game Board */
@@ -159,12 +160,13 @@ body {
     border: 4px solid var(--red);
     border-radius: 10px;
     box-shadow: 0 8px 25px rgba(211, 43, 30, 0.3);
+    padding: 0;
 }
 
 #game-board {
-    display: block;
     border-radius: 6px;
     background: #F0F0F0;
+    display: block;
 }
 
 /* Game Over Overlay */
@@ -360,11 +362,6 @@ body {
         padding: 1rem;
     }
     
-    #game-board {
-        width: 250px !important;
-        height: 500px !important;
-    }
-    
     .game-sidebar {
         padding: 1rem;
     }
@@ -385,11 +382,6 @@ body {
         padding: 0.5rem;
     }
     
-    #game-board {
-        width: 200px !important;
-        height: 400px !important;
-    }
-    
     .game-sidebar {
         padding: 0.5rem;
     }
@@ -397,4 +389,173 @@ body {
     .game-sidebar h2 {
         font-size: 1rem;
     }
+}
+
+/* Touch Controls */
+.touch-controls {
+    margin-top: 1rem;
+    display: none; /* Hidden by default, shown on mobile */
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* D-Pad Layout */
+.touch-dpad {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    width: 186px;
+    height: 124px;
+    margin: 0 auto 0.5rem;
+}
+
+.touch-up {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+}
+
+.touch-dpad-middle {
+    grid-column: 1 / 4;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+}
+
+.touch-dpad-btn {
+    background: linear-gradient(145deg, var(--blue), #002880);
+    color: var(--white);
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: all 0.15s ease;
+    box-shadow: 0 3px 0 #001a40, 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.touch-dpad-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #001a40, 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(145deg, var(--red), #a01e1e);
+}
+
+/* Action Buttons */
+.touch-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.touch-action-btn {
+    background: linear-gradient(145deg, var(--red), #a01e1e);
+    color: var(--white);
+    border: none;
+    width: 200px;
+    height: 60px;
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 0 #7a1616, 0 6px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.touch-action-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #7a1616, 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.touch-icon {
+    font-size: 1.5rem;
+}
+
+.touch-label {
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Toggle Buttons */
+.touch-toggles {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.touch-toggle-btn {
+    background: linear-gradient(145deg, #f8f9fa, #dee2e6);
+    color: #495057;
+    border: 2px solid #ced4da;
+    padding: 0.6rem 0.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 70px;
+    font-size: 0.55rem;
+}
+
+.touch-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.touch-toggle-btn.active {
+    background: linear-gradient(145deg, var(--blue), #002880);
+    color: var(--white);
+    border-color: var(--blue);
+    box-shadow: 0 3px 6px rgba(0, 57, 166, 0.3);
+}
+
+.touch-toggle-icon {
+    font-size: 1.2rem;
+}
+
+.touch-toggle-label {
+    font-size: 0.6rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* Show touch controls on mobile devices */
+@media (max-width: 768px) {
+    .touch-controls {
+        display: block;
+    }
+}
+
+/* Ghost Piece Status */
+#ghost-toggle {
+    color: var(--blue);
+    font-weight: bold;
+    margin-left: 0.5rem;
+    display: inline-block;
+    width: 30px; /* Fixed width to prevent layout shift */
+    text-align: left;
 }
