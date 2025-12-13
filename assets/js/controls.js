@@ -2,6 +2,7 @@
 export class Controls {
     constructor() {
         this.game = null;
+        this.holdTimers = new Map();
 
         this.setupKeyboardListeners();
     }
@@ -209,8 +210,9 @@ export class Controls {
         const downBtn = document.getElementById('touch-down');
         const rotateBtn = document.getElementById('touch-rotate');
 
-        if (leftBtn) leftBtn.addEventListener('click', () => this.movePiece(-1, 0));
-        if (rightBtn) rightBtn.addEventListener('click', () => this.movePiece(1, 0));
+        // Press-and-hold repeat on mobile (no need for many taps).
+        if (leftBtn) this.bindHoldRepeat(leftBtn, () => this.movePiece(-1, 0));
+        if (rightBtn) this.bindHoldRepeat(rightBtn, () => this.movePiece(1, 0));
 
         // Mobile: use ↓ as hard drop (no separate DROP button).
         if (downBtn) downBtn.addEventListener('click', () => this.hardDrop());
@@ -245,5 +247,39 @@ export class Controls {
         // Initialize toggle states
         if (ghostBtn) ghostBtn.classList.toggle('active', this.game.showGhostPiece);
         if (soundBtn) soundBtn.classList.toggle('active', !this.game.audio.isMuted);
+    }
+
+    bindHoldRepeat(buttonEl, action) {
+        const initialDelayMs = 180;
+        const intervalMs = 60;
+        const key = buttonEl.id || buttonEl;
+
+        const clear = () => {
+            const t = this.holdTimers.get(key);
+            if (t?.timeoutId) clearTimeout(t.timeoutId);
+            if (t?.intervalId) clearInterval(t.intervalId);
+            this.holdTimers.delete(key);
+        };
+
+        const start = (e) => {
+            if (e?.cancelable) e.preventDefault();
+            clear();
+
+            // First move immediately on press.
+            action();
+
+            const timeoutId = setTimeout(() => {
+                const intervalId = setInterval(action, intervalMs);
+                const prev = this.holdTimers.get(key) || {};
+                this.holdTimers.set(key, { ...prev, intervalId });
+            }, initialDelayMs);
+
+            this.holdTimers.set(key, { timeoutId, intervalId: null });
+        };
+
+        buttonEl.addEventListener('pointerdown', start, { passive: false });
+        buttonEl.addEventListener('pointerup', clear, { passive: true });
+        buttonEl.addEventListener('pointercancel', clear, { passive: true });
+        buttonEl.addEventListener('pointerleave', clear, { passive: true });
     }
 }
