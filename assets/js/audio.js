@@ -9,6 +9,8 @@ export class AudioEngine {
         this.resumePromise = null;
         this.sfxBuffers = new Map();
         this.isBuildingSfx = false;
+        this.pendingPlays = [];
+        this.flushHooked = false;
     }
     
     initAudioContext() {
@@ -24,6 +26,8 @@ export class AudioEngine {
             this.masterGain.connect(this.audioContext.destination);
             this.didInit = true;
             this.sfxBuffers.clear();
+            this.pendingPlays = [];
+            this.flushHooked = false;
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
         }
@@ -48,8 +52,47 @@ export class AudioEngine {
                 this.resumePromise = null;
             }
         }
+        this.hookFlushAfterResume();
         this.buildSfxBuffers();
         return this.resumePromise;
+    }
+
+    hookFlushAfterResume() {
+        if (this.flushHooked || !this.audioContext) return;
+        this.flushHooked = true;
+
+        const flush = () => {
+            if (!this.audioContext || this.audioContext.state !== 'running' || this.isMuted) return;
+            const queue = this.pendingPlays;
+            this.pendingPlays = [];
+            queue.forEach((fn) => {
+                try { fn(); } catch { /* ignore */ }
+            });
+        };
+
+        // Flush once audio becomes running again (helps on Mobile Chrome auto-suspend).
+        this.audioContext.onstatechange = () => {
+            if (this.audioContext?.state === 'running') flush();
+        };
+
+        // If we already resumed, flush immediately.
+        if (this.audioContext.state === 'running') flush();
+        else if (this.resumePromise && typeof this.resumePromise.then === 'function') {
+            this.resumePromise.then(flush).catch(() => {});
+        }
+    }
+
+    enqueuePlay(fn) {
+        if (!this.audioContext || this.isMuted) return;
+        if (this.audioContext.state === 'running') {
+            fn();
+            return;
+        }
+
+        // Keep queue bounded to avoid unbounded growth if resume is blocked.
+        if (this.pendingPlays.length > 30) this.pendingPlays.shift();
+        this.pendingPlays.push(fn);
+        this.hookFlushAfterResume();
     }
 
     buildSfxBuffers() {
@@ -107,10 +150,16 @@ export class AudioEngine {
         }
     }
 
-    playBuffer(key, volume = 0.5) {
+    playBuffer(key, volume = 0.5, fromQueue = false) {
         if (!this.audioContext || this.isMuted) return false;
         const buffer = this.sfxBuffers.get(key);
         if (!buffer) return false;
+
+        if (this.audioContext.state !== 'running' && !fromQueue) {
+            this.resumeContext();
+            this.enqueuePlay(() => this.playBuffer(key, volume, true));
+            return true;
+        }
 
         const src = this.audioContext.createBufferSource();
         const gain = this.audioContext.createGain();
@@ -121,27 +170,28 @@ export class AudioEngine {
         if (this.masterGain) gain.connect(this.masterGain);
         else gain.connect(this.audioContext.destination);
 
-        const delay = this.audioContext.state === 'running' ? 0 : 0.06;
-        src.start(this.audioContext.currentTime + delay);
+        src.start(this.audioContext.currentTime);
         return true;
     }
     
-    createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1) {
+    createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1, fromQueue = false) {
         this.resumeContext();
         if (!this.audioContext || this.isMuted) return null;
+
+        if (this.audioContext.state !== 'running' && !fromQueue) {
+            this.enqueuePlay(() => this.createOscillator(frequency, type, startTime, duration, volume, true));
+            return null;
+        }
         
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         
         oscillator.type = type;
-        // If we just resumed the context, schedule a tiny bit in the future so the first sound
-        // isn't dropped while the browser is transitioning to "running".
-        const safeStart = this.audioContext.state === 'running' ? startTime : Math.max(startTime, 0.06);
-        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + safeStart);
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + startTime);
         
         // Professional ADSR Envelope - smooth and pleasant
         const softVolume = this.masterVolume * volume;
-        const now = this.audioContext.currentTime + safeStart;
+        const now = this.audioContext.currentTime + startTime;
         
         // Very smooth attack to avoid harshness
         gainNode.gain.setValueAtTime(0, now);
