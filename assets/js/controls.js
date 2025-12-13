@@ -215,8 +215,30 @@ export class Controls {
         if (rightBtn) this.bindHoldRepeat(rightBtn, () => this.movePiece(1, 0));
 
         // Mobile: use ↓ as hard drop (no separate DROP button).
-        if (downBtn) downBtn.addEventListener('click', () => this.hardDrop());
-        if (rotateBtn) rotateBtn.addEventListener('click', () => this.rotatePiece());
+        if (downBtn) {
+            downBtn.addEventListener('pointerdown', (e) => {
+                if (e?.cancelable) e.preventDefault();
+                e?.stopPropagation?.();
+                this.hardDrop();
+            }, { passive: false });
+            // Prevent "ghost click" on some mobile browsers after rapid taps.
+            downBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { capture: true });
+        }
+
+        if (rotateBtn) {
+            rotateBtn.addEventListener('pointerdown', (e) => {
+                if (e?.cancelable) e.preventDefault();
+                e?.stopPropagation?.();
+                this.rotatePiece();
+            }, { passive: false });
+            rotateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { capture: true });
+        }
 
         // Toggle controls
         const ghostBtn = document.getElementById('touch-ghost');
@@ -263,6 +285,7 @@ export class Controls {
 
         const start = (e) => {
             if (e?.cancelable) e.preventDefault();
+            e?.stopPropagation?.();
             clear();
 
             // First move immediately on press.
@@ -281,5 +304,12 @@ export class Controls {
         buttonEl.addEventListener('pointerup', clear, { passive: true });
         buttonEl.addEventListener('pointercancel', clear, { passive: true });
         buttonEl.addEventListener('pointerleave', clear, { passive: true });
+
+        // Some browsers synthesize a click after pointer events; swallow it so rapid taps
+        // can't accidentally activate adjacent UI (e.g. restart).
+        buttonEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { capture: true });
     }
 }
