@@ -79,24 +79,33 @@
         </section>
 
         <!-- Touch Controls for Mobile -->
-        <div class="touch-controls">
-            <div class="touch-dpad">
-                <button class="touch-dpad-btn touch-up" id="touch-rotate">↑</button>
-                <div class="touch-dpad-middle">
-                    <button class="touch-dpad-btn touch-left" id="touch-left">←</button>
-                    <button class="touch-dpad-btn touch-down" id="touch-down">↓</button>
-                    <button class="touch-dpad-btn touch-right" id="touch-right">→</button>
-                </div>
-            </div>
-
-            <div class="touch-actions">
-                <button class="touch-action-btn touch-hard-drop" id="touch-drop">
-                    <span class="touch-icon">⬇</span>
-                    <span class="touch-label">DROP</span>
+        <aside class="mobile-side-panel" aria-label="Mobile info panel">
+            <div class="theme-buttons mobile-flags" role="group" aria-label="Theme selector">
+                <button class="theme-btn theme-btn-flag" type="button" data-theme="modern" aria-pressed="true"
+                    aria-label="Modern Russia" title="Modern Russia">
+                    <span class="theme-flag theme-flag-modern" aria-hidden="true"></span>
+                </button>
+                <button class="theme-btn theme-btn-flag" type="button" data-theme="imperial" aria-pressed="false"
+                    aria-label="Imperial Russia" title="Imperial Russia">
+                    <span class="theme-flag theme-flag-imperial" aria-hidden="true"></span>
+                </button>
+                <button class="theme-btn theme-btn-flag" type="button" data-theme="soviet" aria-pressed="false"
+                    aria-label="Soviet" title="Soviet">
+                    <span class="theme-flag theme-flag-soviet" aria-hidden="true"></span>
                 </button>
             </div>
 
-            <div class="touch-toggles">
+            <canvas id="mobile-next-piece" width="64" height="64" aria-label="Next piece"></canvas>
+
+            <div class="mobile-stats" aria-label="Status">
+                <div class="mobile-stat"><span>Score</span><span id="m-score">0</span></div>
+                <div class="mobile-stat"><span>Level</span><span id="m-level">1</span></div>
+                <div class="mobile-stat"><span>Lines</span><span id="m-lines">0</span></div>
+                <div class="mobile-stat"><span>Time</span><span id="m-time">00:00</span></div>
+                <div class="mobile-stat"><span>High</span><span id="m-high">0</span></div>
+            </div>
+
+            <div class="touch-toggles mobile-toggles" aria-label="Quick actions">
                 <button class="touch-toggle-btn" id="touch-ghost">
                     <span class="touch-toggle-icon">👻</span>
                     <span class="touch-toggle-label">GHOST</span>
@@ -113,6 +122,17 @@
                     <span class="touch-toggle-icon">🔊</span>
                     <span class="touch-toggle-label">SOUND</span>
                 </button>
+            </div>
+        </aside>
+
+        <div class="touch-controls">
+            <div class="touch-dpad">
+                <button class="touch-dpad-btn touch-up" id="touch-rotate">↑</button>
+                <div class="touch-dpad-middle">
+                    <button class="touch-dpad-btn touch-left" id="touch-left">←</button>
+                    <button class="touch-dpad-btn touch-down" id="touch-down">↓</button>
+                    <button class="touch-dpad-btn touch-right" id="touch-right">→</button>
+                </div>
             </div>
         </div>
 
@@ -169,7 +189,7 @@
     </main>
 
     <footer class="game-footer">
-        <p>&copy; 2025 Patriotic Tetris</p>
+        <p>&copy; 2025 Peter Adrianov</p>
     </footer>
 
     <!-- JavaScript modules -->

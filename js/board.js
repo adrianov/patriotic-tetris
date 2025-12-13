@@ -126,12 +126,17 @@ export class Board {
         // Set CSS size to match board exactly
         this.canvas.style.width = canvasWidth + 'px';
         this.canvas.style.height = canvasHeight + 'px';
+
+        // Expose board size for UI overlays (game over / paused) so they can match the canvas
+        // instead of filling the whole center column on desktop.
+        document.documentElement.style.setProperty('--board-w', `${canvasWidth}px`);
+        document.documentElement.style.setProperty('--board-h', `${canvasHeight}px`);
         
-        // Make container wrap canvas exactly (no extra space around it)
-        const borderH = parseInt(containerStyle.borderLeftWidth) + parseInt(containerStyle.borderRightWidth);
-        const borderV = parseInt(containerStyle.borderTopWidth) + parseInt(containerStyle.borderBottomWidth);
-        container.style.width = (canvasWidth + paddingH + borderH) + 'px';
-        container.style.height = (canvasHeight + paddingV + borderV) + 'px';
+        // Let CSS (flex/grid) define the container size on all breakpoints.
+        // If we set inline width/height here, we "lock" the container to the previous canvas size,
+        // preventing it from expanding to use available viewport space (notably on desktop).
+        container.style.width = '';
+        container.style.height = '';
     }
     
     canMove(piece, dx, dy, newRotation = null) {

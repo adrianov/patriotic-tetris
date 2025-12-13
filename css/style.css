@@ -49,6 +49,20 @@
     --btn-border: var(--border-light);
     --btn-border-active: var(--blue);
 
+    /* Sidebar sizing (keep left/right visually consistent) */
+    --sidebar-pad: 0.7rem;
+    --sidebar-h2: 0.85rem;
+    --sidebar-gap: 0.6rem;
+    --sidebar-item-pad: 0.35rem;
+    --sidebar-text: 0.78rem;
+
+    /* Footer (desktop fixed) */
+    --footer-height: 56px;
+
+    /* Mobile layout */
+    --hud-bg: rgba(255, 255, 255, 0.92);
+    --mobile-panel-text: var(--text-dark);
+
     /* Shadows */
     --shadow-ui: rgba(0, 57, 166, 0.2);
     --shadow-board: rgba(211, 43, 30, 0.3);
@@ -103,6 +117,8 @@
     /* Footer */
     --footer-bg: #0B0B0B;
     --footer-text: #D4AF37;
+
+    --mobile-panel-text: #FFF2CF;
 
     --overlay-gameover: rgba(11, 11, 11, 0.92);
     --overlay-paused: rgba(212, 175, 55, 0.88);
@@ -196,6 +212,8 @@
 
     --highscore-bg: #D4AF37;
     --highscore-text: #8A0303;
+
+    --mobile-panel-text: #3B1B12;
 }
 
 /* Reset and Base Styles */
@@ -219,7 +237,8 @@ body {
     flex: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: stretch;
+    min-height: 0;
     padding: 2rem;
     gap: 2rem;
     max-width: 1400px;
@@ -232,18 +251,21 @@ body {
     background: var(--panel-bg);
     border: 3px solid var(--blue);
     border-radius: 10px;
-    padding: 0.8rem;
+    padding: var(--sidebar-pad);
     box-shadow: 0 4px 15px var(--shadow-ui);
     min-width: 160px;
     max-width: 180px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sidebar-gap);
 }
 
 .game-sidebar h2 {
     font-family: inherit;
     color: var(--text-dark);
-    font-size: 0.9rem;
-    margin-bottom: 0.4rem;
+    font-size: var(--sidebar-h2);
+    margin-bottom: 0.3rem;
     text-align: center;
     border-bottom: 1px solid var(--red);
     padding-bottom: 0.2rem;
@@ -252,7 +274,7 @@ body {
 
 /* Brand Block (right sidebar) */
 .theme-panel {
-    margin-bottom: 0.8rem;
+    margin-bottom: 0;
 }
 
 .theme-buttons {
@@ -267,7 +289,7 @@ body {
     align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
-    padding: 0.45rem 0.5rem;
+    padding: 0.35rem 0.45rem;
     border-radius: 8px;
     border: 2px solid var(--btn-border);
     background: var(--btn-bg);
@@ -275,7 +297,7 @@ body {
     cursor: pointer;
     font-family: inherit;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: var(--sidebar-text);
     letter-spacing: 0.3px;
 }
 
@@ -329,16 +351,16 @@ body {
 }
 
 .brand-panel {
-    margin-bottom: 0.8rem;
+    margin-bottom: 0;
     text-align: center;
 }
 
 .brand-title {
     font-family: var(--font-display);
     color: var(--text-dark);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
     letter-spacing: 1px;
     border-bottom: 1px solid var(--red);
     padding-bottom: 0.3rem;
@@ -347,9 +369,9 @@ body {
 .brand-eagle {
     display: block;
     width: 100%;
-    max-width: 120px;
+    max-width: 96px;
     height: auto;
-    margin: 0.4rem auto 0;
+    margin: 0.3rem auto 0;
     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.25));
 }
 
@@ -390,11 +412,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.2rem 0.4rem;
+    padding: var(--sidebar-item-pad) 0.4rem;
     background: var(--control-bg);
     border-radius: 3px;
     border-left: 3px solid var(--red);
-    font-size: 0.8rem;
+    font-size: var(--sidebar-text);
 }
 
 .key {
@@ -411,33 +433,46 @@ body {
 /* Game Board */
 .game-board-container {
     position: relative;
-    background: var(--panel-inner-bg);
-    border: 4px solid var(--red);
-    border-radius: 10px;
-    box-shadow: 0 8px 25px var(--shadow-board);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
     padding: 0;
+    /* Desktop: allow the board to grow and center the canvas within available space */
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #game-board {
-    border-radius: 6px;
-    background: #F0F0F0;
+    border: 4px solid var(--red);
+    border-radius: 10px;
+    box-shadow: 0 8px 25px var(--shadow-board);
+    background: transparent;
     display: block;
+    touch-action: none;
 }
+
+/* Mobile HUD removed (replaced by right-side control panel on mobile) */
 
 /* Game Over Overlay */
 .game-over {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 50%;
+    top: 50%;
+    width: var(--board-w, 300px);
+    height: var(--board-h, 600px);
+    transform: translate(-50%, -50%);
     background: var(--overlay-gameover);
     color: var(--overlay-text);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 10px;
     text-align: center;
 }
 
@@ -474,17 +509,18 @@ body {
 /* Paused Overlay */
 .paused-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 50%;
+    top: 50%;
+    width: var(--board-w, 300px);
+    height: var(--board-h, 600px);
+    transform: translate(-50%, -50%);
     background: var(--overlay-paused);
     color: var(--overlay-text);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 10px;
     text-align: center;
     animation: pulse 2s infinite;
 }
@@ -603,7 +639,7 @@ body {
 .stat-item {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem;
+    padding: 0.35rem 0.5rem;
     background: var(--panel-inner-bg);
     border-radius: 5px;
     border-left: 4px solid var(--blue);
@@ -612,7 +648,7 @@ body {
 .reset-btn {
     width: 100%;
     margin-top: 0.4rem;
-    padding: 0.5rem;
+    padding: 0.4rem;
     border-radius: 8px;
     border: 2px solid var(--blue);
     background: var(--btn-bg);
@@ -633,34 +669,25 @@ body {
     text-align: center;
     padding: 1rem;
     font-weight: bold;
+    flex: 0 0 auto;
+}
+
+/* Desktop: prevent page scrolling, keep footer visible in normal flow */
+@media (min-width: 769px) {
+    body {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .game-container {
+        padding: 1.25rem 2rem 1rem;
+        overflow: hidden;
+    }
 }
 
 /* Utility Classes */
 .hidden {
     display: none !important;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .game-container {
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .game-sidebar {
-        width: 100%;
-        max-width: 600px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        justify-content: space-around;
-    }
-    
-    .game-sidebar > div {
-        flex: 1;
-        min-width: 150px;
-    }
 }
 
 @media (max-width: 768px) {
@@ -704,10 +731,64 @@ body {
     margin-top: 1rem;
     display: none; /* Hidden by default, shown on mobile */
     padding: 1rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: var(--panel-bg);
+    border: 2px solid var(--blue);
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+/* Mobile-only side panel (themes/next/stats/actions). Hidden on desktop. */
+.mobile-side-panel {
+    display: none;
+}
+
+.mobile-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    font-weight: 800;
+    font-size: 0.72rem;
+}
+
+.mobile-stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+
+.mobile-stat span:first-child {
+    opacity: 0.85;
+}
+
+.mobile-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.mobile-flags .theme-btn {
+    padding: 0.25rem;
+    justify-content: center;
+    font-size: 0;
+    line-height: 0;
+    min-height: 40px;
+}
+
+.mobile-flags .theme-btn-flag .theme-flag {
+    width: 34px;
+    height: 22px;
+    flex: 0 0 34px;
+}
+
+#mobile-next-piece {
+    display: block;
+    background: transparent;
+}
+
+.mobile-toggles { }
 
 /* D-Pad Layout */
 .touch-dpad {
@@ -853,9 +934,145 @@ body {
 
 /* Show touch controls on mobile devices */
 @media (max-width: 768px) {
+    :root {
+        /* Set by JS: window.innerHeight * 0.01 (px). Fallback is 1vh. */
+        --vh: 1vh;
+        --mobile-gap: 0px;
+        /* Keep side panel compact so board+panel fit on narrow devices (iPhone 12 Pro etc.) */
+        --panel-w: clamp(92px, 24vw, 150px);
+        /* Make arrows more usable on touch */
+        --btn: clamp(48px, calc(var(--vh) * 6.8), 62px);
+        --dpad: calc(var(--btn) * 3 + 4px);
+        /* Approx bottom bar height (arrows + padding + border) */
+        --bottom-h: calc(var(--btn) * 2.85 + 2.2rem);
+    }
+
     .touch-controls {
         display: block;
+        position: static;
+        margin-top: 0;
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        border-radius: 14px;
+        height: auto;
     }
+
+
+    /* Fit board + controls on one screen */
+    body {
+        height: calc(var(--vh) * 100);
+        overflow: hidden;
+    }
+
+    .game-footer {
+        display: none;
+    }
+
+    .game-container {
+        padding: 0;
+        gap: var(--mobile-gap);
+        height: calc(var(--vh) * 100);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto auto;
+        grid-template-columns: 1fr var(--panel-w);
+        align-items: start;
+        align-content: start;
+        justify-items: stretch;
+    }
+
+    .game-board-container {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: stretch;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        display: flex;
+        justify-content: center;
+        /* Give the container a real height so Board.resizeCanvas() can size up to the
+           available viewport space (otherwise it can get "stuck" at its initial size). */
+        height: calc((var(--vh) * 100) - var(--controls-h, var(--bottom-h)));
+        max-height: calc((var(--vh) * 100) - var(--controls-h, var(--bottom-h)));
+        min-height: 0;
+        margin: 0;
+        border-radius: 0;
+        /* Remove the desktop "card" styling so the empty left space doesn't show as a white strip.
+           The canvas itself remains the visible playfield. */
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .mobile-side-panel {
+        grid-row: 1;
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.35rem 0.35rem 0.25rem;
+        background: transparent;
+        border-left: 2px solid var(--blue);
+        align-self: start;
+        overflow: hidden;
+        color: var(--mobile-panel-text);
+    }
+
+    .mobile-flags {
+        justify-content: flex-start;
+    }
+
+    .game-sidebar {
+        display: none !important;
+    }
+
+    .touch-controls {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        border-top: 2px solid var(--blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .touch-dpad {
+        width: var(--dpad);
+        height: calc(var(--btn) * 2 + 2px);
+        margin: 0.35rem auto 0.25rem;
+    }
+
+    .touch-dpad-btn {
+        width: var(--btn);
+        height: var(--btn);
+        font-size: clamp(1.4rem, calc(var(--vh) * 2.2), 1.9rem);
+    }
+
+    .touch-toggle-btn {
+        min-width: clamp(56px, calc(var(--vh) * 8), 70px);
+        padding: 0.45rem 0.4rem;
+    }
+
+    .touch-toggles {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+
+    /* Lighter Game Over overlay on mobile */
+    .game-over {
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--text-dark);
+    }
+    .game-over h2 { color: var(--text-dark); }
+}
+
+/* Prevent accidental page scroll while playing on mobile */
+body.no-scroll {
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
 }
 
 /* Ghost Piece Status */

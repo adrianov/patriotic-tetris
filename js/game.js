@@ -44,15 +44,11 @@ class Game {
     
     init() {
         console.log('Patriotic Tetris initialized');
+        this.updateViewportUnits();
         this.setupEventListeners();
         this.board.setupCanvas(this.canvas);
         this.startNewGame();
         this.gameLoop();
-        
-        // Start background music after a short delay
-        setTimeout(() => {
-            this.audio.playBackgroundMusic();
-        }, 1000);
     }
     
     setupEventListeners() {
@@ -75,6 +71,75 @@ class Game {
         const resetHighBtn = document.getElementById('reset-high-btn');
         if (resetHighBtn) {
             resetHighBtn.addEventListener('click', () => this.resetHighScore());
+        }
+
+        window.addEventListener('resize', () => {
+            this.updateViewportUnits();
+            this.setScrollLock();
+        });
+
+        window.addEventListener('orientationchange', () => {
+            // Safari needs a beat to settle the new innerHeight.
+            setTimeout(() => this.updateViewportUnits(), 50);
+        });
+
+        // Prevent accidental scroll gestures during play on mobile.
+        document.addEventListener('touchmove', (e) => {
+            if (!document.body.classList.contains('no-scroll')) return;
+            if (e.target && e.target.closest && e.target.closest('.game-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Start audio after first user gesture (required by browsers).
+        this.bindFirstAudioGesture();
+    }
+
+    bindFirstAudioGesture() {
+        if (this.didBindAudio) return;
+        this.didBindAudio = true;
+
+        const start = () => {
+            this.audio.resumeContext();
+            this.audio.playBackgroundMusic();
+        };
+
+        const onFirst = () => {
+            document.removeEventListener('pointerdown', onFirst);
+            document.removeEventListener('keydown', onFirst);
+            document.removeEventListener('touchstart', onFirst);
+            start();
+        };
+
+        document.addEventListener('pointerdown', onFirst, { passive: true });
+        document.addEventListener('keydown', onFirst);
+        document.addEventListener('touchstart', onFirst, { passive: true });
+    }
+
+    updateViewportUnits() {
+        // Mobile browsers can shrink/grow the visible viewport when the URL bar appears.
+        // Use a CSS var for stable layout: height = calc(var(--vh) * 100).
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+        // Also measure the actual controls height so the board can take the *remaining* space
+        // precisely (avoids wasting space on iOS where safe areas / bars vary).
+        const isMobileLayout = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        if (isMobileLayout) {
+            const controls = document.querySelector('.touch-controls');
+            if (controls) {
+                const rect = controls.getBoundingClientRect();
+                if (rect && rect.height) {
+                    document.documentElement.style.setProperty('--controls-h', `${rect.height}px`);
+                }
+            }
+        } else {
+            document.documentElement.style.removeProperty('--controls-h');
+        }
+
+        // Recompute the canvas size after layout vars change.
+        if (this.board && typeof this.board.resizeCanvas === 'function') {
+            requestAnimationFrame(() => this.board.resizeCanvas());
         }
     }
     
@@ -102,6 +167,7 @@ class Game {
         this.updateUI();
         this.updateTimeUI();
         this.updateHighScoreUI();
+        this.setScrollLock();
         this.hideGameOver();
         this.hidePaused();
         
@@ -299,11 +365,20 @@ class Game {
         const boostPct = this.speedBoost * 20;
         document.getElementById('level').textContent = boostPct > 0 ? `${this.level} (+${boostPct}%)` : `${this.level}`;
         document.getElementById('lines').textContent = this.lines;
+
+        const mScore = document.getElementById('m-score');
+        if (mScore) mScore.textContent = this.score;
+        const mLevel = document.getElementById('m-level');
+        if (mLevel) mLevel.textContent = boostPct > 0 ? `${this.level}+${boostPct}%` : `${this.level}`;
+        const mLines = document.getElementById('m-lines');
+        if (mLines) mLines.textContent = this.lines;
     }
 
     updateHighScoreUI() {
         const el = document.getElementById('high-score');
         if (el) el.textContent = this.highScore;
+        const mHigh = document.getElementById('m-high');
+        if (mHigh) mHigh.textContent = this.highScore;
     }
 
     updateTimeUI() {
@@ -313,6 +388,10 @@ class Game {
         const timeEl = document.getElementById('time');
         if (timeEl) {
             timeEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        const mTime = document.getElementById('m-time');
+        if (mTime) {
+            mTime.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     }
     
@@ -338,6 +417,18 @@ class Game {
         if (this.nextPiece) {
             this.pieces.renderNextPiece(this.nextCtx, this.nextPiece, this.board);
         }
+
+        // Mobile next piece (right panel)
+        const mobileNext = document.getElementById('mobile-next-piece');
+        if (mobileNext) {
+            const mctx = mobileNext.getContext('2d');
+            if (mctx) {
+                mctx.clearRect(0, 0, mobileNext.width, mobileNext.height);
+                if (this.nextPiece) {
+                    this.pieces.renderNextPiece(mctx, this.nextPiece, this.board);
+                }
+            }
+        }
     }
     
     pause() {
@@ -351,6 +442,8 @@ class Game {
         } else {
             this.hidePaused();
         }
+
+        this.setScrollLock();
         
         console.log(this.paused ? 'Game paused' : 'Game resumed');
     }
@@ -365,9 +458,16 @@ class Game {
     
     endGame() {
         this.gameOver = true;
+        this.setScrollLock();
         this.audio.playGameOver();
         this.showGameOver();
         console.log('Game Over - Final Score:', this.score);
+    }
+
+    setScrollLock() {
+        const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        const shouldLock = isMobile && !this.paused && !this.gameOver;
+        document.body.classList.toggle('no-scroll', shouldLock);
     }
     
     showGameOver() {
