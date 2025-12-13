@@ -23,6 +23,7 @@ class Game {
         this.paused = false;
         this.currentPiece = null;
         this.nextPiece = null;
+        this.speedBoost = 0;
         this.dropTime = 1000;
         this.lastDrop = 0;
         this.isAnimating = false;
@@ -71,7 +72,8 @@ class Game {
         this.gameOver = false;
         this.paused = false;
         this.isAnimating = false;
-        this.dropTime = 1000;
+        this.speedBoost = 0;
+        this.dropTime = this.calcDropTime();
         this.lockDelay = 0;
         this.hardDropGrace = false;
         
@@ -111,17 +113,25 @@ class Game {
         
         requestAnimationFrame((time) => this.gameLoop(time));
     }
-    
-    dropPiece() {
-        if (!this.currentPiece || this.gameOver || this.paused || this.isAnimating) return;
-        
-        if (this.board.canMove(this.currentPiece, 0, 1)) {
-            this.currentPiece.y++;
-        } else {
-            this.lockPiece();
-        }
+
+    calcDropTime() {
+        const base = Math.max(100, 1000 - (this.level - 1) * 100);
+        const factor = 1 + this.speedBoost * 0.2; // +20% faster per press
+        return Math.max(50, Math.round(base / factor));
     }
-    
+
+    applyDropTime() {
+        this.dropTime = this.calcDropTime();
+    }
+
+    increaseSpeed() {
+        if (this.gameOver) return;
+        this.speedBoost = Math.min(30, this.speedBoost + 1);
+        this.applyDropTime();
+        this.lastDrop = performance.now() - this.dropTime;
+        this.updateUI();
+    }
+
     dropPiece() {
         if (!this.currentPiece || this.gameOver || this.paused || this.isAnimating) return;
         
@@ -186,7 +196,7 @@ class Game {
         const newLevel = Math.floor(this.lines / 10) + 1;
         if (newLevel > this.level) {
             this.level = newLevel;
-            this.dropTime = Math.max(100, 1000 - (this.level - 1) * 100);
+            this.applyDropTime();
         }
         
         this.updateUI();
@@ -194,7 +204,8 @@ class Game {
     
     updateUI() {
         document.getElementById('score').textContent = this.score;
-        document.getElementById('level').textContent = this.level;
+        const boostPct = this.speedBoost * 20;
+        document.getElementById('level').textContent = boostPct > 0 ? `${this.level} (+${boostPct}%)` : `${this.level}`;
         document.getElementById('lines').textContent = this.lines;
     }
     

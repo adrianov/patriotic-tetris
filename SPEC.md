@@ -35,6 +35,14 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **Space**: Hard drop (instant drop)
 - **P**: Pause/resume game
 - **R**: Restart game
+- **M**: Mute/unmute
+- **G**: Toggle ghost piece
+- **+**: Increase speed (+20% per press; shown next to Level)
+
+### Locking Behavior
+- After a **hard drop**, the piece enters a brief **lock window** where it can still be moved/rotated.
+- If the piece is **on the ground** (can’t move down) and the player attempts an **impossible move**
+  (left/right/rotate/down), the piece **locks immediately**.
 
 ### Features
 - **Score system** based on lines cleared
@@ -42,7 +50,7 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **Next piece preview**
 - **Ghost piece** (shows where piece will land)
 - **Pause functionality**
-- **Game over screen with restart option
+- **Game over screen with restart option**
 - **Responsive design** for different screen sizes
 - **Sound effects** for piece movements, rotations, line clears
 - **Background music** (optional, patriotic theme)
