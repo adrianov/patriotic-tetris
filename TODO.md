@@ -16,6 +16,16 @@
 - [ ] No console errors on page load
 - [ ] Basic layout is responsive on different screen sizes
 
+### Bug Fixes & Corrections:
+- [ ] Fix JavaScript error: "e is not defined" in controls.js
+- [ ] Fix TypeError: Cannot read properties of undefined (reading '0') in board.js
+- [ ] Fix hard drop animation causing piece freeze and errors
+- [ ] Add animated hard drop with SPACE key
+- [ ] Change tetromino colors to patriotic (white, red, blue)
+- [ ] Soften movement sounds with proper audio formulas
+- [ ] Add PAUSED overlay panel over game field
+- [ ] Fix left panel height to prevent page scrolling
+
 ## Phase 2: Core Game Engine
 ### Development Tasks:
 - [ ] Implement game board (10x20 grid)
