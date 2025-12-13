@@ -15,6 +15,8 @@
 - [ ] Verify audio controls + mute work consistently across browsers/devices
 
 ## Later (Phase 8)
-- [ ] Local high scores (localStorage)
+- [x] Local high scores (localStorage)
+- [x] Reset high score control
+- [x] New high score celebration screen + melody
 - [ ] Loading/intro screen (optional)
 - [ ] Final code review + deployment readiness

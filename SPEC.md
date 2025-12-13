@@ -55,6 +55,7 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **Responsive design** for different screen sizes
 - **Sound effects** for piece movements, rotations, line clears
 - **Background music** (optional, patriotic theme)
+- **High score** persisted in `localStorage` with a reset control and celebration on new record
 
 ### Scoring
 - Single line: 100 points × level
