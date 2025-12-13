@@ -69,20 +69,18 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 ```
 /
 ├── index.html          # Main HTML file
-├── css/
-│   └── style.css       # Game styles
-├── js/
-│   ├── game.js         # Main game logic
-│   ├── pieces.js       # Tetromino definitions
-│   ├── board.js        # Game board management
-│   ├── controls.js     # Input handling
-│   └── theme.js        # UI theme switching (Modern/Imperial/Soviet)
 └── assets/
+    ├── css/
+    │   └── style.css       # Game styles
+    ├── js/
+    │   ├── game.js         # Main game logic
+    │   ├── pieces.js       # Tetromino definitions
+    │   ├── board.js        # Game board management
+    │   ├── controls.js     # Input handling
+    │   ├── theme.js        # UI theme switching (Modern/Imperial/Soviet)
+    │   └── audio.js        # Synthesized sound effects generator
     ├── svg/            # SVG graphics and icons
-    │   ├── eagle.svg   # Russian two-headed eagle
-    │   └── icons.svg   # UI icons and symbols
-    └── js/
-        └── audio.js    # Synthesized sound effects generator
+    │   └── eagle.svg   # Russian two-headed eagle
 ```
 
 ## Performance Requirements
