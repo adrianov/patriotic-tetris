@@ -39,8 +39,13 @@ class Game {
         this.lastFrameTime = 0;
         this.lastTimeUiUpdate = 0;
         this.lastNextKey = '';
+        this.needsRender = true;
         
         this.init();
+    }
+
+    requestRender() {
+        this.needsRender = true;
     }
     
     init() {
@@ -160,7 +165,10 @@ class Game {
 
         // Recompute the canvas size after layout vars change.
         if (this.board && typeof this.board.resizeCanvas === 'function') {
-            requestAnimationFrame(() => this.board.resizeCanvas());
+            requestAnimationFrame(() => {
+                this.board.resizeCanvas();
+                this.requestRender();
+            });
         }
     }
     
@@ -180,6 +188,7 @@ class Game {
         this.elapsedMs = 0;
         this.lastFrameTime = 0;
         this.lastTimeUiUpdate = 0;
+        this.lastNextKey = '';
         
         this.currentPiece = this.pieces.getRandomPiece();
         this.nextPiece = this.pieces.getRandomPiece();
@@ -196,7 +205,7 @@ class Game {
         if (ghostStatus) {
             ghostStatus.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
-        
+        this.requestRender();
     }
 
     loadHighScore() {
@@ -253,8 +262,11 @@ class Game {
             }
         }
         
-        // Always render game
-        this.render();
+        // Only render when needed; keep full-rate rendering during animations.
+        if (this.isAnimating || this.needsRender) {
+            this.render();
+            this.needsRender = false;
+        }
 
         this.lastFrameTime = currentTime;
         
@@ -285,6 +297,7 @@ class Game {
         if (this.board.canMove(this.currentPiece, 0, 1)) {
             this.currentPiece.y++;
             this.lockDelay = 0;
+            this.requestRender();
         } else if (this.isPieceCompletelyStuck()) {
             this.lockPiece();
         } else {
@@ -319,6 +332,7 @@ class Game {
         this.board.lockPiece(this.currentPiece);
         this.currentPiece = null;
         this.lockDelay = 0;
+        this.requestRender();
 
         const lines = this.board.getFullLines();
         if (lines.length > 0) {
@@ -336,6 +350,7 @@ class Game {
                     this.updateScore(lines.length);
                     this.spawnNextPiece();
                     this.isAnimating = false;
+                    this.requestRender();
                     return;
                 }
                 requestAnimationFrame(step);
@@ -351,6 +366,7 @@ class Game {
     spawnNextPiece() {
         this.currentPiece = this.nextPiece;
         this.nextPiece = this.pieces.getRandomPiece();
+        this.requestRender();
 
         if (this.board.checkGameOver(this.currentPiece)) {
             this.endGame();
@@ -426,9 +442,6 @@ class Game {
     }
     
     render() {
-        // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
         // Draw board
         this.board.render(this.ctx);
         
@@ -482,6 +495,7 @@ class Game {
         }
 
         this.setScrollLock();
+        this.requestRender();
     }
     
     showPaused() {
@@ -497,6 +511,7 @@ class Game {
         this.setScrollLock();
         this.audio.playGameOver();
         this.showGameOver();
+        this.requestRender();
     }
 
     setScrollLock() {
@@ -529,6 +544,7 @@ class Game {
         if (statusElement) {
             statusElement.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
+        this.requestRender();
     }
 }
 
