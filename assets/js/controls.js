@@ -100,6 +100,7 @@ export class Controls {
             this.game.currentPiece.x += dx;
             this.game.lockDelay = 0;
             this.game.audio.playMove();
+            this.game.requestRender();
         } else if (onGround) {
             this.game.lockPiece();
         }
@@ -113,6 +114,7 @@ export class Controls {
             this.game.lockDelay = 0;
             this.game.audio.playDrop();
             this.game.addDropPoints(1);
+            this.game.requestRender();
             return;
         }
 
@@ -130,6 +132,7 @@ export class Controls {
             this.game.currentPiece.shape = rotatedShape;
             this.game.lockDelay = 0;
             this.game.audio.playRotate();
+            this.game.requestRender();
         } else if (onGround) {
             // Same locking rule as horizontal moves: failed rotation on the ground locks.
             this.game.lockPiece();
@@ -158,6 +161,7 @@ export class Controls {
             this.game.addDropPoints(dropDistance * 2);
             // Animate the drop
             this.animateHardDrop(startY, tempPiece.y);
+            this.game.requestRender();
         } else {
             // Already at bottom and can't move down - lock immediately
             this.game.lockPiece();
