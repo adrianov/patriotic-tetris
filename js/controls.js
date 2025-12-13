@@ -74,6 +74,7 @@ export class Controls {
     
     movePiece(dx, dy) {
         if (this.game.paused || this.game.isAnimating) return;
+        
         if (this.game.board.canMove(this.game.currentPiece, dx, dy)) {
             this.game.currentPiece.x += dx;
             this.game.currentPiece.y += dy;
@@ -83,6 +84,9 @@ export class Controls {
             } else {
                 this.game.audio.playMove();
             }
+        } else if (dy > 0) {
+            // Trying to move down but can't - try to lock
+            this.game.lockPiece();
         }
     }
     
@@ -118,6 +122,8 @@ export class Controls {
             // Animate the drop
             this.animateHardDrop(startY, tempPiece.y);
         }
+        // If dropDistance is 0, piece can't move down at all - do nothing
+        // Let normal game flow handle locking
     }
     
     animateHardDrop(startY, endY) {
@@ -140,7 +146,15 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Don't lock immediately - let it behave like naturally fallen piece
+                // After hard drop, check if piece is completely stuck
+                if (this.game.isPieceCompletelyStuck()) {
+                    this.game.lockPiece();
+                } else {
+                    // Start lock delay if not stuck
+                    if (this.game.lockDelay === 0) {
+                        this.game.lockDelay = performance.now();
+                    }
+                }
                 // Clear animation flag
                 this.game.isAnimating = false;
             }

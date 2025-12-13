@@ -27,6 +27,7 @@ class Game {
         this.lastDrop = 0;
         this.isAnimating = false;
         this.showGhostPiece = true;
+        this.lockDelay = 0;
         
         this.init();
     }
@@ -37,6 +38,11 @@ class Game {
         this.board.setupCanvas(this.canvas);
         this.startNewGame();
         this.gameLoop();
+        
+        // Start background music after a short delay
+        setTimeout(() => {
+            this.audio.playBackgroundMusic();
+        }, 1000);
     }
     
     setupEventListeners() {
@@ -66,6 +72,7 @@ class Game {
         this.paused = false;
         this.isAnimating = false;
         this.dropTime = 1000;
+        this.lockDelay = 0;
         this.hardDropGrace = false;
         
         this.currentPiece = this.pieces.getRandomPiece();
@@ -91,6 +98,12 @@ class Game {
                 this.dropPiece();
                 this.lastDrop = currentTime;
             }
+            
+            // Handle lock delay - use same timing as drop speed
+            if (this.lockDelay > 0 && currentTime - this.lockDelay > this.dropTime) {
+                this.lockPiece();
+                this.lockDelay = 0;
+            }
         }
         
         // Always render game
@@ -109,7 +122,45 @@ class Game {
         }
     }
     
+    isPieceCompletelyStuck() {
+        if (!this.currentPiece) return false;
+        
+        // Check if piece can't move down
+        if (this.board.canMove(this.currentPiece, 0, 1)) return false;
+        
+        // Check if piece can move left or right
+        if (this.board.canMove(this.currentPiece, -1, 0)) return false;
+        if (this.board.canMove(this.currentPiece, 1, 0)) return false;
+        
+        // Check if piece can rotate (skip for O-piece which can't rotate)
+        if (this.currentPiece.type !== 'O') {
+            const rotatedShape = this.pieces.rotatePiece(this.currentPiece);
+            if (this.board.canMove(this.currentPiece, 0, 0, rotatedShape)) return false;
+        }
+        
+        // Piece is completely stuck - can't move anywhere
+        return true;
+    }
+    
+    dropPiece() {
+        if (!this.currentPiece || this.gameOver || this.paused || this.isAnimating) return;
+        
+        if (this.board.canMove(this.currentPiece, 0, 1)) {
+            this.currentPiece.y++;
+            this.lockDelay = 0; // Reset lock delay when piece moves down
+        } else {
+            // Piece hit ground - try to lock
+            this.lockPiece();
+        }
+    }
+    
     lockPiece() {
+        // Prevent double-locking and ensure piece can't move down
+        if (!this.currentPiece || this.gameOver) return;
+        
+        // Only lock if piece can't move down
+        if (this.board.canMove(this.currentPiece, 0, 1)) return;
+        
         this.board.lockPiece(this.currentPiece);
         
         // Check for completed lines
