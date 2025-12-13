@@ -172,8 +172,10 @@ export class AudioEngine {
     toggleMute() {
         this.isMuted = !this.isMuted;
         const muteBtn = document.getElementById('mute-btn');
-        muteBtn.textContent = this.isMuted ? '🔇 Sound Off' : '🔊 Sound On';
-        muteBtn.style.background = this.isMuted ? '#999' : '';
+        if (muteBtn) {
+            muteBtn.textContent = this.isMuted ? '🔇 Sound Off' : '🔊 Sound On';
+            muteBtn.style.background = this.isMuted ? '#999' : '';
+        }
         
         return this.isMuted;
     }
