@@ -230,6 +230,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    /* Prevent mobile double-tap zoom on the game UI while still allowing pinch zoom if supported. */
+    touch-action: manipulation;
 }
 
 /* Main Container */
