@@ -325,31 +325,12 @@ body {
 }
 
 .theme-flag-soviet {
-    position: relative;
-    overflow: hidden;
-    background: #B00020;
+    background: url('../svg/soviet.svg') center / cover no-repeat;
 }
 
-.theme-flag-soviet::before {
-    content: "☭";
-    position: absolute;
-    left: 3px;
-    top: 4px;
-    font-size: 10px;
-    line-height: 1;
-    color: #D4AF37;
-    opacity: 0.95;
-}
-
+.theme-flag-soviet::before,
 .theme-flag-soviet::after {
-    content: "★";
-    position: absolute;
-    left: 2px;
-    top: 1px;
-    font-size: 7px;
-    line-height: 1;
-    color: #D4AF37;
-    opacity: 0.95;
+    content: none;
 }
 
 .brand-panel {
