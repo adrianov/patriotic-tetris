@@ -122,35 +122,32 @@ class Game {
         }
     }
     
-    isPieceCompletelyStuck() {
-        if (!this.currentPiece) return false;
-        
-        // Check if piece can't move down
-        if (this.board.canMove(this.currentPiece, 0, 1)) return false;
-        
-        // Check if piece can move left or right
-        if (this.board.canMove(this.currentPiece, -1, 0)) return false;
-        if (this.board.canMove(this.currentPiece, 1, 0)) return false;
-        
-        // Check if piece can rotate (skip for O-piece which can't rotate)
-        if (this.currentPiece.type !== 'O') {
-            const rotatedShape = this.pieces.rotatePiece(this.currentPiece);
-            if (this.board.canMove(this.currentPiece, 0, 0, rotatedShape)) return false;
-        }
-        
-        // Piece is completely stuck - can't move anywhere
-        return true;
-    }
-    
     dropPiece() {
         if (!this.currentPiece || this.gameOver || this.paused || this.isAnimating) return;
         
         if (this.board.canMove(this.currentPiece, 0, 1)) {
             this.currentPiece.y++;
-            this.lockDelay = 0; // Reset lock delay when piece moves down
-        } else {
-            // Piece hit ground - try to lock
+            this.lockDelay = 0;
+        } else if (this.isPieceCompletelyStuck()) {
             this.lockPiece();
+        } else {
+            this.startLockDelay();
+        }
+    }
+    
+    isPieceCompletelyStuck() {
+        if (!this.currentPiece) return false;
+        
+        // Can't move down, left, right, or rotate
+        return !this.board.canMove(this.currentPiece, 0, 1) &&
+               !this.board.canMove(this.currentPiece, -1, 0) &&
+               !this.board.canMove(this.currentPiece, 1, 0) &&
+               (this.currentPiece.type === 'O' || !this.board.canMove(this.currentPiece, 0, 0, this.pieces.rotatePiece(this.currentPiece)));
+    }
+    
+    startLockDelay() {
+        if (this.lockDelay === 0) {
+            this.lockDelay = performance.now();
         }
     }
     
