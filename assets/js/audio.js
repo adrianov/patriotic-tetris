@@ -52,54 +52,81 @@ export class AudioEngine {
     
     playMove() {
         this.resumeContext();
-        // Soft, subtle click sound
-        this.createOscillator(600, 'sine', 0, 0.05, 0.6);
+        // Jazzy staccato - C5 with quick decay
+        this.createOscillator(523.25, 'sine', 0, 0.015, 0.2);
     }
     
     playRotate() {
         this.resumeContext();
-        // Gentle whoosh with lower volume
-        this.createOscillator(400, 'triangle', 0, 0.1, 0.8);
-        setTimeout(() => this.createOscillator(500, 'triangle', 0.03, 0.07, 0.6), 30);
+        // Jazzy grace note - E5 with syncopated feel
+        this.createOscillator(659.25, 'triangle', 0, 0.035, 0.25);
+        setTimeout(() => this.createOscillator(523.25, 'sine', 0, 0.02, 0.15), 15);
     }
     
     playDrop() {
         this.resumeContext();
-        // Soft thud
-        this.createOscillator(200, 'sine', 0, 0.06, 0.8);
+        // Jazzy brush - G4 with swing feel
+        this.createOscillator(392, 'triangle', 0, 0.08, 0.6);
+        setTimeout(() => this.createOscillator(329.63, 'sine', 0, 0.04, 0.3), 25);
     }
     
     playHardDrop() {
         this.resumeContext();
-        // Slightly louder but still soft impact
-        this.createOscillator(150, 'triangle', 0, 0.1, 1.0);
+        // Jazzy accent - C4 with rhythmic punch
+        this.createOscillator(261.63, 'triangle', 0, 0.12, 0.8);
+        setTimeout(() => this.createOscillator(392, 'sine', 0, 0.06, 0.4), 40);
     }
     
     playLineClear(lines) {
         this.resumeContext();
         
-        const baseFrequency = 523.25; // C5
-        const frequencies = [baseFrequency, baseFrequency * 1.25, baseFrequency * 1.5, baseFrequency * 2];
+        // Jazzy chord progression - C major with swing timing
+        const chords = [
+            [523.25, 659.25, 783.99], // C major
+            [587.33, 739.99, 880.00], // D major
+            [659.25, 830.61, 987.77], // E minor
+            [783.99, 987.77, 1174.66] // G major
+        ];
         
         for (let i = 0; i < lines; i++) {
+            const chord = chords[i % chords.length];
             setTimeout(() => {
-                this.createOscillator(frequencies[i], 'sine', 0, 0.3, 0.8);
-                // Add harmony
-                this.createOscillator(frequencies[i] * 1.5, 'sine', 0, 0.3, 0.6);
-            }, i * 100);
+                chord.forEach((freq, index) => {
+                    setTimeout(() => {
+                        this.createOscillator(freq, 'triangle', 0, 0.4, 0.7);
+                        // Add jazzy seventh
+                        this.createOscillator(freq * 0.89, 'sine', 0, 0.3, 0.4);
+                    }, index * 30);
+                });
+            }, i * 150);
         }
     }
     
     playGameOver() {
         this.resumeContext();
         
-        // Descending notes
-        const notes = [523.25, 440, 349.23, 261.63]; // C5, A4, F4, C4
+        // Jazzy descending line with blue notes
+        const melody = [
+            {freq: 1046.50, duration: 0.3}, // C6
+            {freq: 880.00, duration: 0.2},  // A5 (blue note)
+            {freq: 783.99, duration: 0.4},  // G5
+            {freq: 622.25, duration: 0.2},  // D#5 (blue note)
+            {freq: 523.25, duration: 0.5},  // C5
+            {freq: 392.00, duration: 0.3},  // G4
+            {freq: 349.23, duration: 0.4},  // F4 (blue note)
+            {freq: 261.63, duration: 0.8},  // C4
+        ];
         
-        notes.forEach((frequency, index) => {
+        let timeOffset = 0;
+        melody.forEach((note, index) => {
             setTimeout(() => {
-                this.createOscillator(frequency, 'sawtooth', 0, 0.5, 0.8);
-            }, index * 200);
+                this.createOscillator(note.freq, index % 2 === 0 ? 'triangle' : 'sine', 0, note.duration, 0.7);
+                // Add jazzy harmony
+                if (index % 2 === 0) {
+                    this.createOscillator(note.freq * 0.75, 'sine', 0, note.duration * 0.8, 0.4);
+                }
+            }, timeOffset * 1000);
+            timeOffset += note.duration * 0.8; // Swing timing
         });
     }
     
@@ -120,16 +147,18 @@ export class AudioEngine {
     playBackgroundMusic() {
         if (!this.audioContext || this.isMuted) return;
         
-        // Simple patriotic-sounding melody
+        // Jazzy patriotic melody with swing and blue notes
         const melody = [
-            {freq: 392, duration: 0.5}, // G4
-            {freq: 392, duration: 0.5}, // G4
-            {freq: 440, duration: 0.5}, // A4
-            {freq: 494, duration: 0.5}, // B4
-            {freq: 523, duration: 1},  // C5
-            {freq: 494, duration: 0.5}, // B4
-            {freq: 440, duration: 0.5}, // A4
-            {freq: 392, duration: 1},  // G4
+            {freq: 261.63, duration: 0.4}, // C4
+            {freq: 311.13, duration: 0.2}, // D#4 (blue note)
+            {freq: 329.63, duration: 0.3}, // E4
+            {freq: 392.00, duration: 0.2}, // G4
+            {freq: 466.16, duration: 0.3}, // A#4 (blue note)
+            {freq: 523.25, duration: 0.8}, // C5
+            {freq: 392.00, duration: 0.3}, // G4
+            {freq: 349.23, duration: 0.2}, // F4 (blue note)
+            {freq: 329.63, duration: 0.3}, // E4
+            {freq: 261.63, duration: 0.6}, // C4
         ];
         
         let timeOffset = 0;
