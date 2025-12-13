@@ -6,6 +6,9 @@
 - **Lint JS**: `tsc --noEmit --project jsconfig.json`
 - **Test audio**: Press M to toggle mute, use arrow keys to test sounds
 
+## Project Hygiene
+- **TODO.md**: Do **not** remove finished items; mark them as completed instead (use `[x]` or `✅`).
+
 ## Code Style Guidelines
 
 ### JavaScript
