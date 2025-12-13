@@ -470,6 +470,23 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Desktop: improve overlay readability against busy boards */
+@media (min-width: 769px) {
+    .game-over h2,
+    .game-over p {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Imperial theme: game over overlay uses a dark backdrop; keep text high-contrast */
+:root[data-theme="imperial"] .game-over {
+    color: #FFF2CF;
+}
+
+:root[data-theme="imperial"] .game-over h2 {
+    color: #D4AF37;
+}
+
 .new-high-score {
     background: var(--highscore-bg);
     color: var(--highscore-text);
