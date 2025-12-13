@@ -147,7 +147,7 @@ export class Board {
     }
     
     checkGameOver(piece) {
-        // Check if piece can be placed at starting position
+        // Simple game over: if new piece can't be placed at spawn position
         return !this.canMove(piece, 0, 0);
     }
     
