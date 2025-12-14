@@ -792,10 +792,9 @@ body {
 .touch-dpad {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 2px;
+    grid-template-rows: auto auto;
+    gap: 4px 2px;
     width: 186px;
-    height: 124px;
     margin: 0 auto 0.5rem;
 }
 
@@ -821,6 +820,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 8px;
+    font-family: var(--font-display);
     font-size: 1.8rem;
     font-weight: bold;
     cursor: pointer;
@@ -889,38 +889,21 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* Desktop: wrapper is transparent, shows contents inline */
+.mobile-top-row {
+    display: contents;
+}
+
 /* Show touch controls on mobile devices */
 @media (max-width: 768px) {
     :root {
-        /* Set by JS: window.innerHeight * 0.01 (px). Fallback is 1vh. */
-        --vh: 1vh;
-        --mobile-gap: 0px;
-        /* Keep side panel compact so board+panel fit on narrow devices (iPhone 12 Pro etc.) */
         --panel-w: clamp(92px, 24vw, 150px);
-        /* Make arrows more usable on touch (and still fit short viewports). */
-        --btn: clamp(40px, calc(var(--vh) * 6.0), 60px);
+        --btn: clamp(50px, 8vh, 70px);
         --dpad: calc(var(--btn) * 3 + 4px);
-        /* Approx bottom bar height (arrows + padding + border) */
-        --bottom-h: calc(var(--btn) * 2.6 + 1.6rem);
     }
 
-    .touch-controls {
-        display: block;
-        position: static;
-        margin-top: 0;
-        padding: 0.35rem;
-        /* Extra baseline padding helps on browsers where bottom bars overlap content but don't
-           report a safe-area inset (common on some Android WebViews). */
-        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom) + 12px);
-        border-radius: 14px;
-        height: auto;
-    }
-
-
-    /* Fit board + controls on one screen */
     body {
         height: 100dvh;
-        height: calc(var(--vh) * 100);
         overflow: hidden;
     }
 
@@ -930,54 +913,46 @@ body {
 
     .game-container {
         padding: 0;
-        gap: var(--mobile-gap);
+        gap: 0;
         height: 100dvh;
-        height: calc(var(--vh) * 100);
         overflow: hidden;
-        display: grid;
-        /* Keep controls row always visible; first row takes remaining height. */
-        grid-template-rows: 1fr auto;
-        grid-template-columns: 1fr var(--panel-w);
-        align-items: start;
-        align-content: start;
-        justify-items: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    /* Top row wrapper: board + side panel in a row */
+    .mobile-top-row {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: flex-start;
     }
 
     .game-board-container {
-        grid-row: 1;
-        grid-column: 1;
-        justify-self: stretch;
-        width: 100%;
+        flex: 1 1 0;
         min-width: 0;
-        max-width: 100%;
+        max-width: calc(100% - var(--panel-w));
         display: flex;
+        align-items: flex-start;
         justify-content: center;
-        /* Give the container a real height so Board.resizeCanvas() can size up to the
-           available viewport space (otherwise it can get "stuck" at its initial size). */
-        height: calc((var(--vh) * 100) - var(--controls-h, var(--bottom-h)));
-        max-height: calc((var(--vh) * 100) - var(--controls-h, var(--bottom-h)));
-        min-height: 0;
-        margin: 0;
-        border-radius: 0;
-        /* Remove the desktop "card" styling so the empty left space doesn't show as a white strip.
-           The canvas itself remains the visible playfield. */
         background: transparent;
         border: 0;
         box-shadow: none;
     }
 
     .mobile-side-panel {
-        grid-row: 1;
-        grid-column: 2;
+        flex: 0 0 var(--panel-w);
+        width: var(--panel-w);
+        align-self: flex-start;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        padding: 0.35rem 0.35rem 0.25rem;
+        padding: 0.35rem;
         background: transparent;
         border-left: 2px solid var(--blue);
-        align-self: start;
         overflow: auto;
-        min-height: 0;
         max-height: 100%;
         color: var(--mobile-panel-text);
     }
@@ -991,31 +966,30 @@ body {
     }
 
     .touch-controls {
-        grid-row: 2;
-        grid-column: 1 / -1;
-        width: 100%;
-        margin: 0;
-        border-radius: 0;
-        border-top: 2px solid var(--blue);
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0;
+        padding: 0.35rem;
+        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+        border-radius: 0;
+        border-top: 2px solid var(--blue);
     }
 
     .touch-dpad {
         width: var(--dpad);
-        height: calc(var(--btn) * 2 + 2px);
         margin: 0.25rem auto 0.15rem;
     }
 
     .touch-dpad-btn {
         width: var(--btn);
         height: var(--btn);
-        font-size: clamp(1.4rem, calc(var(--vh) * 2.2), 1.9rem);
+        font-size: clamp(1.4rem, 2.2vh, 1.9rem);
     }
 
     .touch-toggle-btn {
-        min-width: clamp(50px, calc(var(--vh) * 7.2), 64px);
+        min-width: clamp(50px, 7.2vh, 64px);
         padding: 0.4rem 0.35rem;
     }
 
@@ -1043,11 +1017,10 @@ body {
     }
 }
 
-/* Short mobile viewports: shrink controls further so the D-pad fits fully. */
+/* Short mobile viewports: shrink controls further */
 @media (max-width: 768px) and (max-height: 650px) {
     :root {
-        --btn: clamp(36px, calc(var(--vh) * 5.2), 54px);
-        --bottom-h: calc(var(--btn) * 2.4 + 1.4rem);
+        --btn: clamp(36px, 5.2vh, 54px);
     }
 
     .touch-toggle-btn {
@@ -1057,7 +1030,7 @@ body {
 
     .mobile-side-panel {
         gap: 0.35rem;
-        padding: 0.25rem 0.25rem 0.2rem;
+        padding: 0.25rem;
     }
 
     .mobile-flags .theme-btn {
@@ -1072,6 +1045,7 @@ body {
         font-size: 0.52rem;
     }
 }
+
 
 /* Prevent accidental page scroll while playing on mobile */
 body.no-scroll {

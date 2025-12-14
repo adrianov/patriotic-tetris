@@ -40,38 +40,11 @@ class Game {
         this.lastTimeUiUpdate = 0;
         this.lastNextKey = '';
         this.needsRender = true;
-        this.lastVhPx = 0;
-        this.lastViewportCheck = 0;
         
         this.init();
     }
 
-    getViewportHeight() {
-        const vvH = window.visualViewport?.height;
-        if (Number.isFinite(vvH) && vvH > 0) return Math.min(window.innerHeight, vvH);
-
-        // Some mobile browsers don't expose visualViewport but still report a layout viewport
-        // that better matches what's actually visible (excluding URL/address bars).
-        const docH = document.documentElement?.clientHeight;
-        if (Number.isFinite(docH) && docH > 0) return Math.min(window.innerHeight, docH);
-
-        return window.innerHeight;
-    }
-
-    syncControlsHeight(isMobileLayout) {
-        if (!isMobileLayout) {
-            document.documentElement.style.removeProperty('--controls-h');
-            return;
-        }
-
-        const controls = document.querySelector('.touch-controls');
-        const rect = controls?.getBoundingClientRect();
-        if (rect?.height) {
-            document.documentElement.style.setProperty('--controls-h', `${rect.height}px`);
-        }
-    }
-
-    resizeAfterViewportChange() {
+    resizeBoard() {
         if (!this.board || typeof this.board.resizeCanvas !== 'function') return;
         requestAnimationFrame(() => {
             this.board.resizeCanvas();
@@ -84,14 +57,14 @@ class Game {
     }
     
     init() {
-        this.updateViewportUnits();
+        this.resizeBoard();
         this.setupEventListeners();
         this.board.setupCanvas(this.canvas);
         this.startNewGame();
         this.gameLoop();
 
         // Some browsers settle the final viewport size shortly after load (URL bar state).
-        setTimeout(() => this.updateViewportUnits(true), 250);
+        setTimeout(() => this.resizeBoard(), 250);
     }
     
     setupEventListeners() {
@@ -124,25 +97,23 @@ class Game {
         }
 
         window.addEventListener('resize', () => {
-            this.updateViewportUnits();
+            this.resizeBoard();
             this.setScrollLock();
         });
 
         // iOS Safari/Chrome: visual viewport changes when browser bars show/hide.
         if (window.visualViewport) {
-            const onVvChange = () => this.updateViewportUnits();
-            window.visualViewport.addEventListener('resize', onVvChange);
-            window.visualViewport.addEventListener('scroll', onVvChange);
+            window.visualViewport.addEventListener('resize', () => this.resizeBoard());
         }
 
         window.addEventListener('orientationchange', () => {
             // Safari needs a beat to settle the new innerHeight.
-            setTimeout(() => this.updateViewportUnits(), 50);
+            setTimeout(() => this.resizeBoard(), 50);
         });
 
         // BFCache restore / app-switch return sometimes doesn't fire resize consistently.
-        window.addEventListener('pageshow', () => this.updateViewportUnits(true));
-        window.addEventListener('focus', () => this.updateViewportUnits(true));
+        window.addEventListener('pageshow', () => this.resizeBoard());
+        window.addEventListener('focus', () => this.resizeBoard());
 
         // Prevent accidental scroll gestures during play on mobile.
         document.addEventListener('touchmove', (e) => {
@@ -181,20 +152,6 @@ class Game {
         document.addEventListener('pointerdown', onFirst, { passive: true });
         document.addEventListener('keydown', onFirst);
         document.addEventListener('touchstart', onFirst, { passive: true });
-    }
-
-    updateViewportUnits(force = false) {
-        // Use a CSS var for stable layout: height = calc(var(--vh) * 100).
-        const vhPx = this.getViewportHeight() * 0.01;
-        const diff = Math.abs(vhPx - (this.lastVhPx || 0));
-        if (force || diff >= 0.5) {
-            this.lastVhPx = vhPx;
-            document.documentElement.style.setProperty('--vh', `${vhPx}px`);
-        }
-
-        const isMobileLayout = !!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
-        this.syncControlsHeight(isMobileLayout);
-        this.resizeAfterViewportChange();
     }
     
     startNewGame() {
