@@ -913,6 +913,8 @@ body {
 
     .game-container {
         padding: 0;
+        /* Safe area for iPhone notch/status bar at top, home indicator at bottom */
+        padding-top: env(safe-area-inset-top, 0px);
         padding-bottom: env(safe-area-inset-bottom, 0px);
         gap: 0;
         min-height: 100dvh;
@@ -972,8 +974,7 @@ body {
         justify-content: center;
         margin: 0;
         padding: 0.5rem;
-        /* Bottom padding for mobile browser bars (Chrome ~56px, Safari safe-area) */
-        padding-bottom: calc(0.5rem + 56px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 12px));
         border-radius: 0;
         border-top: 2px solid var(--blue);
     }
