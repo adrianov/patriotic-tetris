@@ -11,13 +11,13 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.nextCanvas = document.getElementById('next-piece');
         this.nextCtx = this.nextCanvas.getContext('2d');
-        
+
         this.board = new Board();
         this.pieces = new Pieces();
         this.pieces.board = this.board;
         this.controls = new Controls();
         this.audio = new AudioEngine();
-        
+
         this.score = 0;
         this.level = 1;
         this.lines = 0;
@@ -40,7 +40,7 @@ class Game {
         this.lastTimeUiUpdate = 0;
         this.lastNextKey = '';
         this.needsRender = true;
-        
+
         this.init();
     }
 
@@ -55,7 +55,7 @@ class Game {
     requestRender() {
         this.needsRender = true;
     }
-    
+
     init() {
         this.resizeBoard();
         this.setupEventListeners();
@@ -66,26 +66,29 @@ class Game {
         // Some browsers settle the final viewport size shortly after load (URL bar state).
         setTimeout(() => this.resizeBoard(), 250);
     }
-    
+
     setupEventListeners() {
         // Game controls will be handled by Controls module
         this.controls.setup(this);
+
+        // Hide cursor on game board during active gameplay (desktop only)
+        this.canvas.addEventListener('mousemove', () => this.showCursor());
 
         // Mobile browsers can suspend WebAudio after interruptions; re-resume on any gesture.
         const resumeAudio = () => this.audio.resumeContext();
         document.addEventListener('pointerdown', resumeAudio, { passive: true });
         document.addEventListener('touchstart', resumeAudio, { passive: true });
         document.addEventListener('keydown', resumeAudio);
-        
+
         // UI controls
         document.getElementById('restart-btn').addEventListener('click', () => {
             this.startNewGame();
         });
-        
+
         document.getElementById('mute-btn').addEventListener('click', () => {
             this.audio.toggleMute();
         });
-        
+
         document.getElementById('volume-slider').addEventListener('input', (e) => {
             const value = Number(e.target.value);
             this.audio.setVolume(Number.isFinite(value) ? value / 100 : 0.5);
@@ -153,7 +156,7 @@ class Game {
         document.addEventListener('keydown', onFirst);
         document.addEventListener('touchstart', onFirst, { passive: true });
     }
-    
+
     startNewGame() {
         this.board.reset();
         this.score = 0;
@@ -171,17 +174,18 @@ class Game {
         this.lastFrameTime = 0;
         this.lastTimeUiUpdate = 0;
         this.lastNextKey = '';
-        
+
         this.currentPiece = this.pieces.getRandomPiece();
         this.nextPiece = this.pieces.getRandomPiece();
-        
+
         this.updateUI();
         this.updateTimeUI();
         this.updateHighScoreUI();
         this.setScrollLock();
         this.hideGameOver();
         this.hidePaused();
-        
+        this.showCursor();
+
         // Initialize ghost piece status
         const ghostStatus = document.getElementById('ghost-toggle');
         if (ghostStatus) {
@@ -218,7 +222,7 @@ class Game {
         }
         this.updateHighScoreUI();
     }
-    
+
     gameLoop(currentTime = 0) {
         if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
 
@@ -242,14 +246,14 @@ class Game {
                 this.dropPiece();
                 this.lastDrop = currentTime;
             }
-            
+
             // Handle lock delay - use same timing as drop speed
             if (this.lockDelay > 0 && currentTime - this.lockDelay > this.dropTime) {
                 this.lockPiece();
                 this.lockDelay = 0;
             }
         }
-        
+
         // Only render when needed; keep full-rate rendering during animations.
         if (this.isAnimating || this.needsRender) {
             this.render();
@@ -257,7 +261,7 @@ class Game {
         }
 
         this.lastFrameTime = currentTime;
-        
+
         requestAnimationFrame((time) => this.gameLoop(time));
     }
 
@@ -281,7 +285,7 @@ class Game {
 
     dropPiece() {
         if (!this.currentPiece || this.gameOver || this.paused || this.isAnimating) return;
-        
+
         if (this.board.canMove(this.currentPiece, 0, 1)) {
             this.currentPiece.y++;
             this.lockDelay = 0;
@@ -292,30 +296,30 @@ class Game {
             this.startLockDelay();
         }
     }
-    
+
     isPieceCompletelyStuck() {
         if (!this.currentPiece) return false;
-        
+
         // Can't move down, left, right, or rotate
         return !this.board.canMove(this.currentPiece, 0, 1) &&
-               !this.board.canMove(this.currentPiece, -1, 0) &&
-               !this.board.canMove(this.currentPiece, 1, 0) &&
-               (this.currentPiece.type === 'O' || !this.board.canMove(this.currentPiece, 0, 0, this.pieces.rotatePiece(this.currentPiece)));
+            !this.board.canMove(this.currentPiece, -1, 0) &&
+            !this.board.canMove(this.currentPiece, 1, 0) &&
+            (this.currentPiece.type === 'O' || !this.board.canMove(this.currentPiece, 0, 0, this.pieces.rotatePiece(this.currentPiece)));
     }
-    
+
     startLockDelay() {
         if (this.lockDelay === 0) {
             this.lockDelay = performance.now();
         }
     }
-    
+
     lockPiece() {
         // Prevent double-locking and ensure piece can't move down
         if (!this.currentPiece || this.gameOver) return;
-        
+
         // Only lock if piece can't move down
         if (this.board.canMove(this.currentPiece, 0, 1)) return;
-        
+
         // Lock current piece into the grid
         this.board.lockPiece(this.currentPiece);
         this.currentPiece = null;
@@ -360,19 +364,19 @@ class Game {
             this.endGame();
         }
     }
-    
+
     updateScore(clearedLines) {
         const points = [0, 100, 300, 500, 800];
         this.addPoints(points[clearedLines] * this.level);
         this.lines += clearedLines;
-        
+
         // Level up every 10 lines
         const newLevel = Math.floor(this.lines / 10) + 1;
         if (newLevel > this.level) {
             this.level = newLevel;
             this.applyDropTime();
         }
-        
+
         this.updateUI();
     }
 
@@ -393,7 +397,7 @@ class Game {
         this.addPoints(points);
         this.updateUI();
     }
-    
+
     updateUI() {
         document.getElementById('score').textContent = this.score;
         const boostPct = this.speedBoost * 20;
@@ -428,21 +432,21 @@ class Game {
             mTime.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     }
-    
+
     render() {
         // Draw board
         this.board.render(this.ctx);
-        
+
         // Draw ghost piece
         if (this.showGhostPiece && this.currentPiece && !this.gameOver && !this.paused && !this.isAnimating && this.currentPiece.shape) {
             this.pieces.renderGhostPiece(this.ctx, this.currentPiece, this.board);
         }
-        
+
         // Draw current piece
         if (this.currentPiece && !this.gameOver && !this.paused) {
             this.pieces.renderPiece(this.ctx, this.currentPiece, this.board);
         }
-        
+
         // Draw next piece only when it changes (saves CPU/GPU on mobile).
         const nextKey = this.nextPiece
             ? `${this.nextCanvas.width}x${this.nextCanvas.height}:${this.nextPiece.type}:${this.nextPiece.color}`
@@ -469,13 +473,13 @@ class Game {
             }
         }
     }
-    
+
     pause() {
         this.paused = !this.paused;
 
         // Prevent a large delta on resume.
         this.lastFrameTime = performance.now();
-        
+
         if (this.paused) {
             this.showPaused();
         } else {
@@ -485,18 +489,19 @@ class Game {
         this.setScrollLock();
         this.requestRender();
     }
-    
+
     showPaused() {
         document.getElementById('paused').classList.remove('hidden');
     }
-    
+
     hidePaused() {
         document.getElementById('paused').classList.add('hidden');
     }
-    
+
     endGame() {
         this.gameOver = true;
         this.setScrollLock();
+        this.showCursor();
         this.audio.playGameOver();
         this.showGameOver();
         this.requestRender();
@@ -507,7 +512,7 @@ class Game {
         const shouldLock = isMobile && !this.paused && !this.gameOver;
         document.body.classList.toggle('no-scroll', shouldLock);
     }
-    
+
     showGameOver() {
         document.getElementById('final-score').textContent = this.score;
         document.getElementById('game-over').classList.remove('hidden');
@@ -521,11 +526,11 @@ class Game {
             this.audio.playHighScore();
         }
     }
-    
+
     hideGameOver() {
         document.getElementById('game-over').classList.add('hidden');
     }
-    
+
     toggleGhostPiece() {
         this.showGhostPiece = !this.showGhostPiece;
         const statusElement = document.getElementById('ghost-toggle');
@@ -533,6 +538,15 @@ class Game {
             statusElement.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
         this.requestRender();
+    }
+
+    hideCursor() {
+        if (this.gameOver || this.paused) return;
+        this.canvas.classList.add('cursor-hidden');
+    }
+
+    showCursor() {
+        this.canvas.classList.remove('cursor-hidden');
     }
 }
 

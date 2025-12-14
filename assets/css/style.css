@@ -12,13 +12,18 @@
     /* Typography */
     --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --font-display: 'Orbitron', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-    
+
     /* High contrast background colors - excellent contrast with white pieces */
-    --bg-light: #C5D9F0;      /* Medium-light blue - strong contrast */
-    --bg-medium: #A8C5E0;     /* Medium blue - very good contrast */
-    --bg-dark: #8BB4D0;       /* Darker blue - for UI elements */
-    --text-dark: #1A365D;       /* Dark blue text - good contrast */
-    --border-light: #7AA3C0;    /* Medium blue borders */
+    --bg-light: #C5D9F0;
+    /* Medium-light blue - strong contrast */
+    --bg-medium: #A8C5E0;
+    /* Medium blue - very good contrast */
+    --bg-dark: #8BB4D0;
+    /* Darker blue - for UI elements */
+    --text-dark: #1A365D;
+    /* Dark blue text - good contrast */
+    --border-light: #7AA3C0;
+    /* Medium blue borders */
 
     /* Layout colors */
     --page-bg-light: var(--bg-light);
@@ -93,10 +98,13 @@
 :root[data-theme="imperial"] {
     /* Imperial: white page, gold panels, gold playfield, black footer */
     --white: #FFFFFF;
-    --blue: #B58E24;          /* borders / accents */
-    --red: #1A1A1A;           /* avoid red dominance in imperial */
+    --blue: #B58E24;
+    /* borders / accents */
+    --red: #1A1A1A;
+    /* avoid red dominance in imperial */
     --gold: #D4AF37;
-    --dark-blue: #0B0B0B;     /* footer black */
+    --dark-blue: #0B0B0B;
+    /* footer black */
     --light-red: #C9B07A;
 
     /* Page background */
@@ -141,8 +149,10 @@
     --shadow-accent: rgba(0, 0, 0, 0.18);
 
     /* Board/playfield background: mid-tone for contrast with white/gold/black pieces */
-    --board-bg: #1B5E3B;   /* roulette green */
-    --board-grid: #164A2F; /* darker green grid */
+    --board-bg: #1B5E3B;
+    /* roulette green */
+    --board-grid: #164A2F;
+    /* darker green grid */
     --cell-border: rgba(0, 0, 0, 0.35);
     --cell-highlight: rgba(255, 255, 255, 0.18);
     --cell-shadow: rgba(0, 0, 0, 0.22);
@@ -163,7 +173,8 @@
 /* Theme: Soviet (deep red / gold / warm cream + Moscow accent) */
 :root[data-theme="soviet"] {
     --white: #FFF3E0;
-    --blue: #00796B; /* Moscow accent */
+    --blue: #00796B;
+    /* Moscow accent */
     --red: #8A0303;
     --gold: #D4AF37;
     --dark-blue: #4E0000;
@@ -359,11 +370,17 @@ body {
 }
 
 /* Panel Styles */
-.score-panel, .level-panel, .next-piece-panel, .controls-panel, .audio-controls, .stats-panel {
+.score-panel,
+.level-panel,
+.next-piece-panel,
+.controls-panel,
+.audio-controls,
+.stats-panel {
     margin-bottom: 0.8rem;
 }
 
-.score-value, .level-value {
+.score-value,
+.level-value {
     font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: bold;
@@ -439,6 +456,11 @@ body {
     touch-action: none;
 }
 
+/* Hide cursor during active gameplay on desktop */
+#game-board.cursor-hidden {
+    cursor: none;
+}
+
 /* Mobile HUD removed (replaced by right-side control panel on mobile) */
 
 /* Game Over Overlay */
@@ -472,6 +494,7 @@ body {
 
 /* Desktop: improve overlay readability against busy boards */
 @media (min-width: 769px) {
+
     .game-over h2,
     .game-over p {
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
@@ -501,9 +524,19 @@ body {
 }
 
 @keyframes highscorePop {
-    0% { transform: scale(0.9); opacity: 0.0; }
-    60% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1.0); }
+    0% {
+        transform: scale(0.9);
+        opacity: 0.0;
+    }
+
+    60% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.0);
+    }
 }
 
 /* Paused Overlay */
@@ -538,8 +571,15 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 0.9; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.9;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 .restart-btn {
@@ -698,11 +738,11 @@ body {
     .brand-eagle {
         max-width: 96px;
     }
-    
+
     .game-container {
         padding: 1rem;
     }
-    
+
     .game-sidebar {
         padding: 1rem;
     }
@@ -716,11 +756,11 @@ body {
     .brand-eagle {
         max-width: 84px;
     }
-    
+
     .game-sidebar {
         padding: 0.5rem;
     }
-    
+
     .game-sidebar h2 {
         font-size: 1rem;
     }
@@ -729,7 +769,8 @@ body {
 /* Touch Controls */
 .touch-controls {
     margin-top: 1rem;
-    display: none; /* Hidden by default, shown on mobile */
+    display: none;
+    /* Hidden by default, shown on mobile */
     padding: 1rem;
     background: var(--panel-bg);
     border: 2px solid var(--blue);
@@ -1009,10 +1050,14 @@ body {
         background: rgba(255, 255, 255, 0.82);
         color: var(--text-dark);
     }
-    .game-over h2 { color: var(--text-dark); }
+
+    .game-over h2 {
+        color: var(--text-dark);
+    }
 
     /* Prevent double-tap text selection/callouts while playing on mobile. */
-    .game-container, .game-container * {
+    .game-container,
+    .game-container * {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
@@ -1062,6 +1107,7 @@ body.no-scroll {
     font-weight: bold;
     margin-left: 0.5rem;
     display: inline-block;
-    width: 30px; /* Fixed width to prevent layout shift */
+    width: 30px;
+    /* Fixed width to prevent layout shift */
     text-align: left;
 }

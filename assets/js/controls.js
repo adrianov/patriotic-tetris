@@ -28,6 +28,7 @@ export class Controls {
         if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
             e.preventDefault();
             this.game.increaseSpeed();
+            this.game.hideCursor();
             return;
         }
 
@@ -36,7 +37,9 @@ export class Controls {
             case 'P':
                 e.preventDefault();
                 this.game.pause();
-                break;
+                // Show cursor when pausing, hide when resuming
+                if (this.game.paused) this.game.showCursor();
+                return;
             case 'ArrowLeft':
                 e.preventDefault();
                 this.moveSide(-1);
@@ -74,7 +77,10 @@ export class Controls {
                 e.preventDefault();
                 this.game.toggleGhostPiece();
                 break;
+            default:
+                return; // Don't hide cursor for unrelated keys
         }
+        this.game.hideCursor();
     }
 
     movePiece(dx, dy) {
