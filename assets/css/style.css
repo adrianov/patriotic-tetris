@@ -913,8 +913,10 @@ body {
 
     .game-container {
         padding: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         gap: 0;
-        height: 100dvh;
+        min-height: 100dvh;
+        max-height: 100dvh;
         overflow: hidden;
         display: grid;
         grid-template-columns: 1fr var(--panel-w);
@@ -969,8 +971,9 @@ body {
         align-items: center;
         justify-content: center;
         margin: 0;
-        padding: 0.35rem;
-        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+        padding: 0.5rem;
+        /* Bottom padding for mobile browser bars (Chrome ~56px, Safari safe-area) */
+        padding-bottom: calc(0.5rem + 56px + env(safe-area-inset-bottom, 0px));
         border-radius: 0;
         border-top: 2px solid var(--blue);
     }
