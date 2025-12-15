@@ -3,6 +3,7 @@ export class AudioEngine {
     constructor() {
         this.audioContext = null;
         this.didInit = false;
+        this.didUnlock = false;
         this.masterVolume = 0.5;
         this.isMuted = false;
         this.masterGain = null;
@@ -81,6 +82,8 @@ export class AudioEngine {
         if (this.audioContext && this.audioContext.state !== 'running') {
             try {
                 this.resumePromise = this.audioContext.resume();
+                // iOS needs a sound played during the gesture to fully unlock
+                this.unlockWithSilence();
             } catch {
                 this.resumePromise = null;
             }
@@ -88,6 +91,20 @@ export class AudioEngine {
         this.hookFlushAfterResume();
         this.buildSfxBuffers();
         return this.resumePromise;
+    }
+
+    // Play a silent buffer to unlock iOS audio during user gesture
+    unlockWithSilence() {
+        if (this.didUnlock || !this.audioContext) return;
+        this.didUnlock = true;
+
+        try {
+            const buffer = this.audioContext.createBuffer(1, 1, this.audioContext.sampleRate);
+            const source = this.audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(this.audioContext.destination);
+            source.start(0);
+        } catch { /* ignore */ }
     }
 
     hookFlushAfterResume() {
@@ -112,6 +129,8 @@ export class AudioEngine {
         if (this.audioContext.state === 'running') flush();
         else if (this.resumePromise && typeof this.resumePromise.then === 'function') {
             this.resumePromise.then(flush).catch(() => {});
+            // iOS sometimes needs a slight delay after resume resolves
+            this.resumePromise.then(() => setTimeout(flush, 50)).catch(() => {});
         }
     }
 
