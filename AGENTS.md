@@ -6,6 +6,7 @@
 - **Lint JS**: `tsc --noEmit --project jsconfig.json`
 - **Complexity check**: `npx eslint assets/js/` (warns if CCN > 10)
 - **Test audio**: Press M to toggle mute, use arrow keys to test sounds
+- **Fix parsing error**: Parsing errors affect the whole file, so to fix them, read the file as a whole, do not read it with limits or partials. And then rewrite file as a whole syntaxically correct.
 
 ## Project Hygiene
 - **TODO.md**: Do **not** remove finished items; mark them as completed instead (use `[x]` or `✅`).
