@@ -42,86 +42,116 @@ export class PieceMovement {
         // Can't move down
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
 
-        // Check if position can be improved by moving left/right
-        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) return false;
-        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) return false;
-
-        // Check if position can be improved by rotating
-        if (this.game.currentPiece.type !== 'O') {
-            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
-            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
-                // Check if rotation would improve the position
-                if (this.wouldImprovePosition(rotatedShape)) return false;
+        // Check if moving left would be a better position
+        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
+            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
+            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
+                return false; // Position can be improved
             }
         }
 
-        // If position cannot be improved by any means, piece is stuck
+        // Check if moving right would be a better position
+        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
+            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
+            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
+                return false; // Position can be improved
+            }
+        }
+
+        // Check if rotating would be a better position
+        if (this.game.currentPiece.type !== 'O') {
+            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
+            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
+                const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+                if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
+                    return false; // Position can be improved
+                }
+            }
+        }
+
+        // If position cannot be improved, piece is stuck
         return true;
     }
 
-    // Check if rotating would improve the piece position
-    wouldImprovePosition(rotatedShape) {
-        const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+    // Count gaps under a piece (simplified version)
+    countGapsUnderPiece(piece) {
+        let gaps = 0;
 
-        // Check if rotation would allow the piece to move down further
-        if (this.game.board.canMove(testPiece, 0, 1)) return true;
-
-        // Check if rotation would reduce gaps
-        const currentGaps = this.getGapsUnderPiece(this.game.currentPiece);
-        const testGaps = this.getGapsUnderPiece(testPiece);
-
-        return testGaps.length < currentGaps.length;
-    }
-
-    // Get gaps under a piece (empty cells with piece cells above them)
-    getGapsUnderPiece(piece) {
-        const gaps = [];
-
-        for (let py = 0; py < piece.shape.length; py++) {
-            for (let px = 0; px < piece.shape[py].length; px++) {
-                if (!piece.shape[py][px]) continue;
-
-                const boardX = piece.x + px;
-                const boardY = piece.y + py + 1; // Cell below this piece cell
-
-                // Check if there's a gap (empty cell with piece cell above)
-                if (boardY < this.game.board.height &&
-                    boardX >= 0 && boardX < this.game.board.width &&
-                    !this.game.board.grid[boardY][boardX]) {
-
-                    // Check if this gap is "problematic" - i.e., it would create a hole
-                    // A gap is problematic if there's a block adjacent to it on the same row
-                    // or if there's a block above it that would make it hard to fill
-                    if (this.isProblematicGap(boardX, boardY)) {
-                        gaps.push({ x: boardX, y: boardY });
-                    }
+        // For each column of the piece, check if there's a gap below
+        for (let px = 0; px < piece.shape[0].length; px++) {
+            // Find the lowest row of this piece in this column
+            let lowestPieceRow = -1;
+            for (let py = 0; py < piece.shape.length; py++) {
+                if (piece.shape[py][px]) {
+                    lowestPieceRow = Math.max(lowestPieceRow, py);
                 }
+            }
+
+            if (lowestPieceRow < 0) continue; // Skip if no piece in this column
+
+            // Check if there's a gap directly below this column
+            const belowY = piece.y + lowestPieceRow + 1;
+            const belowX = piece.x + px;
+
+            // If the cell below is empty and within bounds, it's a potential gap
+            if (belowY < this.game.board.height &&
+                belowX >= 0 && belowX < this.game.board.width &&
+                !this.game.board.grid[belowY][belowX]) {
+                gaps++;
             }
         }
 
         return gaps;
     }
 
-    // Check if a gap is problematic (would create a hard-to-fill hole)
-    isProblematicGap(x, y) {
-        // If at the bottom of the board, it's not a problematic gap
-        if (y >= this.game.board.height - 1) return false;
+    // Simple heuristic to evaluate if a position is better than current
+    // Returns true if the new position is better
+    isBetterPosition(currentPiece, testPiece) {
+        // Rule 1: Prefer positions that create fewer gaps under the piece
+        const currentGaps = this.countGapsUnderPiece(currentPiece);
+        const testGaps = this.countGapsUnderPiece(testPiece);
+        if (testGaps < currentGaps) return true;
+        if (testGaps > currentGaps) return false;
 
-        // Check if there's a block directly below the gap
-        if (y + 1 < this.game.board.height && this.game.board.grid[y + 1][x]) {
-            return true; // This would create a hole
+        // Rule 2: If gaps are equal, prefer positions that can slide under overhangs
+        const currentCanSlide = this.canSlideUnderOverhang(currentPiece);
+        const testCanSlide = this.canSlideUnderOverhang(testPiece);
+        if (testCanSlide && !currentCanSlide) return true;
+        if (!testCanSlide && currentCanSlide) return false;
+
+        // Rule 3: Prefer lower positions (closer to the bottom)
+        if (testPiece.y > currentPiece.y) return true;
+        if (testPiece.y < currentPiece.y) return false;
+
+        // If all rules are equal, positions are considered equivalent
+        return false;
+    }
+
+    // Check if the piece can slide under an overhang
+    canSlideUnderOverhang(piece) {
+        // Check if there's an overhang above the piece that it could slide under
+        for (let px = 0; px < piece.shape[0].length; px++) {
+            // Find the highest row of this piece in this column
+            let highestPieceRow = piece.shape.length;
+            for (let py = 0; py < piece.shape.length; py++) {
+                if (piece.shape[py][px]) {
+                    highestPieceRow = Math.min(highestPieceRow, py);
+                }
+            }
+
+            if (highestPieceRow >= piece.shape.length) continue; // Skip if no piece in this column
+
+            // Check if there's a block above this column
+            const aboveY = piece.y + highestPieceRow - 1;
+            if (aboveY >= 0 && this.game.board.grid[aboveY]?.[piece.x + px]) {
+                // Check if there's empty space to the side that could allow sliding
+                const leftEmpty = piece.x > 0 && this.game.board.isCellFree(piece.x - 1, aboveY);
+                const rightEmpty = piece.x + piece.shape[0].length < this.game.board.width &&
+                    this.game.board.isCellFree(piece.x + piece.shape[0].length, aboveY);
+
+                if (leftEmpty || rightEmpty) return true;
+            }
         }
-
-        // Check if there's a block adjacent to the gap on the same row
-        // that would make it hard to fill
-        const hasLeftBlock = x > 0 && this.game.board.grid[y][x - 1];
-        const hasRightBlock = x < this.game.board.width - 1 && this.game.board.grid[y][x + 1];
-
-        // If there are blocks on both sides, it's a problematic gap
-        if (hasLeftBlock && hasRightBlock) return true;
-
-        // Check if there's a block above the gap that would make it hard to fill
-        if (y > 0 && this.game.board.grid[y - 1][x]) return true;
 
         return false;
     }
