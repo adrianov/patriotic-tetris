@@ -100,8 +100,9 @@ export class PieceMovement {
         // Get gaps in test position
         const testGaps = this.getGapsUnderPiece(testPiece);
         
-        // If test position has fewer gaps, it would close gaps
-        return testGaps.length < currentGaps.length;
+        // If test position has no gaps, it would close all gaps
+        // Otherwise, if it has fewer gaps, it would close some gaps
+        return testGaps.length === 0 || testGaps.length < currentGaps.length;
     }
 
     // Get gaps under a piece (empty cells with piece cells above them)
