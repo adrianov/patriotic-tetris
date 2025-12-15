@@ -11,12 +11,10 @@
 
 ## Next after themes (Phase 7)
 - [x] Implement intelligent piece locking mechanism
-- [x] Fix piece locking for pieces that create unavoidable gaps (e.g., Z piece on empty field)
-- [x] Improve gap detection to distinguish between problematic and non-problematic gaps
-- [x] Optimize piece locking to check if rotation would eliminate all gaps, not just reduce them
-- [x] Fix Z piece locking to only wait if rotation would eliminate all gaps
-- [x] Fix false positive locking when rotation would enable further movement
-- [x] Simplify piece locking logic to focus on whether position can be improved
+- [x] Simplify and optimize piece locking algorithm to count gaps
+- [x] Fix gap definition to only count cells that would create holes
+- [x] Implement ray casting for accurate gap detection
+- [x] Fix gap detection to properly check if moving left/right reduces gaps
 - [ ] Do a manual cross-browser pass (Chrome / Firefox / Safari / Edge)
 - [ ] Do a long-play performance check (FPS + memory) and fix any regressions
 - [ ] Verify audio controls + mute work consistently across browsers/devices
