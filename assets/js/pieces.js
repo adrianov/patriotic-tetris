@@ -102,7 +102,7 @@ export class Pieces {
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    this.drawCellScaled(ctx, offsetX + x * cellSize, offsetY + y * cellSize, cellSize, color, board);
+                    this.drawCellScaled(ctx, { x: offsetX + x * cellSize, y: offsetY + y * cellSize, size: cellSize, color }, board);
                 }
             }
         }
@@ -112,11 +112,11 @@ export class Pieces {
         const pixelX = x * board.cellSize;
         const pixelY = y * board.cellSize;
         
-        this.drawCellScaled(ctx, pixelX, pixelY, board.cellSize, color, board);
+        this.drawCellScaled(ctx, { x: pixelX, y: pixelY, size: board.cellSize, color }, board);
     }
-    
-    drawCellScaled(ctx, x, y, size, color, board) {
-        // Glow effect is expensive on mobile GPUs; reduce it on small screens.
+
+    drawCellScaled(ctx, rect, board) {
+        const { x, y, size, color } = rect;
         const blur = board?.isMobile ? 2 : 6;
         ctx.shadowColor = color;
         ctx.shadowBlur = blur;
@@ -170,24 +170,15 @@ export class Pieces {
     }
     
     renderGhostPiece(ctx, piece, board) {
-        const ghostPiece = this.getGhostPiece(piece, board);
-        
-        if (!ghostPiece) return;
-        const color = ghostPiece.color || '#FFFFFF';
-        
-        // Only render ghost piece if it's within board bounds and not colliding with existing pieces
-        for (let y = 0; y < ghostPiece.shape.length; y++) {
-            for (let x = 0; x < ghostPiece.shape[y].length; x++) {
-                if (ghostPiece.shape[y][x]) {
-                    const boardX = ghostPiece.x + x;
-                    const boardY = ghostPiece.y + y;
-                    
-                    // Only draw if within board boundaries and cell is not occupied
-                    if (boardX >= 0 && boardX < board.width && boardY >= 0 && boardY < board.height && 
-                        board.grid[boardY] && !board.grid[boardY][boardX]) {
-                        this.drawGhostCell(ctx, boardX, boardY, color, board);
-                    }
-                }
+        const ghost = this.getGhostPiece(piece, board);
+        if (!ghost) return;
+
+        const color = ghost.color || '#FFFFFF';
+        for (let y = 0; y < ghost.shape.length; y++) {
+            for (let x = 0; x < ghost.shape[y].length; x++) {
+                if (!ghost.shape[y][x]) continue;
+                const bx = ghost.x + x, by = ghost.y + y;
+                if (board.isCellFree(bx, by)) this.drawGhostCell(ctx, bx, by, color, board);
             }
         }
     }
