@@ -341,72 +341,47 @@ export class Board {
         return !this.canMove(piece, 0, 0);
     }
 
-    // Check if piece has clean support below (no air gaps)
-    // Returns true if every bottom edge cell is at board bottom or has a block below
-    isCleanLanding(piece) {
-        for (let y = 0; y < piece.shape.length; y++) {
-            for (let x = 0; x < piece.shape[y].length; x++) {
-                if (!piece.shape[y][x]) continue;
+    // Returns true if piece should lock immediately: clean landing AND no fillable gap
+    shouldLockClean(piece) {
+        for (let py = 0; py < piece.shape.length; py++) {
+            const boardY = piece.y + py;
+            let left = null, right = null;
 
-                // Check if this cell is at bottom edge of piece shape
-                const hasShapeCellBelow = (y + 1 < piece.shape.length) && piece.shape[y + 1][x];
-                if (hasShapeCellBelow) continue;
+            for (let px = 0; px < piece.shape[py].length; px++) {
+                if (!piece.shape[py][px]) continue;
+                const bx = piece.x + px;
+                if (left === null || bx < left) left = bx;
+                if (right === null || bx > right) right = bx;
 
-                const boardX = piece.x + x;
-                const boardY = piece.y + y;
-                const belowY = boardY + 1;
+                // Check clean landing (bottom edge cells only)
+                const hasShapeCellBelow = (py + 1 < piece.shape.length) && piece.shape[py + 1][px];
+                if (!hasShapeCellBelow) {
+                    const belowY = boardY + 1;
+                    if (belowY < this.height && !this.grid[belowY]?.[bx]) return false;
+                }
+            }
 
-                // At board bottom - clean
-                if (belowY >= this.height) continue;
+            if (left === null || boardY < 0 || boardY >= this.height) continue;
 
-                // Has block below - clean
-                if (this.grid[belowY]?.[boardX]) continue;
+            // Check fillable gap on left (empty cell + block above + block further left)
+            if (this.canMove(piece, -1, 0) && left > 0 && !this.grid[boardY][left - 1]) {
+                if (boardY > 0 && this.grid[boardY - 1]?.[left - 1]) {
+                    for (let x = left - 2; x >= 0; x--) {
+                        if (this.grid[boardY][x]) return false;
+                    }
+                }
+            }
 
-                // Empty space below - not clean
-                return false;
+            // Check fillable gap on right
+            if (this.canMove(piece, 1, 0) && right < this.width - 1 && !this.grid[boardY][right + 1]) {
+                if (boardY > 0 && this.grid[boardY - 1]?.[right + 1]) {
+                    for (let x = right + 2; x < this.width; x++) {
+                        if (this.grid[boardY][x]) return false;
+                    }
+                }
             }
         }
         return true;
-    }
-
-    // Check if there's a fillable gap: empty cell with block above AND block on same row
-    canFillAdjacentGap(piece) {
-        for (let py = 0; py < piece.shape.length; py++) {
-            const boardY = piece.y + py;
-            if (boardY < 0 || boardY >= this.height) continue;
-
-            // Find piece bounds on this row
-            let left = null, right = null;
-            for (let px = 0; px < piece.shape[py].length; px++) {
-                if (piece.shape[py][px]) {
-                    const bx = piece.x + px;
-                    if (left === null || bx < left) left = bx;
-                    if (right === null || bx > right) right = bx;
-                }
-            }
-            if (left === null) continue;
-
-            // Gap on left: empty cell with block above + block further left on same row
-            if (this.canMove(piece, -1, 0) && left > 0 && !this.grid[boardY][left - 1]) {
-                const hasBlockAbove = boardY > 0 && this.grid[boardY - 1]?.[left - 1];
-                if (hasBlockAbove) {
-                    for (let x = left - 2; x >= 0; x--) {
-                        if (this.grid[boardY][x]) return true;
-                    }
-                }
-            }
-
-            // Gap on right: empty cell with block above + block further right on same row
-            if (this.canMove(piece, 1, 0) && right < this.width - 1 && !this.grid[boardY][right + 1]) {
-                const hasBlockAbove = boardY > 0 && this.grid[boardY - 1]?.[right + 1];
-                if (hasBlockAbove) {
-                    for (let x = right + 2; x < this.width; x++) {
-                        if (this.grid[boardY][x]) return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     render(ctx) {
