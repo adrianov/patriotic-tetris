@@ -3,12 +3,13 @@ export class Controls {
     constructor() {
         this.game = null;
         this.holdTimers = new Map();
-
+        this.keyMap = {};
         this.setupKeyboardListeners();
     }
 
     setup(game) {
         this.game = game;
+        this.keyMap = this.buildKeyMap();
         this.setupTouchControls();
     }
 
@@ -25,62 +26,33 @@ export class Controls {
     handleKeyPress(e) {
         if (!this.game || this.game.gameOver) return;
 
-        if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
-            e.preventDefault();
-            this.game.increaseSpeed();
-            this.game.hideCursor();
-            return;
-        }
+        const key = e.key.toLowerCase();
+        const action = this.keyMap[key] || this.keyMap[e.key] || this.keyMap[e.code];
+        if (!action) return;
 
-        switch (e.key) {
-            case 'p':
-            case 'P':
-                e.preventDefault();
-                this.game.pause();
-                // Show cursor when pausing, hide when resuming
-                if (this.game.paused) this.game.showCursor();
-                return;
-            case 'ArrowLeft':
-                e.preventDefault();
-                this.moveSide(-1);
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                this.moveSide(1);
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                this.softDrop();
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                this.rotatePiece();
-                break;
-            case ' ':
-                e.preventDefault();
-                this.hardDrop();
-                break;
-            case 'r':
-            case 'R':
-                if (!e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
-                    this.game.startNewGame();
-                }
-                break;
-            case 'm':
-            case 'M':
-                e.preventDefault();
-                this.game.audio.toggleMute();
-                break;
-            case 'g':
-            case 'G':
-                e.preventDefault();
-                this.game.toggleGhostPiece();
-                break;
-            default:
-                return; // Don't hide cursor for unrelated keys
-        }
+        // R key: ignore if ctrl/cmd held (browser refresh)
+        if (key === 'r' && (e.ctrlKey || e.metaKey)) return;
+
+        e.preventDefault();
+        action();
         this.game.hideCursor();
+    }
+
+    buildKeyMap() {
+        return {
+            '+': () => this.game.increaseSpeed(),
+            '=': () => this.game.increaseSpeed(),
+            'NumpadAdd': () => this.game.increaseSpeed(),
+            'p': () => { this.game.pause(); if (this.game.paused) this.game.showCursor(); },
+            'arrowleft': () => this.moveSide(-1),
+            'arrowright': () => this.moveSide(1),
+            'arrowdown': () => this.softDrop(),
+            'arrowup': () => this.rotatePiece(),
+            ' ': () => this.hardDrop(),
+            'r': () => this.game.startNewGame(),
+            'm': () => this.game.audio.toggleMute(),
+            'g': () => this.game.toggleGhostPiece(),
+        };
     }
 
     movePiece(dx, dy) {
@@ -195,17 +167,8 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Lock immediately if completely stuck, or clean landing with no fillable gaps
-                const dominated = this.game.isPieceCompletelyStuck();
-                const clean = this.game.board.isCleanLanding(piece);
-                const hasGap = this.game.board.canFillAdjacentGap(piece);
-
-                if (dominated || (clean && !hasGap)) {
-                    this.game.lockPiece();
-                } else {
-                    this.game.startLockDelay();
-                }
-                // Clear animation flag
+                (this.game.isPieceCompletelyStuck() || this.game.board.shouldLockClean(piece))
+                    ? this.game.lockPiece() : this.game.startLockDelay();
                 this.game.isAnimating = false;
             }
         };
