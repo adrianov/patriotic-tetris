@@ -451,9 +451,14 @@ body {
     border: 4px solid var(--red);
     border-radius: 10px;
     box-shadow: 0 8px 25px var(--shadow-board);
-    background: transparent;
+    background: var(--board-bg);
     display: block;
     touch-action: none;
+}
+
+/* Prevent flicker: hide canvas until JS sets dimensions */
+#game-board:not([data-ready]) {
+    visibility: hidden;
 }
 
 /* Hide cursor during active gameplay on desktop */

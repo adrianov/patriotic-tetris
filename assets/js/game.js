@@ -45,11 +45,10 @@ class Game {
     }
 
     resizeBoard() {
-        if (!this.board || typeof this.board.resizeCanvas !== 'function') return;
-        requestAnimationFrame(() => {
-            this.board.resizeCanvas();
-            this.requestRender();
-        });
+        if (!this.board || typeof this.board.resizeCanvas !== 'function') return false;
+        const success = this.board.resizeCanvas();
+        this.requestRender();
+        return success;
     }
 
     requestRender() {
@@ -57,14 +56,32 @@ class Game {
     }
 
     init() {
-        this.resizeBoard();
-        this.setupEventListeners();
         this.board.setupCanvas(this.canvas);
+        this.setupEventListeners();
         this.startNewGame();
-        this.gameLoop();
 
-        // Some browsers settle the final viewport size shortly after load (URL bar state).
-        setTimeout(() => this.resizeBoard(), 250);
+        // Mark canvas ready to show (CSS hides it until this point)
+        // On mobile, layout may not be ready yet - retry briefly if needed
+        if (this.board.cssWidth > 0) {
+            this.canvas.setAttribute('data-ready', '');
+        } else {
+            this.retryShowCanvas(3);
+        }
+        this.gameLoop();
+    }
+
+    retryShowCanvas(attemptsLeft) {
+        if (attemptsLeft <= 0) {
+            this.canvas.setAttribute('data-ready', '');
+            return;
+        }
+        setTimeout(() => {
+            if (this.resizeBoard() && this.board.cssWidth > 0) {
+                this.canvas.setAttribute('data-ready', '');
+            } else {
+                this.retryShowCanvas(attemptsLeft - 1);
+            }
+        }, 100);
     }
 
     setupEventListeners() {
@@ -99,24 +116,29 @@ class Game {
             resetHighBtn.addEventListener('click', () => this.resetHighScore());
         }
 
-        window.addEventListener('resize', () => {
-            this.resizeBoard();
-            this.setScrollLock();
-        });
+        // Debounced resize handler to prevent flickering
+        let resizeTimer = 0;
+        const handleResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                this.resizeBoard();
+                this.setScrollLock();
+            }, 50);
+        };
+
+        window.addEventListener('resize', handleResize);
 
         // iOS Safari/Chrome: visual viewport changes when browser bars show/hide.
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => this.resizeBoard());
+            window.visualViewport.addEventListener('resize', handleResize);
         }
 
-        window.addEventListener('orientationchange', () => {
-            // Safari needs a beat to settle the new innerHeight.
-            setTimeout(() => this.resizeBoard(), 50);
-        });
+        window.addEventListener('orientationchange', handleResize);
 
-        // BFCache restore / app-switch return sometimes doesn't fire resize consistently.
-        window.addEventListener('pageshow', () => this.resizeBoard());
-        window.addEventListener('focus', () => this.resizeBoard());
+        // BFCache restore (mobile Safari back/forward navigation)
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) handleResize();
+        });
 
         // Prevent accidental scroll gestures during play on mobile.
         document.addEventListener('touchmove', (e) => {
@@ -225,12 +247,6 @@ class Game {
 
     gameLoop(currentTime = 0) {
         if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
-
-        // Watchdog: if viewport events don't fire (mobile browser quirks), re-sync periodically.
-        if (currentTime - this.lastViewportCheck > 1000) {
-            this.lastViewportCheck = currentTime;
-            this.updateViewportUnits();
-        }
 
         if (!this.gameOver && !this.paused) {
             this.elapsedMs += Math.max(0, currentTime - this.lastFrameTime);

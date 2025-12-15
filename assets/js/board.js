@@ -96,11 +96,6 @@ export class Board {
 
         // Update canvas theme immediately when UI theme changes.
         window.addEventListener('themechange', () => this.refreshTheme());
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            this.resizeCanvas();
-        });
     }
 
     resizeCanvas() {
@@ -118,13 +113,13 @@ export class Board {
         // Available space for canvas
         const availableWidth = containerWidth - paddingH;
         const availableHeight = containerHeight - paddingV;
-        if (availableWidth <= 0 || availableHeight <= 0) return;
+        if (availableWidth <= 0 || availableHeight <= 0) return false;
 
         // Calculate cell size based on both width and height constraints
         const maxCellSizeFromWidth = Math.floor(availableWidth / this.width);
         const maxCellSizeFromHeight = Math.floor(availableHeight / this.height);
         this.cellSize = Math.min(maxCellSizeFromWidth, maxCellSizeFromHeight);
-        if (this.cellSize <= 0) return;
+        if (this.cellSize <= 0) return false;
 
         // Calculate canvas dimensions using the determined cell size
         const canvasWidth = this.cellSize * this.width;
@@ -175,6 +170,7 @@ export class Board {
         // preventing it from expanding to use available viewport space (notably on desktop).
         container.style.width = '';
         container.style.height = '';
+        return true;
     }
 
     buildBackground() {
