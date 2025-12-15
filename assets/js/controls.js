@@ -27,22 +27,37 @@ export class Controls {
         if (!this.game || this.game.gameOver) return;
 
         const key = e.key.toLowerCase();
-        const action = this.keyMap[key] || this.keyMap[e.key] || this.keyMap[e.code];
+        const action = this.getActionForKey(key, e);
         if (!action) return;
-
-        // R key: ignore if ctrl/cmd held (browser refresh)
-        if (key === 'r' && (e.ctrlKey || e.metaKey)) return;
 
         e.preventDefault();
 
+        this.executeKeyAction(key, action);
+    }
+
+    getActionForKey(key, e) {
+        const action = this.keyMap[key] || this.keyMap[e.key] || this.keyMap[e.code];
+        if (!action) return null;
+
+        // R key: ignore if ctrl/cmd held (browser refresh)
+        if (key === 'r' && (e.ctrlKey || e.metaKey)) return null;
+
+        return action;
+    }
+
+    executeKeyAction(key, action) {
         // For movement arrow keys (left, right, down), use repeat logic
-        if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown') {
+        if (this.isMovementKey(key)) {
             this.handleArrowKeyRepeat(key, action);
         } else {
             // For rotation and other keys, execute immediately
             action();
-            this.game.hideCursor();
+            this.game.ui.hideCursor();
         }
+    }
+
+    isMovementKey(key) {
+        return key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown';
     }
 
     handleKeyUp(e) {
@@ -59,12 +74,12 @@ export class Controls {
 
         // Execute action immediately on first press
         action();
-        this.game.hideCursor();
+        this.game.ui.hideCursor();
 
         // Set up repeat timers using the same logic as touch controls
         this.setupRepeatTimer(key, () => {
             action();
-            this.game.hideCursor();
+            this.game.ui.hideCursor();
         });
     }
 
@@ -91,10 +106,10 @@ export class Controls {
 
     buildKeyMap() {
         return {
-            '+': () => this.game.increaseSpeed(),
-            '=': () => this.game.increaseSpeed(),
-            'NumpadAdd': () => this.game.increaseSpeed(),
-            'p': () => { this.game.pause(); if (this.game.paused) this.game.showCursor(); },
+            '+': () => this.game.pieceMovement.increaseSpeed(),
+            '=': () => this.game.pieceMovement.increaseSpeed(),
+            'NumpadAdd': () => this.game.pieceMovement.increaseSpeed(),
+            'p': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); },
             'arrowleft': () => this.moveSide(-1),
             'arrowright': () => this.moveSide(1),
             'arrowdown': () => this.softDrop(),
@@ -102,7 +117,7 @@ export class Controls {
             ' ': () => this.hardDrop(),
             'r': () => this.game.startNewGame(),
             'm': () => this.game.audio.toggleMute(),
-            'g': () => this.game.toggleGhostPiece(),
+            'g': () => this.game.ui.toggleGhostPiece(),
         };
     }
 
@@ -132,7 +147,7 @@ export class Controls {
             this.game.audio.playMove();
             this.game.requestRender();
         } else if (onGround) {
-            this.game.lockPiece();
+            this.game.pieceMovement.lockPiece();
         }
     }
 
@@ -143,13 +158,13 @@ export class Controls {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
             this.game.audio.playDrop();
-            this.game.addDropPoints(1);
+            this.game.pieceMovement.addDropPoints(1);
             this.game.requestRender();
             return;
         }
 
         // If the player asks to move down but it's impossible, lock immediately.
-        this.game.lockPiece();
+        this.game.pieceMovement.lockPiece();
     }
 
     rotatePiece() {
@@ -165,7 +180,7 @@ export class Controls {
             this.game.requestRender();
         } else if (onGround) {
             // Same locking rule as horizontal moves: failed rotation on the ground locks.
-            this.game.lockPiece();
+            this.game.pieceMovement.lockPiece();
         }
     }
 
@@ -188,13 +203,13 @@ export class Controls {
 
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
-            this.game.addDropPoints(dropDistance * 2);
+            this.game.pieceMovement.addDropPoints(dropDistance * 2);
             // Animate the drop
             this.animateHardDrop(startY, tempPiece.y);
             this.game.requestRender();
         } else {
             // Already at bottom and can't move down - lock immediately
-            this.game.lockPiece();
+            this.game.pieceMovement.lockPiece();
         }
     }
 
@@ -218,8 +233,8 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                (this.game.isPieceCompletelyStuck() || this.game.board.shouldLockClean(piece))
-                    ? this.game.lockPiece() : this.game.startLockDelay();
+                (this.game.pieceMovement.isPieceCompletelyStuck() || this.game.board.shouldLockClean(piece))
+                    ? this.game.pieceMovement.lockPiece() : this.game.pieceMovement.startLockDelay();
                 this.game.isAnimating = false;
             }
         };
@@ -263,7 +278,7 @@ export class Controls {
         if (!btn) return;
         btn.classList.toggle('active', this.game.showGhostPiece);
         btn.addEventListener('click', () => {
-            this.game.toggleGhostPiece();
+            this.game.ui.toggleGhostPiece();
             btn.classList.toggle('active', this.game.showGhostPiece);
         });
     }
