@@ -15,6 +15,7 @@
 - [x] Fix gap definition to only count cells that would create holes
 - [x] Implement ray casting for accurate gap detection
 - [x] Fix gap detection to properly check if moving left/right reduces gaps
+- [x] Implement wall kicks (twists) for piece rotation
 - [ ] Do a manual cross-browser pass (Chrome / Firefox / Safari / Edge)
 - [ ] Do a long-play performance check (FPS + memory) and fix any regressions
 - [ ] Verify audio controls + mute work consistently across browsers/devices

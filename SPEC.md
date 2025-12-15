@@ -24,14 +24,14 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 - **7 Tetromino pieces**: I, O, T, S, Z, J, L
 - **10x20 game grid** (standard Tetris dimensions)
 - **Piece rotation** (90-degree clockwise/counterclockwise)
+- **Wall kicks** (twists) - pieces can shift slightly when rotating against walls or in tight spaces
 - **Line clearing** when rows are completed
 - **Gravity** - pieces fall automatically
 - **Collision detection** with other pieces and boundaries
 - **Game over** when pieces reach the top
 
 ### Controls
-- **Arrow Keys**: Left/Right to move, Down to soft drop
-- **Up Arrow**: Rotate piece
+- **Arrow Keys**: Left/Right to move, Up for counter-clockwise rotation, Down for clockwise rotation
 - **Space**: Hard drop (instant drop)
 - **P**: Pause/resume game
 - **R**: Restart game
