@@ -76,6 +76,32 @@ export class Pieces {
         return rotated;
     }
     
+    rotatePieceCounterClockwise(piece) {
+        const rotated = [];
+        const rows = piece.shape.length;
+        const cols = piece.shape[0].length;
+        
+        // Initialize the rotated matrix with the correct dimensions
+        for (let i = 0; i < cols; i++) {
+            rotated[i] = [];
+            for (let j = 0; j < rows; j++) {
+                rotated[i][j] = 0;
+            }
+        }
+        
+        // Perform counter-clockwise rotation
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (piece.shape[y][x]) {
+                    // Counter-clockwise: (x, y) -> (cols-1-x, y)
+                    rotated[cols - 1 - x][y] = piece.shape[y][x];
+                }
+            }
+        }
+        
+        return rotated;
+    }
+    
     renderPiece(ctx, piece, board) {
         const color = piece.color || '#FFFFFF';
         for (let y = 0; y < piece.shape.length; y++) {

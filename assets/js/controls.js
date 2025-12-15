@@ -57,13 +57,13 @@ export class Controls {
     }
 
     isMovementKey(key) {
-        return key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown';
+        return key === 'arrowleft' || key === 'arrowright';
     }
 
     handleKeyUp(e) {
         const key = e.key.toLowerCase();
-        // Only clear timers for movement arrow keys (left, right, down)
-        if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown') {
+        // Only clear timers for movement arrow keys (left, right)
+        if (key === 'arrowleft' || key === 'arrowright') {
             this.clearRepeatTimer(key);
         }
     }
@@ -112,7 +112,7 @@ export class Controls {
             'p': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); },
             'arrowleft': () => this.moveSide(-1),
             'arrowright': () => this.moveSide(1),
-            'arrowdown': () => this.softDrop(),
+            'arrowdown': () => this.rotatePieceClockwise(),
             'arrowup': () => this.rotatePiece(),
             ' ': () => this.hardDrop(),
             'r': () => this.game.startNewGame(),
@@ -122,11 +122,7 @@ export class Controls {
     }
 
     movePiece(dx, dy) {
-        if (dy > 0 && dx === 0) {
-            this.softDrop();
-            return;
-        }
-
+        // Down arrow is now used for clockwise rotation, not soft drop
         if (dy === 0 && dx !== 0) {
             this.moveSide(dx);
         }
@@ -170,15 +166,78 @@ export class Controls {
     rotatePiece() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
-        const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
+        // Use counter-clockwise rotation
+        const rotatedShape = this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
         const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
 
         if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
+            // Normal rotation succeeds
             this.game.currentPiece.shape = rotatedShape;
             this.game.lockDelay = 0;
             this.game.audio.playRotate();
             this.game.requestRender();
-        } else if (onGround) {
+            return;
+        }
+
+        // Try wall kicks if normal rotation fails
+        const kickTests = this.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
+        let kicked = false;
+
+        for (const [dx, dy] of kickTests) {
+            if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
+                // Apply wall kick
+                this.game.currentPiece.x += dx;
+                this.game.currentPiece.y += dy;
+                this.game.currentPiece.shape = rotatedShape;
+                this.game.lockDelay = 0;
+                this.game.audio.playRotate();
+                this.game.requestRender();
+                kicked = true;
+                break;
+            }
+        }
+
+        if (!kicked && onGround) {
+            // Same locking rule as horizontal moves: failed rotation on the ground locks.
+            this.game.pieceMovement.lockPiece();
+        }
+    }
+    
+    rotatePieceClockwise() {
+        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
+
+        // Use clockwise rotation (original rotatePiece function)
+        const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
+        const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
+
+        if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
+            // Normal rotation succeeds
+            this.game.currentPiece.shape = rotatedShape;
+            this.game.lockDelay = 0;
+            this.game.audio.playRotate();
+            this.game.requestRender();
+            return;
+        }
+
+        // Try wall kicks if normal rotation fails
+        const kickTests = this.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
+        let kicked = false;
+
+        for (const [dx, dy] of kickTests) {
+            if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
+                // Apply wall kick
+                this.game.currentPiece.x += dx;
+                this.game.currentPiece.y += dy;
+                this.game.currentPiece.shape = rotatedShape;
+                this.game.lockDelay = 0;
+                this.game.audio.playRotate();
+                this.game.requestRender();
+                kicked = true;
+                break;
+            }
+        }
+
+        if (!kicked && onGround) {
             // Same locking rule as horizontal moves: failed rotation on the ground locks.
             this.game.pieceMovement.lockPiece();
         }
@@ -302,6 +361,46 @@ export class Controls {
         // Repeat interval: 60ms at level 1, down to 35ms at level 10+
         const intervalMs = Math.max(35, 60 - (level - 1) * 3);
         return { initialDelayMs, intervalMs };
+    }
+
+    getWallKickTests(pieceType, currentShape) {
+        // Standard wall kick patterns for different piece types
+        // Based on SRS (Super Rotation System) with simplified patterns
+        switch (pieceType) {
+            case 'I':
+                // I-piece has special extended kicks based on current orientation
+                // Check if piece is horizontal (1 row, 4 columns) or vertical (4 rows, 1 column)
+                const isHorizontal = currentShape.length === 1;
+                
+                if (isHorizontal) {
+                    // Horizontal to vertical rotation needs more extensive kicks
+                    return [
+                        [-1, 0], [1, 0],   // Left/right kicks
+                        [-2, 0], [2, 0],   // Extended left/right kicks
+                        [0, -1],          // Up kick
+                        [-1, -1], [1, -1] // Diagonal kicks
+                    ];
+                } else {
+                    // Vertical to horizontal rotation
+                    // Prioritize left kicks when near right wall
+                    return [
+                        [-1, 0], [-2, 0], [-3, 0],   // Left kicks (prioritized)
+                        [1, 0], [2, 0],               // Right kicks
+                        [0, -1],                      // Up kick
+                        [-1, -1], [1, -1]             // Diagonal kicks
+                    ];
+                }
+            case 'O':
+                // O-piece doesn't rotate, but include for completeness
+                return [];
+            default:
+                // Standard kicks for J, L, S, T, Z pieces
+                return [
+                    [-1, 0], [1, 0],   // Left/right kicks
+                    [0, -1],          // Up kick
+                    [-1, -1], [1, -1] // Diagonal kicks
+                ];
+        }
     }
 
     bindHoldRepeat(buttonEl, action) {
