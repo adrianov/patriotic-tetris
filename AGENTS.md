@@ -4,6 +4,7 @@
 - **Start dev server**: `python3 -m http.server 8000`
 - **Run single test**: Open `http://localhost:8000` in browser
 - **Lint JS**: `tsc --noEmit --project jsconfig.json`
+- **Complexity check**: `pipx run lizard assets/js/` (warns if CCN > 15)
 - **Test audio**: Press M to toggle mute, use arrow keys to test sounds
 
 ## Project Hygiene
