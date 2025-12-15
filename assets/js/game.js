@@ -45,10 +45,9 @@ class Game {
     }
 
     resizeBoard() {
-        if (!this.board || typeof this.board.resizeCanvas !== 'function') return false;
-        const success = this.board.resizeCanvas();
+        if (!this.board || typeof this.board.resizeCanvas !== 'function') return;
+        this.board.resizeCanvas();
         this.requestRender();
-        return success;
     }
 
     requestRender() {
@@ -61,27 +60,12 @@ class Game {
         this.startNewGame();
 
         // Mark canvas ready to show (CSS hides it until this point)
-        // On mobile, layout may not be ready yet - retry briefly if needed
-        if (this.board.cssWidth > 0) {
-            this.canvas.setAttribute('data-ready', '');
-        } else {
-            this.retryShowCanvas(3);
-        }
-        this.gameLoop();
-    }
+        this.canvas.setAttribute('data-ready', '');
 
-    retryShowCanvas(attemptsLeft) {
-        if (attemptsLeft <= 0) {
-            this.canvas.setAttribute('data-ready', '');
-            return;
-        }
-        setTimeout(() => {
-            if (this.resizeBoard() && this.board.cssWidth > 0) {
-                this.canvas.setAttribute('data-ready', '');
-            } else {
-                this.retryShowCanvas(attemptsLeft - 1);
-            }
-        }, 100);
+        // Mobile browsers may need a delayed resize after layout settles
+        setTimeout(() => this.resizeBoard(), 150);
+
+        this.gameLoop();
     }
 
     setupEventListeners() {
@@ -116,14 +100,10 @@ class Game {
             resetHighBtn.addEventListener('click', () => this.resetHighScore());
         }
 
-        // Debounced resize handler to prevent flickering
-        let resizeTimer = 0;
+        // Resize handler
         const handleResize = () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                this.resizeBoard();
-                this.setScrollLock();
-            }, 50);
+            this.resizeBoard();
+            this.setScrollLock();
         };
 
         window.addEventListener('resize', handleResize);
@@ -133,7 +113,10 @@ class Game {
             window.visualViewport.addEventListener('resize', handleResize);
         }
 
-        window.addEventListener('orientationchange', handleResize);
+        window.addEventListener('orientationchange', () => {
+            // Safari needs a moment to settle the new dimensions
+            setTimeout(handleResize, 50);
+        });
 
         // BFCache restore (mobile Safari back/forward navigation)
         window.addEventListener('pageshow', (e) => {

@@ -99,7 +99,7 @@ export class Board {
     }
 
     resizeCanvas() {
-        if (!this.canvas) return;
+        if (!this.canvas) return false;
 
         const container = this.canvas.parentElement;
         const containerStyle = window.getComputedStyle(container);
