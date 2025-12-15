@@ -110,14 +110,18 @@ export class Controls {
             '=': () => this.game.pieceMovement.increaseSpeed(),
             'NumpadAdd': () => this.game.pieceMovement.increaseSpeed(),
             'p': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); },
+            'з': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); }, // Russian з for pause
             'arrowleft': () => this.moveSide(-1),
             'arrowright': () => this.moveSide(1),
             'arrowdown': () => this.rotatePieceClockwise(),
             'arrowup': () => this.rotatePiece(),
             ' ': () => this.hardDrop(),
             'r': () => this.game.startNewGame(),
+            'к': () => this.game.startNewGame(), // Russian к for restart
             'm': () => this.game.audio.toggleMute(),
+            'ь': () => this.game.audio.toggleMute(), // Russian ь for mute
             'g': () => this.game.ui.toggleGhostPiece(),
+            'п': () => this.game.ui.toggleGhostPiece(), // Russian п for ghost piece
         };
     }
 
