@@ -231,37 +231,41 @@ class Game {
     gameLoop(currentTime = 0) {
         if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
 
-        if (!this.gameOver && !this.paused) {
-            this.elapsedMs += Math.max(0, currentTime - this.lastFrameTime);
-            if (currentTime - this.lastTimeUiUpdate > 250) {
-                this.lastTimeUiUpdate = currentTime;
-                this.updateTimeUI();
-            }
+        if (this.isPlaying()) {
+            this.updateElapsedTime(currentTime);
+            if (!this.isAnimating) this.updateGameState(currentTime);
         }
 
-        if (!this.gameOver && !this.paused && !this.isAnimating) {
-            // Handle automatic piece dropping
-            if (currentTime - this.lastDrop > this.dropTime) {
-                this.dropPiece();
-                this.lastDrop = currentTime;
-            }
-
-            // Handle lock delay - use same timing as drop speed
-            if (this.lockDelay > 0 && currentTime - this.lockDelay > this.dropTime) {
-                this.lockPiece();
-                this.lockDelay = 0;
-            }
-        }
-
-        // Only render when needed; keep full-rate rendering during animations.
         if (this.isAnimating || this.needsRender) {
             this.render();
             this.needsRender = false;
         }
 
         this.lastFrameTime = currentTime;
-
         requestAnimationFrame((time) => this.gameLoop(time));
+    }
+
+    isPlaying() {
+        return !this.gameOver && !this.paused;
+    }
+
+    updateElapsedTime(currentTime) {
+        this.elapsedMs += Math.max(0, currentTime - this.lastFrameTime);
+        if (currentTime - this.lastTimeUiUpdate > 250) {
+            this.lastTimeUiUpdate = currentTime;
+            this.updateTimeUI();
+        }
+    }
+
+    updateGameState(currentTime) {
+        if (currentTime - this.lastDrop > this.dropTime) {
+            this.dropPiece();
+            this.lastDrop = currentTime;
+        }
+        if (this.lockDelay > 0 && currentTime - this.lockDelay > this.dropTime) {
+            this.lockPiece();
+            this.lockDelay = 0;
+        }
     }
 
     calcDropTime() {
