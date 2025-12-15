@@ -184,119 +184,111 @@ export class AudioEngine {
     }
 
     playBuffer(key, volume = 0.5, fromQueue = false) {
-        if (!this.audioContext || this.isMuted) return false;
+        if (!this.canPlay()) return false;
         const buffer = this.sfxBuffers.get(key);
         if (!buffer) return false;
 
-        if (this.audioContext.state !== 'running' && !fromQueue) {
-            this.resumeContext();
+        if (this.shouldQueue(fromQueue)) {
             this.enqueuePlay(() => this.playBuffer(key, volume, true));
             return true;
         }
 
         const src = this.audioContext.createBufferSource();
-        const gain = this.audioContext.createGain();
         src.buffer = buffer;
-
-        // Avoid start/end clicks on browsers/devices that are sensitive to discontinuities.
         const now = this.audioContext.currentTime + AudioEngine.START_LOOKAHEAD_S;
-        const target = this.masterVolume * volume;
-        const dur = Math.max(0.001, buffer.duration || 0);
-        const env = this.scheduleOneShotGain(gain.gain, now, dur, target);
-        src.connect(gain);
-        if (this.masterGain) gain.connect(this.masterGain);
-        else gain.connect(this.audioContext.destination);
-
+        const env = this.setupGainEnvelope(src, now, buffer.duration || 0.001, volume);
         src.start(now);
         try { src.stop(env.end); } catch { /* ignore */ }
         return true;
     }
-    
-    createOscillator(frequency, type = 'sine', startTime = 0, duration = 0.1, volume = 0.1, fromQueue = false) {
-        this.resumeContext();
-        if (!this.audioContext || this.isMuted) return null;
 
-        if (this.audioContext.state !== 'running' && !fromQueue) {
-            this.enqueuePlay(() => this.createOscillator(frequency, type, startTime, duration, volume, true));
+    createOscillator(freq, opts = {}) {
+        const { type = 'sine', start = 0, dur = 0.1, vol = 0.1, fromQueue = false } = opts;
+        this.resumeContext();
+        if (!this.canPlay()) return null;
+
+        if (this.shouldQueue(fromQueue)) {
+            this.enqueuePlay(() => this.createOscillator(freq, { ...opts, fromQueue: true }));
             return null;
         }
-        
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + startTime);
-        
-        // Professional ADSR Envelope - smooth and pleasant
-        const softVolume = this.masterVolume * volume;
-        const now = this.audioContext.currentTime + startTime + AudioEngine.START_LOOKAHEAD_S;
-        const dur = Math.max(0.01, Number(duration) || 0);
-        
-        const env = this.scheduleOneShotGain(gainNode.gain, now, dur, softVolume * 0.3);
-        
-        oscillator.connect(gainNode);
-        if (this.masterGain) {
-            gainNode.connect(this.masterGain);
-        } else {
-            gainNode.connect(this.audioContext.destination);
+
+        const osc = this.audioContext.createOscillator();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + start);
+
+        const now = this.audioContext.currentTime + start + AudioEngine.START_LOOKAHEAD_S;
+        const env = this.setupGainEnvelope(osc, now, dur, vol * 0.3);
+        osc.start(now);
+        osc.stop(env.end);
+        return osc;
+    }
+
+    canPlay() {
+        return this.audioContext && !this.isMuted;
+    }
+
+    shouldQueue(fromQueue) {
+        if (fromQueue) return false;
+        if (this.audioContext.state !== 'running') {
+            this.resumeContext();
+            return true;
         }
-        
-        oscillator.start(now);
-        oscillator.stop(env.end);
-        
-        return oscillator;
+        return false;
+    }
+
+    setupGainEnvelope(source, startTime, duration, volume) {
+        const gain = this.audioContext.createGain();
+        const env = this.scheduleOneShotGain(gain.gain, startTime, Math.max(0.001, duration), this.masterVolume * volume);
+        source.connect(gain);
+        this.connectToOutput(gain);
+        return env;
+    }
+
+    connectToOutput(node) {
+        node.connect(this.masterGain || this.audioContext.destination);
     }
     
     playMove() {
         this.resumeContext();
-        // Professional click - higher frequency, smooth envelope
         if (this.playBuffer('move', 0.4)) return;
-        this.createOscillator(1046.50, 'sine', 0, 0.02, 0.4); // C6 - octave higher
+        this.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
     }
-    
+
     playRotate() {
         this.resumeContext();
-        // Professional click - crisp but smooth
         if (this.playBuffer('rotate', 0.5)) return;
-        this.createOscillator(1318.51, 'sine', 0, 0.018, 0.5); // E6 - octave higher
+        this.createOscillator(1318.51, { dur: 0.018, vol: 0.5 }); // E6
     }
-    
+
     playDrop() {
         this.resumeContext();
-        // Professional tap - pleasant mid-range
         if (this.playBuffer('drop', 0.6)) return;
-        this.createOscillator(783.99, 'sine', 0, 0.04, 0.6); // G5 - octave higher
+        this.createOscillator(783.99, { dur: 0.04, vol: 0.6 }); // G5
     }
-    
+
     playHardDrop() {
         this.resumeContext();
-        // Professional impact - solid but not harsh
         if (this.playBuffer('hardDrop', 0.7)) return;
-        this.createOscillator(523.25, 'sine', 0, 0.06, 0.7); // C5 - original root
+        this.createOscillator(523.25, { dur: 0.06, vol: 0.7 }); // C5
     }
     
 
     
     playLineClear(lines) {
         this.resumeContext();
-        
-        // Jazzy chord progression - C major with swing timing
         const chords = [
-            [523.25, 659.25, 783.99], // C major
-            [587.33, 739.99, 880.00], // D major
-            [659.25, 830.61, 987.77], // E minor
-            [783.99, 987.77, 1174.66] // G major
+            [523.25, 659.25, 783.99], [587.33, 739.99, 880.00],
+            [659.25, 830.61, 987.77], [783.99, 987.77, 1174.66]
         ];
-        
+
         for (let i = 0; i < lines; i++) {
             const chord = chords[i % chords.length];
             setTimeout(() => {
-                chord.forEach((freq, index) => {
+                chord.forEach((freq, idx) => {
                     setTimeout(() => {
-                        this.createOscillator(freq, 'triangle', 0, 0.4, 0.7);
-                        // Add jazzy seventh
-                        this.createOscillator(freq * 0.89, 'sine', 0, 0.3, 0.4);
-                    }, index * 30);
+                        this.createOscillator(freq, { type: 'triangle', dur: 0.4, vol: 0.7 });
+                        this.createOscillator(freq * 0.89, { dur: 0.3, vol: 0.4 });
+                    }, idx * 30);
                 });
             }, i * 150);
         }
@@ -304,57 +296,35 @@ export class AudioEngine {
     
     playGameOver() {
         this.resumeContext();
-        
-        // Jazzy descending line with blue notes
         const melody = [
-            {freq: 1046.50, duration: 0.3}, // C6
-            {freq: 880.00, duration: 0.2},  // A5 (blue note)
-            {freq: 783.99, duration: 0.4},  // G5
-            {freq: 622.25, duration: 0.2},  // D#5 (blue note)
-            {freq: 523.25, duration: 0.5},  // C5
-            {freq: 392.00, duration: 0.3},  // G4
-            {freq: 349.23, duration: 0.4},  // F4 (blue note)
-            {freq: 261.63, duration: 0.8},  // C4
+            { freq: 1046.50, dur: 0.3 }, { freq: 880.00, dur: 0.2 }, { freq: 783.99, dur: 0.4 },
+            { freq: 622.25, dur: 0.2 }, { freq: 523.25, dur: 0.5 }, { freq: 392.00, dur: 0.3 },
+            { freq: 349.23, dur: 0.4 }, { freq: 261.63, dur: 0.8 }
         ];
-        
-        let timeOffset = 0;
-        melody.forEach((note, index) => {
+
+        let t = 0;
+        melody.forEach((n, i) => {
             setTimeout(() => {
-                this.createOscillator(note.freq, index % 2 === 0 ? 'triangle' : 'sine', 0, note.duration, 0.7);
-                // Add jazzy harmony
-                if (index % 2 === 0) {
-                    this.createOscillator(note.freq * 0.75, 'sine', 0, note.duration * 0.8, 0.4);
-                }
-            }, timeOffset * 1000);
-            timeOffset += note.duration * 0.8; // Swing timing
+                this.createOscillator(n.freq, { type: i % 2 === 0 ? 'triangle' : 'sine', dur: n.dur, vol: 0.7 });
+                if (i % 2 === 0) this.createOscillator(n.freq * 0.75, { dur: n.dur * 0.8, vol: 0.4 });
+            }, t * 1000);
+            t += n.dur * 0.8;
         });
     }
 
     playHighScore() {
         this.resumeContext();
-
-        // Short jubilant fanfare (major arpeggio + bright accent)
         const notes = [
-            { freq: 523.25, dur: 0.12 },  // C5
-            { freq: 659.25, dur: 0.12 },  // E5
-            { freq: 783.99, dur: 0.14 },  // G5
-            { freq: 1046.50, dur: 0.20 }, // C6
-            { freq: 987.77, dur: 0.14 },  // B5
-            { freq: 1046.50, dur: 0.28 }  // C6
+            { freq: 523.25, dur: 0.12 }, { freq: 659.25, dur: 0.12 }, { freq: 783.99, dur: 0.14 },
+            { freq: 1046.50, dur: 0.20 }, { freq: 987.77, dur: 0.14 }, { freq: 1046.50, dur: 0.28 }
         ];
 
         let t = 0;
         notes.forEach((n, i) => {
             setTimeout(() => {
-                this.createOscillator(n.freq, 'triangle', 0, n.dur, 0.7);
-                // sparkle layer
-                if (i >= 2) {
-                    this.createOscillator(n.freq * 2, 'sine', 0, Math.max(0.08, n.dur * 0.8), 0.25);
-                }
-                // simple harmony on the last two notes
-                if (i >= notes.length - 2) {
-                    this.createOscillator(n.freq * 0.75, 'sine', 0, n.dur * 0.9, 0.25);
-                }
+                this.createOscillator(n.freq, { type: 'triangle', dur: n.dur, vol: 0.7 });
+                if (i >= 2) this.createOscillator(n.freq * 2, { dur: Math.max(0.08, n.dur * 0.8), vol: 0.25 });
+                if (i >= notes.length - 2) this.createOscillator(n.freq * 0.75, { dur: n.dur * 0.9, vol: 0.25 });
             }, t * 1000);
             t += n.dur * 0.9;
         });
@@ -375,29 +345,21 @@ export class AudioEngine {
         return this.isMuted;
     }
     
-    // Optional: Background music generator
     playBackgroundMusic() {
         this.resumeContext();
-        if (!this.audioContext || this.isMuted) return;
-        
-        // Jazzy patriotic melody with swing and blue notes
+        if (!this.canPlay()) return;
+
         const melody = [
-            {freq: 261.63, duration: 0.4}, // C4
-            {freq: 311.13, duration: 0.2}, // D#4 (blue note)
-            {freq: 329.63, duration: 0.3}, // E4
-            {freq: 392.00, duration: 0.2}, // G4
-            {freq: 466.16, duration: 0.3}, // A#4 (blue note)
-            {freq: 523.25, duration: 0.8}, // C5
-            {freq: 392.00, duration: 0.3}, // G4
-            {freq: 349.23, duration: 0.2}, // F4 (blue note)
-            {freq: 329.63, duration: 0.3}, // E4
-            {freq: 261.63, duration: 0.6}, // C4
+            { freq: 261.63, dur: 0.4 }, { freq: 311.13, dur: 0.2 }, { freq: 329.63, dur: 0.3 },
+            { freq: 392.00, dur: 0.2 }, { freq: 466.16, dur: 0.3 }, { freq: 523.25, dur: 0.8 },
+            { freq: 392.00, dur: 0.3 }, { freq: 349.23, dur: 0.2 }, { freq: 329.63, dur: 0.3 },
+            { freq: 261.63, dur: 0.6 }
         ];
-        
-        let timeOffset = 0.05;
-        melody.forEach(note => {
-            this.createOscillator(note.freq, 'triangle', timeOffset, note.duration);
-            timeOffset += note.duration;
+
+        let t = 0.05;
+        melody.forEach(n => {
+            this.createOscillator(n.freq, { type: 'triangle', start: t, dur: n.dur });
+            t += n.dur;
         });
     }
 }
