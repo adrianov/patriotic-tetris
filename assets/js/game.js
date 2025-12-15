@@ -303,11 +303,84 @@ class Game {
     isPieceCompletelyStuck() {
         if (!this.currentPiece) return false;
 
-        // Can't move down, left, right, or rotate
-        return !this.board.canMove(this.currentPiece, 0, 1) &&
-            !this.board.canMove(this.currentPiece, -1, 0) &&
+        // Can't move down
+        if (this.board.canMove(this.currentPiece, 0, 1)) return false;
+
+        // Check if movement or rotation would close gaps
+        if (this.canCloseGapsWithMovement()) return false;
+        if (this.canCloseGapsWithRotation()) return false;
+
+        // If no movement or rotation can close gaps, piece is stuck
+        return !this.board.canMove(this.currentPiece, -1, 0) &&
             !this.board.canMove(this.currentPiece, 1, 0) &&
             (this.currentPiece.type === 'O' || !this.board.canMove(this.currentPiece, 0, 0, this.pieces.rotatePiece(this.currentPiece)));
+    }
+
+    // Check if moving left or right would close gaps
+    canCloseGapsWithMovement() {
+        if (!this.currentPiece) return false;
+
+        // Check if moving left would close gaps
+        if (this.board.canMove(this.currentPiece, -1, 0)) {
+            const testPiece = { ...this.currentPiece, x: this.currentPiece.x - 1 };
+            if (this.wouldCloseGaps(testPiece)) return true;
+        }
+
+        // Check if moving right would close gaps
+        if (this.board.canMove(this.currentPiece, 1, 0)) {
+            const testPiece = { ...this.currentPiece, x: this.currentPiece.x + 1 };
+            if (this.wouldCloseGaps(testPiece)) return true;
+        }
+
+        return false;
+    }
+
+    // Check if rotating would close gaps
+    canCloseGapsWithRotation() {
+        if (!this.currentPiece || this.currentPiece.type === 'O') return false;
+
+        const rotatedShape = this.pieces.rotatePiece(this.currentPiece);
+        if (this.board.canMove(this.currentPiece, 0, 0, rotatedShape)) {
+            const testPiece = { ...this.currentPiece, shape: rotatedShape };
+            if (this.wouldCloseGaps(testPiece)) return true;
+        }
+
+        return false;
+    }
+
+    // Check if a piece position would close gaps compared to current position
+    wouldCloseGaps(testPiece) {
+        // Get gaps in current position
+        const currentGaps = this.getGapsUnderPiece(this.currentPiece);
+        
+        // Get gaps in test position
+        const testGaps = this.getGapsUnderPiece(testPiece);
+        
+        // If test position has fewer gaps, it would close gaps
+        return testGaps.length < currentGaps.length;
+    }
+
+    // Get gaps under a piece (empty cells with piece cells above them)
+    getGapsUnderPiece(piece) {
+        const gaps = [];
+        
+        for (let py = 0; py < piece.shape.length; py++) {
+            for (let px = 0; px < piece.shape[py].length; px++) {
+                if (!piece.shape[py][px]) continue;
+                
+                const boardX = piece.x + px;
+                const boardY = piece.y + py + 1; // Cell below this piece cell
+                
+                // Check if there's a gap (empty cell with piece cell above)
+                if (boardY < this.board.height && 
+                    boardX >= 0 && boardX < this.board.width &&
+                    !this.board.grid[boardY][boardX]) {
+                    gaps.push({ x: boardX, y: boardY });
+                }
+            }
+        }
+        
+        return gaps;
     }
 
     startLockDelay() {
