@@ -92,7 +92,7 @@ export class PieceMovement {
                     // Check if this gap is "problematic" - i.e., it would create a hole
                     // A gap is problematic if there's a block adjacent to it on the same row
                     // or if there's a block above it that would make it hard to fill
-                    if (this.isProblematicGap(boardX, boardY, piece)) {
+                    if (this.isProblematicGap(boardX, boardY)) {
                         gaps.push({ x: boardX, y: boardY });
                     }
                 }
@@ -103,7 +103,7 @@ export class PieceMovement {
     }
 
     // Check if a gap is problematic (would create a hard-to-fill hole)
-    isProblematicGap(x, y, piece) {
+    isProblematicGap(x, y) {
         // If at the bottom of the board, it's not a problematic gap
         if (y >= this.game.board.height - 1) return false;
 
