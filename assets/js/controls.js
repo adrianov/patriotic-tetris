@@ -1,4 +1,4 @@
-// Controls Module - Input Handling
+// Controls Module - Input Handling v2
 export class Controls {
     constructor() {
         this.game = null;
