@@ -340,6 +340,34 @@ export class Board {
         // Simple game over: if new piece can't be placed at spawn position
         return !this.canMove(piece, 0, 0);
     }
+
+    // Check if piece has clean support below (no air gaps)
+    // Returns true if every bottom edge cell is at board bottom or has a block below
+    isCleanLanding(piece) {
+        for (let y = 0; y < piece.shape.length; y++) {
+            for (let x = 0; x < piece.shape[y].length; x++) {
+                if (!piece.shape[y][x]) continue;
+
+                // Check if this cell is at bottom edge of piece shape
+                const hasShapeCellBelow = (y + 1 < piece.shape.length) && piece.shape[y + 1][x];
+                if (hasShapeCellBelow) continue;
+
+                const boardX = piece.x + x;
+                const boardY = piece.y + y;
+                const belowY = boardY + 1;
+
+                // At board bottom - clean
+                if (belowY >= this.height) continue;
+
+                // Has block below - clean
+                if (this.grid[belowY]?.[boardX]) continue;
+
+                // Empty space below - not clean
+                return false;
+            }
+        }
+        return true;
+    }
     
     render(ctx) {
         const boardWidth = this.cssWidth;

@@ -195,8 +195,8 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // After hard drop - check if completely stuck
-                if (this.game.isPieceCompletelyStuck()) {
+                // Lock immediately if clean landing or completely stuck
+                if (this.game.board.isCleanLanding(piece) || this.game.isPieceCompletelyStuck()) {
                     this.game.lockPiece();
                 } else {
                     this.game.startLockDelay();
