@@ -15,15 +15,15 @@ export class Controls {
 
     setupKeyboardListeners() {
         document.addEventListener('keydown', (e) => {
-            this.handleKeyPress(e);
+            this.handleKeyDown(e);
         });
 
         document.addEventListener('keyup', (e) => {
-            // no-op: we handle keydown actions immediately (no held-key repeat logic)
+            this.handleKeyUp(e);
         });
     }
 
-    handleKeyPress(e) {
+    handleKeyDown(e) {
         if (!this.game || this.game.gameOver) return;
 
         const key = e.key.toLowerCase();
@@ -34,8 +34,59 @@ export class Controls {
         if (key === 'r' && (e.ctrlKey || e.metaKey)) return;
 
         e.preventDefault();
+
+        // For movement arrow keys (left, right, down), use repeat logic
+        if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown') {
+            this.handleArrowKeyRepeat(key, action);
+        } else {
+            // For rotation and other keys, execute immediately
+            action();
+            this.game.hideCursor();
+        }
+    }
+
+    handleKeyUp(e) {
+        const key = e.key.toLowerCase();
+        // Only clear timers for movement arrow keys (left, right, down)
+        if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowdown') {
+            this.clearRepeatTimer(key);
+        }
+    }
+
+    handleArrowKeyRepeat(key, action) {
+        // Clear any existing timer for this key
+        this.clearRepeatTimer(key);
+
+        // Execute action immediately on first press
         action();
         this.game.hideCursor();
+
+        // Set up repeat timers using the same logic as touch controls
+        this.setupRepeatTimer(key, () => {
+            action();
+            this.game.hideCursor();
+        });
+    }
+
+    clearRepeatTimer(key) {
+        const t = this.holdTimers.get(key);
+        if (t?.timeoutId) clearTimeout(t.timeoutId);
+        if (t?.intervalId) clearInterval(t.intervalId);
+        this.holdTimers.delete(key);
+    }
+
+    setupRepeatTimer(key, action) {
+        // Get delays adapted to current level
+        const { initialDelayMs, intervalMs } = this.getRepeatDelays();
+
+        // Set up repeat timers
+        const timeoutId = setTimeout(() => {
+            const intervalId = setInterval(action, intervalMs);
+            const prev = this.holdTimers.get(key) || {};
+            this.holdTimers.set(key, { ...prev, intervalId });
+        }, initialDelayMs);
+
+        this.holdTimers.set(key, { timeoutId, intervalId: null });
     }
 
     buildKeyMap() {
@@ -243,10 +294,7 @@ export class Controls {
         const key = buttonEl.id || buttonEl;
 
         const clear = () => {
-            const t = this.holdTimers.get(key);
-            if (t?.timeoutId) clearTimeout(t.timeoutId);
-            if (t?.intervalId) clearInterval(t.intervalId);
-            this.holdTimers.delete(key);
+            this.clearRepeatTimer(key);
         };
 
         const start = (e) => {
@@ -257,16 +305,8 @@ export class Controls {
             // First move immediately on press.
             action();
 
-            // Get delays adapted to current level
-            const { initialDelayMs, intervalMs } = this.getRepeatDelays();
-
-            const timeoutId = setTimeout(() => {
-                const intervalId = setInterval(action, intervalMs);
-                const prev = this.holdTimers.get(key) || {};
-                this.holdTimers.set(key, { ...prev, intervalId });
-            }, initialDelayMs);
-
-            this.holdTimers.set(key, { timeoutId, intervalId: null });
+            // Set up repeat timers using the shared method
+            this.setupRepeatTimer(key, action);
         };
 
         buttonEl.addEventListener('pointerdown', start, { passive: false });
