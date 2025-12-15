@@ -16,6 +16,7 @@
 - [x] Optimize piece locking to check if rotation would eliminate all gaps, not just reduce them
 - [x] Fix Z piece locking to only wait if rotation would eliminate all gaps
 - [x] Fix false positive locking when rotation would enable further movement
+- [x] Simplify piece locking logic to focus on whether position can be improved
 - [ ] Do a manual cross-browser pass (Chrome / Firefox / Safari / Edge)
 - [ ] Do a long-play performance check (FPS + memory) and fix any regressions
 - [ ] Verify audio controls + mute work consistently across browsers/devices
