@@ -79,14 +79,19 @@ export class PieceMovement {
         return false;
     }
 
-    // Check if rotating would close gaps
+    // Check if rotating would close gaps or enable further movement
     canCloseGapsWithRotation() {
         if (!this.game.currentPiece || this.game.currentPiece.type === 'O') return false;
 
         const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
         if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
             const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+            
+            // Check if rotation would eliminate all gaps
             if (this.wouldCloseGaps(testPiece)) return true;
+            
+            // Check if rotation would allow the piece to move down further
+            if (this.game.board.canMove(testPiece, 0, 1)) return true;
         }
 
         return false;
@@ -100,9 +105,9 @@ export class PieceMovement {
         // Get gaps in test position
         const testGaps = this.getGapsUnderPiece(testPiece);
         
-        // If test position has no gaps, it would close all gaps
-        // Otherwise, if it has fewer gaps, it would close some gaps
-        return testGaps.length === 0 || testGaps.length < currentGaps.length;
+        // Only return true if test position has no gaps (eliminates all gaps)
+        // If it still has gaps, even if fewer, we should lock immediately
+        return testGaps.length === 0;
     }
 
     // Get gaps under a piece (empty cells with piece cells above them)
