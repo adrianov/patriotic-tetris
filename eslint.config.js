@@ -24,6 +24,7 @@ export default [
             "complexity": ["warn", 10],
             "max-depth": ["warn", 4],
             "max-params": ["warn", 5],
+            "max-lines": ["warn", 400],
         }
     }
 ];
