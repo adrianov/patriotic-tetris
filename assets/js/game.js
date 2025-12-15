@@ -434,44 +434,36 @@ class Game {
     }
 
     render() {
-        // Draw board
         this.board.render(this.ctx);
 
-        // Draw ghost piece
-        if (this.showGhostPiece && this.currentPiece && !this.gameOver && !this.paused && !this.isAnimating && this.currentPiece.shape) {
+        const canRender = this.currentPiece && !this.gameOver && !this.paused;
+        if (canRender && this.showGhostPiece && !this.isAnimating) {
             this.pieces.renderGhostPiece(this.ctx, this.currentPiece, this.board);
         }
-
-        // Draw current piece
-        if (this.currentPiece && !this.gameOver && !this.paused) {
+        if (canRender) {
             this.pieces.renderPiece(this.ctx, this.currentPiece, this.board);
         }
 
-        // Draw next piece only when it changes (saves CPU/GPU on mobile).
+        this.renderNextPieceIfChanged();
+    }
+
+    renderNextPieceIfChanged() {
         const nextKey = this.nextPiece
-            ? `${this.nextCanvas.width}x${this.nextCanvas.height}:${this.nextPiece.type}:${this.nextPiece.color}`
+            ? `${this.nextCanvas.width}x${this.nextCanvas.height}:${this.nextPiece.type}`
             : `${this.nextCanvas.width}x${this.nextCanvas.height}:none`;
 
-        if (nextKey !== this.lastNextKey) {
-            this.lastNextKey = nextKey;
+        if (nextKey === this.lastNextKey) return;
+        this.lastNextKey = nextKey;
 
-            this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
-            if (this.nextPiece) {
-                this.pieces.renderNextPiece(this.nextCtx, this.nextPiece, this.board);
-            }
+        this.renderNextToCanvas(this.nextCtx, this.nextCanvas);
+        const mobileNext = document.getElementById('mobile-next-piece');
+        if (mobileNext) this.renderNextToCanvas(mobileNext.getContext('2d'), mobileNext);
+    }
 
-            // Mobile next piece (right panel)
-            const mobileNext = document.getElementById('mobile-next-piece');
-            if (mobileNext) {
-                const mctx = mobileNext.getContext('2d');
-                if (mctx) {
-                    mctx.clearRect(0, 0, mobileNext.width, mobileNext.height);
-                    if (this.nextPiece) {
-                        this.pieces.renderNextPiece(mctx, this.nextPiece, this.board);
-                    }
-                }
-            }
-        }
+    renderNextToCanvas(ctx, canvas) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (this.nextPiece) this.pieces.renderNextPiece(ctx, this.nextPiece, this.board);
     }
 
     pause() {
