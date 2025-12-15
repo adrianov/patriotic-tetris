@@ -41,8 +41,12 @@ A classic Tetris game implementation using HTML5, CSS3, and vanilla JavaScript t
 
 ### Locking Behavior
 - After a **hard drop**, the piece enters a brief **lock window** where it can still be moved/rotated.
-- If the piece is **on the ground** (can’t move down) and the player attempts an **impossible move**
+- If the piece is **on the ground** (can't move down) and the player attempts an **impossible move**
   (left/right/rotate/down), the piece **locks immediately**.
+- **Intelligent gap detection**: When a piece lands and creates a gap, the game checks if moving or rotating would close the gap:
+  - If movement or rotation would close the gap, the piece does not lock immediately
+  - If the gap would be created in any case, the piece locks immediately
+  - This prevents premature locking when a simple adjustment could improve the piece placement
 
 ### Features
 - **Score system** based on lines cleared
