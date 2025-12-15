@@ -73,30 +73,26 @@ export class PieceMovement {
         return true;
     }
 
-    // Count gaps under a piece (simplified version)
+    // Count gaps under a piece
     countGapsUnderPiece(piece) {
         let gaps = 0;
+        const { shape, x, y } = piece;
+        const { grid, height, width } = this.game.board;
 
-        // For each column of the piece, check if there's a gap below
-        for (let px = 0; px < piece.shape[0].length; px++) {
-            // Find the lowest row of this piece in this column
-            let lowestPieceRow = -1;
-            for (let py = 0; py < piece.shape.length; py++) {
-                if (piece.shape[py][px]) {
-                    lowestPieceRow = Math.max(lowestPieceRow, py);
-                }
+        for (let px = 0; px < shape[0].length; px++) {
+            // Find the lowest row with a block in this column
+            let lowestRow = -1;
+            for (let py = 0; py < shape.length; py++) {
+                if (shape[py][px]) lowestRow = Math.max(lowestRow, py);
             }
 
-            if (lowestPieceRow < 0) continue; // Skip if no piece in this column
+            if (lowestRow < 0) continue;
 
-            // Check if there's a gap directly below this column
-            const belowY = piece.y + lowestPieceRow + 1;
-            const belowX = piece.x + px;
+            // Check if there's an empty cell below
+            const belowY = y + lowestRow + 1;
+            const belowX = x + px;
 
-            // If the cell below is empty and within bounds, it's a potential gap
-            if (belowY < this.game.board.height &&
-                belowX >= 0 && belowX < this.game.board.width &&
-                !this.game.board.grid[belowY][belowX]) {
+            if (belowY < height && belowX >= 0 && belowX < width && !grid[belowY][belowX]) {
                 gaps++;
             }
         }
@@ -104,50 +100,60 @@ export class PieceMovement {
         return gaps;
     }
 
-    // Simple heuristic to evaluate if a position is better than current
-    // Returns true if the new position is better
+    // Count gaps to the left or right of the piece (higher priority than gaps down)
+    countSideGaps(piece) {
+        let gaps = 0;
+        const bounds = this.game.board.getPieceBoundsPerRow(piece);
+
+        for (const { row, left, right } of bounds) {
+            // Check for gaps on both sides
+            if (this.game.board.hasGapOnSide(piece, row, left, -1)) gaps++;
+            if (this.game.board.hasGapOnSide(piece, row, right, 1)) gaps++;
+        }
+
+        return gaps;
+    }
+
+    // Evaluate if a position is better than current (prioritizes side gaps over down gaps)
     isBetterPosition(currentPiece, testPiece) {
-        // Rule 1: Prefer positions that create fewer gaps under the piece
-        const currentGaps = this.countGapsUnderPiece(currentPiece);
-        const testGaps = this.countGapsUnderPiece(testPiece);
-        if (testGaps < currentGaps) return true;
-        if (testGaps > currentGaps) return false;
+        // Calculate scores for both positions (lower is better)
+        const currentScore = this.calculatePositionScore(currentPiece);
+        const testScore = this.calculatePositionScore(testPiece);
 
-        // Rule 2: If gaps are equal, prefer positions that can slide under overhangs
-        const currentCanSlide = this.canSlideUnderOverhang(currentPiece);
-        const testCanSlide = this.canSlideUnderOverhang(testPiece);
-        if (testCanSlide && !currentCanSlide) return true;
-        if (!testCanSlide && currentCanSlide) return false;
+        return testScore < currentScore;
+    }
 
-        // Rule 3: Prefer lower positions (closer to the bottom)
-        if (testPiece.y > currentPiece.y) return true;
-        if (testPiece.y < currentPiece.y) return false;
+    // Calculate a score for a piece position (lower is better)
+    calculatePositionScore(piece) {
+        // Side gaps have highest weight (10x), down gaps have medium weight (1x)
+        const sideGaps = this.countSideGaps(piece);
+        const downGaps = this.countGapsUnderPiece(piece);
+        const canSlide = this.canSlideUnderOverhang(piece) ? 0 : 1;
+        const height = -piece.y; // Negative because lower is better
 
-        // If all rules are equal, positions are considered equivalent
-        return false;
+        return sideGaps * 10 + downGaps + canSlide * 0.5 + height * 0.1;
     }
 
     // Check if the piece can slide under an overhang
     canSlideUnderOverhang(piece) {
-        // Check if there's an overhang above the piece that it could slide under
-        for (let px = 0; px < piece.shape[0].length; px++) {
-            // Find the highest row of this piece in this column
-            let highestPieceRow = piece.shape.length;
-            for (let py = 0; py < piece.shape.length; py++) {
-                if (piece.shape[py][px]) {
-                    highestPieceRow = Math.min(highestPieceRow, py);
-                }
+        const { shape, x, y } = piece;
+        const { grid, width } = this.game.board;
+
+        for (let px = 0; px < shape[0].length; px++) {
+            // Find the highest row with a block in this column
+            let highestRow = shape.length;
+            for (let py = 0; py < shape.length; py++) {
+                if (shape[py][px]) highestRow = Math.min(highestRow, py);
             }
 
-            if (highestPieceRow >= piece.shape.length) continue; // Skip if no piece in this column
+            if (highestRow >= shape.length) continue;
 
-            // Check if there's a block above this column
-            const aboveY = piece.y + highestPieceRow - 1;
-            if (aboveY >= 0 && this.game.board.grid[aboveY]?.[piece.x + px]) {
-                // Check if there's empty space to the side that could allow sliding
-                const leftEmpty = piece.x > 0 && this.game.board.isCellFree(piece.x - 1, aboveY);
-                const rightEmpty = piece.x + piece.shape[0].length < this.game.board.width &&
-                    this.game.board.isCellFree(piece.x + piece.shape[0].length, aboveY);
+            // Check if there's a block above and space to slide
+            const aboveY = y + highestRow - 1;
+            if (aboveY >= 0 && grid[aboveY]?.[x + px]) {
+                const leftEmpty = x > 0 && this.game.board.isCellFree(x - 1, aboveY);
+                const rightEmpty = x + shape[0].length < width &&
+                    this.game.board.isCellFree(x + shape[0].length, aboveY);
 
                 if (leftEmpty || rightEmpty) return true;
             }
