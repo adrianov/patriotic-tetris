@@ -20,7 +20,7 @@ export class Board {
         this.isMobile = false;
 
         this.theme = this.readTheme();
-        
+
         this.reset();
     }
 
@@ -79,12 +79,12 @@ export class Board {
         if (!Array.isArray(palette) || palette.length === 0) return '#FFFFFF';
         return palette[Math.floor(Math.random() * palette.length)];
     }
-    
+
     reset() {
         this.grid = Array(this.height).fill().map(() => Array(this.width).fill(0));
         this.blocksDirty = true;
     }
-    
+
     setupCanvas(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
@@ -96,40 +96,40 @@ export class Board {
 
         // Update canvas theme immediately when UI theme changes.
         window.addEventListener('themechange', () => this.refreshTheme());
-        
+
         // Handle window resize
         window.addEventListener('resize', () => {
             this.resizeCanvas();
         });
     }
-    
+
     resizeCanvas() {
         if (!this.canvas) return;
-        
+
         const container = this.canvas.parentElement;
         const containerStyle = window.getComputedStyle(container);
         const containerWidth = container.clientWidth; // includes padding, excludes border
         const containerHeight = container.clientHeight; // includes padding, excludes border
-        
+
         // Account for container padding (clientWidth/clientHeight already exclude border)
         const paddingH = parseInt(containerStyle.paddingLeft) + parseInt(containerStyle.paddingRight);
         const paddingV = parseInt(containerStyle.paddingTop) + parseInt(containerStyle.paddingBottom);
-        
+
         // Available space for canvas
         const availableWidth = containerWidth - paddingH;
         const availableHeight = containerHeight - paddingV;
         if (availableWidth <= 0 || availableHeight <= 0) return;
-        
+
         // Calculate cell size based on both width and height constraints
         const maxCellSizeFromWidth = Math.floor(availableWidth / this.width);
         const maxCellSizeFromHeight = Math.floor(availableHeight / this.height);
         this.cellSize = Math.min(maxCellSizeFromWidth, maxCellSizeFromHeight);
         if (this.cellSize <= 0) return;
-        
+
         // Calculate canvas dimensions using the determined cell size
         const canvasWidth = this.cellSize * this.width;
         const canvasHeight = this.cellSize * this.height;
-        
+
         // Handle Retina displays
         const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
         this.isMobile = isMobile;
@@ -138,11 +138,11 @@ export class Board {
         this.dpr = dpr;
         this.cssWidth = canvasWidth;
         this.cssHeight = canvasHeight;
-        
+
         // Set canvas actual size (for Retina)
         this.canvas.width = canvasWidth * dpr;
         this.canvas.height = canvasHeight * dpr;
-        
+
         // Scale context for Retina
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -160,7 +160,7 @@ export class Board {
             this.blocksCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
             this.blocksDirty = true;
         }
-        
+
         // Set CSS size to match board exactly
         this.canvas.style.width = canvasWidth + 'px';
         this.canvas.style.height = canvasHeight + 'px';
@@ -169,7 +169,7 @@ export class Board {
         // instead of filling the whole center column on desktop.
         document.documentElement.style.setProperty('--board-w', `${canvasWidth}px`);
         document.documentElement.style.setProperty('--board-h', `${canvasHeight}px`);
-        
+
         // Let CSS (flex/grid) define the container size on all breakpoints.
         // If we set inline width/height here, we "lock" the container to the previous canvas size,
         // preventing it from expanding to use available viewport space (notably on desktop).
@@ -246,7 +246,7 @@ export class Board {
 
         this.blocksDirty = false;
     }
-    
+
     canMove(piece, dx, dy, newRotation = null) {
         const testPiece = {
             x: piece.x + dx,
@@ -254,18 +254,18 @@ export class Board {
             shape: newRotation || piece.shape,
             type: piece.type
         };
-        
+
         for (let y = 0; y < testPiece.shape.length; y++) {
             for (let x = 0; x < testPiece.shape[y].length; x++) {
                 if (testPiece.shape[y][x]) {
                     const boardX = testPiece.x + x;
                     const boardY = testPiece.y + y;
-                    
+
                     // Check boundaries
                     if (boardX < 0 || boardX >= this.width || boardY < 0 || boardY >= this.height) {
                         return false;
                     }
-                    
+
                     // Check collision with existing pieces
                     if (this.grid[boardY] && this.grid[boardY][boardX]) {
                         return false;
@@ -273,17 +273,17 @@ export class Board {
                 }
             }
         }
-        
+
         return true;
     }
-    
+
     lockPiece(piece) {
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
                     const boardY = piece.y + y;
                     const boardX = piece.x + x;
-                    
+
                     if (boardY >= 0) {
                         // Store actual color so already-placed blocks do NOT change on theme switch.
                         this.grid[boardY][boardX] = piece.color;
@@ -335,7 +335,7 @@ export class Board {
         this.blocksDirty = true;
         return cleared;
     }
-    
+
     checkGameOver(piece) {
         // Simple game over: if new piece can't be placed at spawn position
         return !this.canMove(piece, 0, 0);
@@ -368,7 +368,47 @@ export class Board {
         }
         return true;
     }
-    
+
+    // Check if there's a fillable gap: empty cell with block above AND block on same row
+    canFillAdjacentGap(piece) {
+        for (let py = 0; py < piece.shape.length; py++) {
+            const boardY = piece.y + py;
+            if (boardY < 0 || boardY >= this.height) continue;
+
+            // Find piece bounds on this row
+            let left = null, right = null;
+            for (let px = 0; px < piece.shape[py].length; px++) {
+                if (piece.shape[py][px]) {
+                    const bx = piece.x + px;
+                    if (left === null || bx < left) left = bx;
+                    if (right === null || bx > right) right = bx;
+                }
+            }
+            if (left === null) continue;
+
+            // Gap on left: empty cell with block above + block further left on same row
+            if (this.canMove(piece, -1, 0) && left > 0 && !this.grid[boardY][left - 1]) {
+                const hasBlockAbove = boardY > 0 && this.grid[boardY - 1]?.[left - 1];
+                if (hasBlockAbove) {
+                    for (let x = left - 2; x >= 0; x--) {
+                        if (this.grid[boardY][x]) return true;
+                    }
+                }
+            }
+
+            // Gap on right: empty cell with block above + block further right on same row
+            if (this.canMove(piece, 1, 0) && right < this.width - 1 && !this.grid[boardY][right + 1]) {
+                const hasBlockAbove = boardY > 0 && this.grid[boardY - 1]?.[right + 1];
+                if (hasBlockAbove) {
+                    for (let x = right + 2; x < this.width; x++) {
+                        if (this.grid[boardY][x]) return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     render(ctx) {
         const boardWidth = this.cssWidth;
         const boardHeight = this.cssHeight;
@@ -414,26 +454,26 @@ export class Board {
             }
         }
     }
-    
+
     drawCell(ctx, x, y, color) {
         const pixelX = x * this.cellSize;
         const pixelY = y * this.cellSize;
         const size = this.cellSize;
-        
+
         // Main cell color
         ctx.fillStyle = color;
         ctx.fillRect(pixelX, pixelY, size, size);
-        
+
         // Cell border
         ctx.strokeStyle = this.theme.cellBorder;
         ctx.lineWidth = 1;
         ctx.strokeRect(pixelX, pixelY, size, size);
-        
+
         // Highlight effect
         ctx.fillStyle = this.theme.cellHighlight;
         ctx.fillRect(pixelX + 2, pixelY + 2, size - 4, 2);
         ctx.fillRect(pixelX + 2, pixelY + 2, 2, size - 4);
-        
+
         // Shadow effect
         ctx.fillStyle = this.theme.cellShadow;
         ctx.fillRect(pixelX + size - 4, pixelY + 2, 2, size - 4);

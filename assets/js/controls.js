@@ -195,8 +195,12 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Lock immediately if clean landing or completely stuck
-                if (this.game.board.isCleanLanding(piece) || this.game.isPieceCompletelyStuck()) {
+                // Lock immediately if completely stuck, or clean landing with no fillable gaps
+                const dominated = this.game.isPieceCompletelyStuck();
+                const clean = this.game.board.isCleanLanding(piece);
+                const hasGap = this.game.board.canFillAdjacentGap(piece);
+
+                if (dominated || (clean && !hasGap)) {
                     this.game.lockPiece();
                 } else {
                     this.game.startLockDelay();
