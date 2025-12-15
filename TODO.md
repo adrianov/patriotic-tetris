@@ -10,6 +10,7 @@
 - [x] Update docs (`SPEC.md`, `TODO.md`)
 
 ## Next after themes (Phase 7)
+- [x] Implement intelligent piece locking mechanism
 - [ ] Do a manual cross-browser pass (Chrome / Firefox / Safari / Edge)
 - [ ] Do a long-play performance check (FPS + memory) and fix any regressions
 - [ ] Verify audio controls + mute work consistently across browsers/devices
