@@ -112,21 +112,20 @@ export class PieceMovement {
         for (let py = 0; py < shape.length; py++) {
             for (let px = 0; px < shape[py].length; px++) {
                 if (shape[py][px]) {
-                    const boardX = x + px;
-                    const boardY = y + py;
-                    
-                    // Check the cell directly above this piece block
-                    const aboveY = boardY - 1;
-                    if (aboveY >= 0 && boardX >= 0 && boardX < width) {
-                        if (grid[aboveY][boardX]) {
-                            filledCount++;
-                        }
-                    }
+                    filledCount += this.checkBlockAbove(x + px, y + py, grid, width);
                 }
             }
         }
 
         return filledCount;
+    }
+
+    checkBlockAbove(boardX, boardY, grid, width) {
+        const aboveY = boardY - 1;
+        if (aboveY < 0 || boardX < 0 || boardX >= width) {
+            return 0;
+        }
+        return grid[aboveY][boardX] ? 1 : 0;
     }
 
     startLockDelay() {
