@@ -135,10 +135,6 @@ export class Controls {
     moveSide(dx) {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
-        // Locking rule:
-        // - If the piece is already on the ground (can't move down) and the player tries an
-        //   impossible horizontal move, lock immediately (especially noticeable after hard drop).
-        const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
         const canMoveSide = this.game.board.canMove(this.game.currentPiece, dx, 0);
 
         if (canMoveSide) {
@@ -146,9 +142,8 @@ export class Controls {
             this.game.lockDelay = 0;
             this.game.audio.playMove();
             this.game.requestRender();
-        } else if (onGround) {
-            this.game.pieceMovement.lockPiece();
         }
+        // Removed: immediate locking on failed horizontal moves - now only applies to hard drops
     }
 
     softDrop() {
@@ -201,12 +196,9 @@ export class Controls {
             }
         }
 
-        if (!kicked && onGround) {
-            // Same locking rule as horizontal moves: failed rotation on the ground locks.
-            this.game.pieceMovement.lockPiece();
-        }
+        // Removed: immediate locking on failed rotations - now only applies to hard drops
     }
-    
+     
     rotatePieceClockwise() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
@@ -241,10 +233,7 @@ export class Controls {
             }
         }
 
-        if (!kicked && onGround) {
-            // Same locking rule as horizontal moves: failed rotation on the ground locks.
-            this.game.pieceMovement.lockPiece();
-        }
+        // Removed: immediate locking on failed rotations - now only applies to hard drops
     }
 
     hardDrop() {
@@ -296,8 +285,12 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                (this.game.pieceMovement.isPieceCompletelyStuck() || this.game.board.shouldLockClean(piece))
-                    ? this.game.pieceMovement.lockPiece() : this.game.pieceMovement.startLockDelay();
+                // Hard drop locks immediately only when piece has no escape moves
+                if (this.game.pieceMovement.hasNoEscapeMoves()) {
+                    this.game.pieceMovement.lockPiece();
+                } else {
+                    this.game.pieceMovement.startLockDelay();
+                }
                 this.game.isAnimating = false;
             }
         };
