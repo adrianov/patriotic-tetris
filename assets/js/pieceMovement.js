@@ -103,6 +103,32 @@ export class PieceMovement {
         return true;
     }
 
+    hasBetterHorizontalMoves() {
+        if (!this.game.currentPiece) return false;
+
+        // Can't be on the ground for this check
+        if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
+
+        // Check if moving left would give a better position
+        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
+            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
+            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
+                return true; // Better position achieved by moving left
+            }
+        }
+
+        // Check if moving right would give a better position
+        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
+            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
+            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
+                return true; // Better position achieved by moving right
+            }
+        }
+
+        // No better horizontal moves available
+        return false;
+    }
+
     // Count gaps under a piece
     countGapsUnderPiece(piece) {
         let gaps = 0;

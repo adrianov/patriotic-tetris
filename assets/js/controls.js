@@ -286,7 +286,9 @@ export class Controls {
                 requestAnimationFrame(animate);
             } else {
                 // Hard drop locks immediately only when piece has no escape moves
-                if (this.game.pieceMovement.hasNoEscapeMoves()) {
+                // AND moving left/right wouldn't improve the score
+                if (this.game.pieceMovement.hasNoEscapeMoves() && 
+                    !this.game.pieceMovement.hasBetterHorizontalMoves()) {
                     this.game.pieceMovement.lockPiece();
                 } else {
                     this.game.pieceMovement.startLockDelay();
