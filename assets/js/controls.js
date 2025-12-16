@@ -1,16 +1,22 @@
 // Controls Module - Input Handling v2
+import { WallKickSystem } from './wallKicks.js';
+import { TouchControls } from './touchControls.js';
+
 export class Controls {
     constructor() {
         this.game = null;
         this.holdTimers = new Map();
         this.keyMap = {};
+        this.touchControls = null;
+        this.pressedKeys = new Set();
         this.setupKeyboardListeners();
     }
 
     setup(game) {
         this.game = game;
         this.keyMap = this.buildKeyMap();
-        this.setupTouchControls();
+        this.touchControls = new TouchControls(game);
+        this.touchControls.setup();
     }
 
     setupKeyboardListeners() {
@@ -24,15 +30,28 @@ export class Controls {
     }
 
     handleKeyDown(e) {
-        if (!this.game || this.game.gameOver) return;
+        if (!this.game) return;
 
         const key = e.key.toLowerCase();
         const action = this.getActionForKey(key, e);
         if (!action) return;
 
+        // Block game controls during game over, but allow restart, mute, and ghost toggle
+        if (this.game.gameOver && !this.isGameOverAllowedKey(key)) return;
+
         e.preventDefault();
 
-        this.executeKeyAction(key, action);
+        // Track pressed keys to prevent repeat for rotation keys
+        if (this.pressedKeys.has(key)) {
+            // Key is already pressed, only allow repeat for movement keys
+            if (this.isMovementKey(key)) {
+                this.executeKeyAction(key, action);
+            }
+        } else {
+            // First time pressing this key
+            this.pressedKeys.add(key);
+            this.executeKeyAction(key, action);
+        }
     }
 
     getActionForKey(key, e) {
@@ -46,11 +65,15 @@ export class Controls {
     }
 
     executeKeyAction(key, action) {
-        // For movement arrow keys (left, right, down), use repeat logic
+        // For movement arrow keys (left, right), use repeat logic
         if (this.isMovementKey(key)) {
             this.handleArrowKeyRepeat(key, action);
+        } else if (this.isRotationKey(key)) {
+            // For rotation keys, execute immediately but don't repeat
+            action();
+            this.game.ui.hideCursor();
         } else {
-            // For rotation and other keys, execute immediately
+            // For all other keys, execute immediately
             action();
             this.game.ui.hideCursor();
         }
@@ -60,10 +83,25 @@ export class Controls {
         return key === 'arrowleft' || key === 'arrowright';
     }
 
+    isRotationKey(key) {
+        return key === 'arrowup' || key === 'arrowdown';
+    }
+
+    isGameOverAllowedKey(key) {
+        // Allow these keys to work even during game over
+        const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п']; // Restart, mute, ghost toggle (English and Russian)
+        return allowedKeys.includes(key);
+    }
+
     handleKeyUp(e) {
         const key = e.key.toLowerCase();
+        
+        // Remove from pressed keys set
+        this.pressedKeys.delete(key);
+        
         // Only clear timers for movement arrow keys (left, right)
-        if (key === 'arrowleft' || key === 'arrowright') {
+        // Rotation keys don't have timers, so no need to clear them
+        if (this.isMovementKey(key)) {
             this.clearRepeatTimer(key);
         }
     }
@@ -179,8 +217,7 @@ export class Controls {
         }
 
         // Try wall kicks if normal rotation fails
-        const kickTests = this.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
-        let kicked = false;
+        const kickTests = WallKickSystem.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
 
         for (const [dx, dy] of kickTests) {
             if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
@@ -191,7 +228,6 @@ export class Controls {
                 this.game.lockDelay = 0;
                 this.game.audio.playRotate();
                 this.game.requestRender();
-                kicked = true;
                 break;
             }
         }
@@ -216,8 +252,7 @@ export class Controls {
         }
 
         // Try wall kicks if normal rotation fails
-        const kickTests = this.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
-        let kicked = false;
+        const kickTests = WallKickSystem.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
 
         for (const [dx, dy] of kickTests) {
             if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
@@ -228,7 +263,6 @@ export class Controls {
                 this.game.lockDelay = 0;
                 this.game.audio.playRotate();
                 this.game.requestRender();
-                kicked = true;
                 break;
             }
         }
@@ -299,138 +333,5 @@ export class Controls {
         requestAnimationFrame(animate);
     }
 
-    setupTouchControls() {
-        document.querySelectorAll('.touch-dpad-btn, .touch-toggle-btn').forEach(btn => {
-            btn.addEventListener('contextmenu', e => e.preventDefault());
-        });
 
-        this.bindHoldRepeat(document.getElementById('touch-left'), () => this.movePiece(-1, 0));
-        this.bindHoldRepeat(document.getElementById('touch-right'), () => this.movePiece(1, 0));
-        this.bindTouchAction('touch-down', () => this.hardDrop());
-        this.bindTouchAction('touch-rotate', () => this.rotatePiece());
-
-        this.bindClick('touch-pause', () => this.game.pause());
-        this.bindClick('touch-restart', () => this.game.startNewGame());
-        this.setupGhostToggle();
-        this.setupSoundToggle();
-    }
-
-    bindTouchAction(id, action) {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        btn.addEventListener('pointerdown', (e) => {
-            e?.preventDefault?.();
-            e?.stopPropagation?.();
-            action();
-        }, { passive: false });
-        btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); }, { capture: true });
-    }
-
-    bindClick(id, action) {
-        document.getElementById(id)?.addEventListener('click', action);
-    }
-
-    setupGhostToggle() {
-        const btn = document.getElementById('touch-ghost');
-        if (!btn) return;
-        btn.classList.toggle('active', this.game.showGhostPiece);
-        btn.addEventListener('click', () => {
-            this.game.ui.toggleGhostPiece();
-            btn.classList.toggle('active', this.game.showGhostPiece);
-        });
-    }
-
-    setupSoundToggle() {
-        const btn = document.getElementById('touch-sound');
-        if (!btn) return;
-        btn.classList.toggle('active', !this.game.audio.isMuted);
-        btn.addEventListener('click', () => {
-            this.game.audio.toggleMute();
-            btn.querySelector('.touch-toggle-icon').textContent = this.game.audio.isMuted ? '🔇' : '🔊';
-            btn.classList.toggle('active', !this.game.audio.isMuted);
-        });
-    }
-
-    getRepeatDelays() {
-        // Adapt repeat speed to game level - faster at higher levels
-        const level = this.game?.level || 1;
-        // Initial delay: 180ms at level 1, down to 80ms at level 10+
-        const initialDelayMs = Math.max(80, 180 - (level - 1) * 12);
-        // Repeat interval: 60ms at level 1, down to 35ms at level 10+
-        const intervalMs = Math.max(35, 60 - (level - 1) * 3);
-        return { initialDelayMs, intervalMs };
-    }
-
-    getWallKickTests(pieceType, currentShape) {
-        // Standard wall kick patterns for different piece types
-        // Based on SRS (Super Rotation System) with simplified patterns
-        switch (pieceType) {
-            case 'I':
-                // I-piece has special extended kicks based on current orientation
-                // Check if piece is horizontal (1 row, 4 columns) or vertical (4 rows, 1 column)
-                const isHorizontal = currentShape.length === 1;
-                
-                if (isHorizontal) {
-                    // Horizontal to vertical rotation needs more extensive kicks
-                    return [
-                        [-1, 0], [1, 0],   // Left/right kicks
-                        [-2, 0], [2, 0],   // Extended left/right kicks
-                        [0, -1],          // Up kick
-                        [-1, -1], [1, -1] // Diagonal kicks
-                    ];
-                } else {
-                    // Vertical to horizontal rotation
-                    // Prioritize left kicks when near right wall
-                    return [
-                        [-1, 0], [-2, 0], [-3, 0],   // Left kicks (prioritized)
-                        [1, 0], [2, 0],               // Right kicks
-                        [0, -1],                      // Up kick
-                        [-1, -1], [1, -1]             // Diagonal kicks
-                    ];
-                }
-            case 'O':
-                // O-piece doesn't rotate, but include for completeness
-                return [];
-            default:
-                // Standard kicks for J, L, S, T, Z pieces
-                return [
-                    [-1, 0], [1, 0],   // Left/right kicks
-                    [0, -1],          // Up kick
-                    [-1, -1], [1, -1] // Diagonal kicks
-                ];
-        }
-    }
-
-    bindHoldRepeat(buttonEl, action) {
-        if (!buttonEl) return;
-        const key = buttonEl.id || buttonEl;
-
-        const clear = () => {
-            this.clearRepeatTimer(key);
-        };
-
-        const start = (e) => {
-            if (e?.cancelable) e.preventDefault();
-            e?.stopPropagation?.();
-            clear();
-
-            // First move immediately on press.
-            action();
-
-            // Set up repeat timers using the shared method
-            this.setupRepeatTimer(key, action);
-        };
-
-        buttonEl.addEventListener('pointerdown', start, { passive: false });
-        buttonEl.addEventListener('pointerup', clear, { passive: true });
-        buttonEl.addEventListener('pointercancel', clear, { passive: true });
-        buttonEl.addEventListener('pointerleave', clear, { passive: true });
-
-        // Some browsers synthesize a click after pointer events; swallow it so rapid taps
-        // can't accidentally activate adjacent UI (e.g. restart).
-        buttonEl.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }, { capture: true });
-    }
 }
