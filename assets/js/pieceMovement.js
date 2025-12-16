@@ -29,47 +29,77 @@ export class PieceMovement {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
             this.game.requestRender();
-        } else if (this.isPieceCompletelyStuck()) {
+        } else if (this.hasNoPossibleMoves()) {
             this.lockPiece();
         } else {
             this.startLockDelay();
         }
     }
 
-    isPieceCompletelyStuck() {
+    hasNoPossibleMoves() {
+        if (!this.game.currentPiece) return false;
+
+        // Can't move down (already checked before calling this function)
+        
+        // Check if piece can move left at all
+        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
+            return false; // Can move left
+        }
+
+        // Check if piece can move right at all
+        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
+            return false; // Can move right
+        }
+
+        // Check if piece can rotate at all
+        if (this.game.currentPiece.type !== 'O') {
+            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
+            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
+                return false; // Can rotate
+            }
+        }
+
+        // No possible moves exist
+        return true;
+    }
+
+    hasNoEscapeMoves() {
         if (!this.game.currentPiece) return false;
 
         // Can't move down
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
 
-        // Check if moving left would be a better position
+        // Check if moving left would allow continued falling (better position doesn't matter for horizontal moves)
         if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
             const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
-            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                return false; // Position can be improved
+            // Only check if moving left allows continued falling
+            if (this.game.board.canMove(testPiece, 0, 1)) {
+                return false; // Can continue falling after moving left
             }
         }
 
-        // Check if moving right would be a better position
+        // Check if moving right would allow continued falling (better position doesn't matter for horizontal moves)
         if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
             const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
-            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                return false; // Position can be improved
+            // Only check if moving right allows continued falling
+            if (this.game.board.canMove(testPiece, 0, 1)) {
+                return false; // Can continue falling after moving right
             }
         }
 
-        // Check if rotating would be a better position
+        // Check if rotating would give a better position (continued falling doesn't matter for rotation)
         if (this.game.currentPiece.type !== 'O') {
             const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
             if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
                 const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+                // Only check if rotating gives a better position - continued falling is ignored
                 if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                    return false; // Position can be improved
+                    return false; // Better position achieved through rotation
                 }
             }
         }
 
-        // If position cannot be improved, piece is stuck
+        // If no escape moves exist, piece has no way out
         return true;
     }
 
