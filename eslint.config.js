@@ -21,10 +21,10 @@ export default [
             }
         },
         rules: {
-            "complexity": ["warn", 10],
-            "max-depth": ["warn", 4],
-            "max-params": ["warn", 5],
-            "max-lines": ["warn", 400],
+            "complexity": ["error", 10],
+            "max-depth": ["error", 4],
+            "max-params": ["error", 5],
+            "max-lines": ["error", 400],
         }
     }
 ];

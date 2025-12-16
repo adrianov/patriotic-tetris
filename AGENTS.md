@@ -4,9 +4,10 @@
 - **Start dev server**: `python3 -m http.server 8000`
 - **Run single test**: Open `http://localhost:8000` in browser
 - **Lint JS**: `tsc --noEmit --project jsconfig.json`
-- **Complexity check**: `npx eslint assets/js/` (warns if CCN > 10)
+- **Complexity check**: `npx eslint assets/js/` (errors if CCN > 10, max-depth > 4, max-params > 5, max-lines > 400)
 - **Test audio**: Press M to toggle mute, use arrow keys to test sounds
 - **Fix parsing error**: Parsing errors affect the whole file, so to fix them, read the file as a whole, do not read it with limits or partials. And then rewrite file as a whole syntaxically correct.
+- **Fix ESLint errors**: Must fix all ESLint errors before committing changes
 
 ## Project Hygiene
 - **TODO.md**: Do **not** remove finished items; mark them as completed instead (use `[x]` or `✅`).
