@@ -285,13 +285,12 @@ export class Controls {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Hard drop locks immediately only when piece has no escape moves
-                // AND moving left/right wouldn't improve the score
-                if (this.game.pieceMovement.hasNoEscapeMoves() && 
-                    !this.game.pieceMovement.hasBetterHorizontalMoves()) {
-                    this.game.pieceMovement.lockPiece();
-                } else {
+                // Hard drop locks immediately unless moving left, right, or rotating
+                // would result in more filled blocks right above it
+                if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
                     this.game.pieceMovement.startLockDelay();
+                } else {
+                    this.game.pieceMovement.lockPiece();
                 }
                 this.game.isAnimating = false;
             }

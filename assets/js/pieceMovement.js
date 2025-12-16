@@ -63,159 +63,70 @@ export class PieceMovement {
         return true;
     }
 
-    hasNoEscapeMoves() {
-        if (!this.game.currentPiece) return false;
-
-        // Can't move down
-        if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
-
-        // Check if moving left would allow continued falling (better position doesn't matter for horizontal moves)
-        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
-            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
-            // Only check if moving left allows continued falling
-            if (this.game.board.canMove(testPiece, 0, 1)) {
-                return false; // Can continue falling after moving left
-            }
-        }
-
-        // Check if moving right would allow continued falling (better position doesn't matter for horizontal moves)
-        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
-            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
-            // Only check if moving right allows continued falling
-            if (this.game.board.canMove(testPiece, 0, 1)) {
-                return false; // Can continue falling after moving right
-            }
-        }
-
-        // Check if rotating would give a better position (continued falling doesn't matter for rotation)
-        if (this.game.currentPiece.type !== 'O') {
-            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
-            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
-                const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
-                // Only check if rotating gives a better position - continued falling is ignored
-                if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                    return false; // Better position achieved through rotation
-                }
-            }
-        }
-
-        // If no escape moves exist, piece has no way out
-        return true;
-    }
-
-    hasBetterHorizontalMoves() {
+    hasMoreFilledBlocksAboveAfterMove() {
         if (!this.game.currentPiece) return false;
 
         // Can't be on the ground for this check
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
 
-        // Check if moving left would give a better position
+        const currentAboveCount = this.countFilledBlocksAbove(this.game.currentPiece);
+
+        // Check if moving left would result in more filled blocks above
         if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
             const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
-            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                return true; // Better position achieved by moving left
+            const leftAboveCount = this.countFilledBlocksAbove(testPiece);
+            if (leftAboveCount > currentAboveCount) {
+                return true;
             }
         }
 
-        // Check if moving right would give a better position
+        // Check if moving right would result in more filled blocks above
         if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
             const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
-            if (this.isBetterPosition(this.game.currentPiece, testPiece)) {
-                return true; // Better position achieved by moving right
+            const rightAboveCount = this.countFilledBlocksAbove(testPiece);
+            if (rightAboveCount > currentAboveCount) {
+                return true;
             }
         }
 
-        // No better horizontal moves available
+        // Check if rotating would result in more filled blocks above
+        if (this.game.currentPiece.type !== 'O') {
+            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
+            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
+                const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+                const rotatedAboveCount = this.countFilledBlocksAbove(testPiece);
+                if (rotatedAboveCount > currentAboveCount) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
-    // Count gaps under a piece
-    countGapsUnderPiece(piece) {
-        let gaps = 0;
-        const { shape, x, y } = piece;
-        const { grid, height, width } = this.game.board;
-
-        for (let px = 0; px < shape[0].length; px++) {
-            // Find the lowest row with a block in this column
-            let lowestRow = -1;
-            for (let py = 0; py < shape.length; py++) {
-                if (shape[py][px]) lowestRow = Math.max(lowestRow, py);
-            }
-
-            if (lowestRow < 0) continue;
-
-            // Check if there's an empty cell below
-            const belowY = y + lowestRow + 1;
-            const belowX = x + px;
-
-            if (belowY < height && belowX >= 0 && belowX < width && !grid[belowY][belowX]) {
-                gaps++;
-            }
-        }
-
-        return gaps;
-    }
-
-    // Count gaps to the left or right of the piece (higher priority than gaps down)
-    countSideGaps(piece) {
-        let gaps = 0;
-        const bounds = this.game.board.getPieceBoundsPerRow(piece);
-
-        for (const { row, left, right } of bounds) {
-            // Check for gaps on both sides
-            if (this.game.board.hasGapOnSide(piece, row, left, -1)) gaps++;
-            if (this.game.board.hasGapOnSide(piece, row, right, 1)) gaps++;
-        }
-
-        return gaps;
-    }
-
-    // Evaluate if a position is better than current (prioritizes side gaps over down gaps)
-    isBetterPosition(currentPiece, testPiece) {
-        // Calculate scores for both positions (lower is better)
-        const currentScore = this.calculatePositionScore(currentPiece);
-        const testScore = this.calculatePositionScore(testPiece);
-
-        return testScore < currentScore;
-    }
-
-    // Calculate a score for a piece position (lower is better)
-    calculatePositionScore(piece) {
-        // Side gaps have highest weight (10x), down gaps have medium weight (1x)
-        const sideGaps = this.countSideGaps(piece);
-        const downGaps = this.countGapsUnderPiece(piece);
-        const canSlide = this.canSlideUnderOverhang(piece) ? 0 : 1;
-        const height = -piece.y; // Negative because lower is better
-
-        return sideGaps * 10 + downGaps + canSlide * 0.5 + height * 0.1;
-    }
-
-    // Check if the piece can slide under an overhang
-    canSlideUnderOverhang(piece) {
+    countFilledBlocksAbove(piece) {
+        let filledCount = 0;
         const { shape, x, y } = piece;
         const { grid, width } = this.game.board;
 
-        for (let px = 0; px < shape[0].length; px++) {
-            // Find the highest row with a block in this column
-            let highestRow = shape.length;
-            for (let py = 0; py < shape.length; py++) {
-                if (shape[py][px]) highestRow = Math.min(highestRow, py);
-            }
-
-            if (highestRow >= shape.length) continue;
-
-            // Check if there's a block above and space to slide
-            const aboveY = y + highestRow - 1;
-            if (aboveY >= 0 && grid[aboveY]?.[x + px]) {
-                const leftEmpty = x > 0 && this.game.board.isCellFree(x - 1, aboveY);
-                const rightEmpty = x + shape[0].length < width &&
-                    this.game.board.isCellFree(x + shape[0].length, aboveY);
-
-                if (leftEmpty || rightEmpty) return true;
+        for (let py = 0; py < shape.length; py++) {
+            for (let px = 0; px < shape[py].length; px++) {
+                if (shape[py][px]) {
+                    const boardX = x + px;
+                    const boardY = y + py;
+                    
+                    // Check the cell directly above this piece block
+                    const aboveY = boardY - 1;
+                    if (aboveY >= 0 && boardX >= 0 && boardX < width) {
+                        if (grid[aboveY][boardX]) {
+                            filledCount++;
+                        }
+                    }
+                }
             }
         }
 
-        return false;
+        return filledCount;
     }
 
     startLockDelay() {
