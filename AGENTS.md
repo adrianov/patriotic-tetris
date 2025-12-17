@@ -8,7 +8,8 @@
 - **Test audio**: Press M to toggle mute, use arrow keys to test sounds
 - **Fix parsing error**: Parsing errors affect the whole file, so to fix them, read the file as a whole, do not read it with limits or partials. And then rewrite file as a whole syntaxically correct.
 - **Fix ESLint errors**: Must fix all ESLint errors before committing changes
-- **Too many lines error**: When ESLint reports "File has too many lines", do NOT fix by removing blank lines or merging lines. Instead fix by removing dead code, removing duplicate code, and refactoring. When refactoring for file length, re-read the file in full as it requires comprehensive restructuring.
+- **Too many lines error**: When ESLint reports "File has too many lines", do NOT fix by removing blank lines or merging lines. Instead fix by removing dead code, removing duplicate code, and refactoring. When refactoring for file length, re-read the file in full as it requires comprehensive restructuring. For modules that need to fit within line restrictions, read the entire module, remove obsolete/unneeded code, reduce code duplication, and apply proper refactoring methods rather than deleting formatting.
+- **Bug fixing rule**: If user reports that an issue is not fixed after a fix attempt, re-read the current git diff to understand what changed, analyze the logic, and find the actual bug before attempting another fix.
 
 ## Project Hygiene
 - **TODO.md**: Do **not** remove finished items; mark them as completed instead (use `[x]` or `✅`).
