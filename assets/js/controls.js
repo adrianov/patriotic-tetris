@@ -226,11 +226,67 @@ export class Controls {
     }
 
     tryRotationAt(x, y, rotatedShape) {
-        if (this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
-            this.applyRotation(x, y, rotatedShape);
-            return true;
+        if (!this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
+            return false;
         }
-        return false;
+        
+        // Check if rotation path is clear (prevents teleportation)
+        if (!this.isRotationPathClear(this.game.currentPiece.x, x, rotatedShape)) {
+            return false;
+        }
+        
+        this.applyRotation(x, y, rotatedShape);
+        return true;
+    }
+
+    isRotationPathClear(startX, endX, rotatedShape) {
+        const distance = Math.abs(endX - startX);
+        if (distance <= 1) return true; // Small moves are safe
+        
+        // Check if this is an I-piece edge rotation (only at board edges)
+        if (this.game.currentPiece.type === 'I' && this.isIEdgeRotation(startX, endX, rotatedShape)) {
+            return true; // Allow I-piece edge rotations only
+        }
+        
+        // For all other cases, check intermediate positions
+        const steps = distance;
+        const stepX = (endX - startX) / steps;
+        
+        for (let i = 1; i < steps; i++) {
+            const intermediateX = Math.round(startX + stepX * i);
+            
+            // Check if current shape can exist at intermediate position
+            if (!this.game.board.canMove({ ...this.game.currentPiece, x: intermediateX }, 0, 0)) {
+                return false; // Path blocked
+            }
+        }
+        
+        return true;
+    }
+
+    isIEdgeRotation(startX, endX, rotatedShape) {
+        const piece = this.game.currentPiece;
+        const board = this.game.board;
+        const currentWidth = this.getShapeWidth(piece.shape);
+        const rotatedWidth = this.getShapeWidth(rotatedShape);
+        
+        // Check if this is vertical to horizontal or horizontal to vertical rotation
+        const isVerticalToHorizontal = currentWidth === 1 && rotatedWidth === 4;
+        const isHorizontalToVertical = currentWidth === 4 && rotatedWidth === 1;
+        
+        if (!isVerticalToHorizontal && !isHorizontalToVertical) return false;
+        
+        // Check if rotation would be at or near board edges
+        const pieceRightEdge = startX + currentWidth - 1;
+        const targetRightEdge = endX + rotatedWidth - 1;
+        const pieceLeftEdge = startX;
+        const targetLeftEdge = endX;
+        
+        // Allow only if at least one side is touching or very close to a board edge
+        const leftEdge = Math.min(pieceLeftEdge, targetLeftEdge);
+        const rightEdge = Math.max(pieceRightEdge, targetRightEdge);
+        
+        return leftEdge <= 1 || rightEdge >= board.width - 2;
     }
 
     tryLocalRotation(targetX, direction, rotatedShape) {
