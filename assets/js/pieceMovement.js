@@ -142,7 +142,7 @@ export class PieceMovement {
         // Only lock if piece can't move down
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return;
 
-        // Lock current piece into the grid
+        // Lock current piece into grid
         this.game.board.lockPiece(this.game.currentPiece);
         this.game.currentPiece = null;
         this.game.lockDelay = 0;
@@ -150,9 +150,19 @@ export class PieceMovement {
 
         const lines = this.game.board.getFullLines();
         if (lines.length > 0) {
-            // Animate line clear before removing rows & spawning the next piece.
-            this.game.isAnimating = true;
             this.game.audio.playLineClear(lines.length);
+            
+            // Skip animation if animations are disabled
+            if (!this.game.animationsEnabled) {
+                this.game.board.clearLines(lines);
+                this.updateScore(lines.length);
+                this.spawnNextPiece();
+                this.game.requestRender();
+                return;
+            }
+            
+            // Animate line clear before removing rows & spawning next piece.
+            this.game.isAnimating = true;
             this.game.board.startLineClear(lines);
 
             const start = performance.now();
