@@ -52,13 +52,72 @@ export class Pieces {
         const pieceData = this.pieceTypes[randomType];
         const color = this.board?.getRandomPaletteColor?.() || '#FFFFFF';
         
+        // Get all possible rotation states for this piece
+        const rotationStates = this.getAllRotationStates(pieceData.shape);
+        const randomRotation = rotationStates[Math.floor(Math.random() * rotationStates.length)];
+        
         return {
             type: randomType,
-            shape: pieceData.shape,
+            shape: randomRotation,
             color,
-            x: Math.floor(10 / 2) - Math.floor(pieceData.shape[0].length / 2),
+            x: Math.floor(10 / 2) - Math.floor(randomRotation[0].length / 2),
             y: 0
         };
+    }
+    
+    getAllRotationStates(shape) {
+        const states = [];
+        let currentShape = shape;
+        
+        // Add the initial state
+        states.push(currentShape);
+        
+        // Generate rotations until we get back to the original shape
+        for (let i = 0; i < 3; i++) {
+            currentShape = this.rotateMatrix(currentShape);
+            
+            // Check if this rotation is unique (not already in states)
+            const isUnique = !states.some(state => 
+                this.shapesEqual(state, currentShape)
+            );
+            
+            if (isUnique) {
+                states.push(currentShape);
+            } else {
+                // We've found a duplicate, so we've found all unique states
+                break;
+            }
+        }
+        
+        return states;
+    }
+    
+    rotateMatrix(shape) {
+        const rotated = [];
+        const rows = shape.length;
+        const cols = shape[0].length;
+        
+        for (let x = 0; x < cols; x++) {
+            rotated[x] = [];
+            for (let y = rows - 1; y >= 0; y--) {
+                rotated[x][rows - 1 - y] = shape[y][x];
+            }
+        }
+        
+        return rotated;
+    }
+    
+    shapesEqual(shape1, shape2) {
+        if (shape1.length !== shape2.length) return false;
+        if (shape1[0].length !== shape2[0].length) return false;
+        
+        for (let y = 0; y < shape1.length; y++) {
+            for (let x = 0; x < shape1[y].length; x++) {
+                if (shape1[y][x] !== shape2[y][x]) return false;
+            }
+        }
+        
+        return true;
     }
     
     rotatePiece(piece) {
