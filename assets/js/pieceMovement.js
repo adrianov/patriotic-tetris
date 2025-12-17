@@ -206,6 +206,7 @@ export class PieceMovement {
         const newLevel = Math.floor(this.game.lines / 10) + 1;
         if (newLevel > this.game.level) {
             this.game.level = newLevel;
+            this.game.board.cycleGenerationColor();
             this.applyDropTime();
         }
 

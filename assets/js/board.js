@@ -275,11 +275,6 @@ export class Board {
 
         const cleared = this.height - remaining.length;
         
-        // Cycle color if 3 or 4 lines were cleared
-        if (cleared === 3 || cleared === 4) {
-            this.cycleGenerationColor();
-        }
-        
         for (let i = 0; i < cleared; i++) {
             remaining.unshift(Array(this.width).fill(0));
         }
