@@ -206,18 +206,66 @@ export class Controls {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         const rotatedShape = this.getRotatedShape(direction);
+        const piece = this.game.currentPiece;
         
-
+        // Try to maintain the correct alignment based on rotation direction
         const targetX = direction === 'clockwise' 
             ? this.findPositionToMaintainRightmost(rotatedShape)
             : this.findPositionToMaintainLeftmost(rotatedShape);
 
-
-        if (this.tryRotationAtPosition(targetX, rotatedShape)) return;
+        // Try rotation at the aligned position first
+        if (this.tryRotationAt(targetX, piece.y, rotatedShape)) return;
         
+        // Try current position as fallback
+        if (this.tryRotationAt(piece.x, piece.y, rotatedShape)) return;
+        
+        // Try local positions with directional preference
+        if (this.tryLocalRotation(targetX, direction, rotatedShape)) return;
+        
+        // If nothing works locally, rotation fails (no teleportation)
+    }
 
-        if (this.tryDirectRotation(this.game.currentPiece, rotatedShape)) return;
-        this.tryWallKicks(this.game.currentPiece, rotatedShape);
+    tryRotationAt(x, y, rotatedShape) {
+        if (this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
+            this.applyRotation(x, y, rotatedShape);
+            return true;
+        }
+        return false;
+    }
+
+    tryLocalRotation(targetX, direction, rotatedShape) {
+        const piece = this.game.currentPiece;
+        const board = this.game.board;
+        
+        // For I-piece at edge, search from current position if target is out of bounds
+        let searchStartX = targetX;
+        if (targetX < 0 || targetX > board.width - this.getShapeWidth(rotatedShape)) {
+            searchStartX = piece.x;
+        }
+        
+        // Simple search pattern: try closest positions first
+        const positions = [0, 1, -1, 2, -2];
+        
+        // Add extra kicks for I-piece edge cases
+        if (piece.type === 'I') {
+            if (direction === 'clockwise') {
+                positions.push(-3); // Horizontal to vertical at right edge
+            } else {
+                positions.push(-3); // Vertical to horizontal at right edge
+                positions.push(-4); // Extra safety for edge cases
+            }
+        }
+        
+        for (const dx of positions) {
+            const testX = searchStartX + dx;
+            if (testX >= 0 && testX <= board.width - this.getShapeWidth(rotatedShape)) {
+                if (this.tryRotationAt(testX, piece.y, rotatedShape)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     getRotatedShape(direction) {
@@ -230,41 +278,51 @@ export class Controls {
 
 
 
-    tryDirectRotation(piece, rotatedShape) {
-        if (this.game.board.canMove(piece, 0, 0, rotatedShape)) {
-            this.applyRotation(piece.x, piece.y, rotatedShape);
-            return true;
+
+
+    trySimpleWallKicks(piece, rotatedShape) {
+        // Only allow very basic kicks that don't risk teleportation
+        // This prevents pieces from jumping through walls
+        
+        const basicKicks = [
+            [-1, 0], [1, 0],   // Basic left/right kicks
+            [0, -1],           // Basic up kick
+        ];
+        
+        // For I-piece, add slightly more options but still very limited
+        if (piece.type === 'I') {
+            basicKicks.push([-2, 0], [2, 0]); // Extra kicks for I-piece only
         }
+        
+        for (const [dx, dy] of basicKicks) {
+            // Only allow kicks that move at most 2 blocks in any direction
+            if (Math.abs(dx) > 2 || Math.abs(dy) > 2) continue;
+            
+            // Check if the target position is valid for the rotated shape
+            if (this.game.board.canMove(piece, dx, dy, rotatedShape)) {
+                this.applyRotation(piece.x + dx, piece.y + dy, rotatedShape);
+                return true;
+            }
+        }
+        
         return false;
     }
 
-    tryWallKicks(adjustedPiece, rotatedShape) {
-        const kickTests = WallKickSystem.getPrioritizedKickTests(
-            this.game.currentPiece.type, 
-            this.game.currentPiece.shape, 
-            this.game.board, 
-            this.game.currentPiece, 
-            rotatedShape
-        );
 
-        for (const [dx, dy] of kickTests) {
-            // Check if the kick path is clear to prevent teleportation through blocks
-            if (!WallKickSystem.isKickPathClear(this.game.board, this.game.currentPiece, dx, dy, rotatedShape)) {
-                continue; // Skip this kick as it would teleport through blocks
-            }
 
-            const testPiece = { ...adjustedPiece };
-            if (this.game.board.canMove(testPiece, dx, dy, rotatedShape)) {
-                this.applyRotation(testPiece.x + dx, testPiece.y + dy, rotatedShape);
-                return;
-            }
-            
-            if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
-                this.applyRotation(this.game.currentPiece.x + dx, this.game.currentPiece.y + dy, rotatedShape);
-                return;
-            }
-        }
+    findPositionToMaintainRightmost(rotatedShape) {
+        const piece = this.game.currentPiece;
+        const currentRightmost = piece.x + this.getShapeWidth(piece.shape) - 1;
+        return currentRightmost - (this.getShapeWidth(rotatedShape) - 1);
     }
+
+    findPositionToMaintainLeftmost(rotatedShape) {
+        return this.game.currentPiece.x;
+    }
+
+
+
+
 
     applyRotation(x, y, shape) {
         this.game.currentPiece.x = x;
@@ -273,52 +331,6 @@ export class Controls {
         this.game.lockDelay = 0;
         this.game.audio.playRotate();
         this.game.requestRender();
-    }
-
-    findPositionToMaintainRightmost(rotatedShape) {
-        const piece = this.game.currentPiece;
-        const board = this.game.board;
-        const currentRightmost = piece.x + this.getShapeWidth(piece.shape) - 1;
-        const targetX = currentRightmost - (this.getShapeWidth(rotatedShape) - 1);
-        
-        if (targetX >= 0 && board.canMove({ ...piece, x: targetX }, 0, 0, rotatedShape)) {
-            return targetX;
-        }
-        
-        for (let x = targetX; x >= 0; x--) {
-            if (board.canMove({ ...piece, x }, 0, 0, rotatedShape)) return x;
-        }
-        
-        return piece.x;
-    }
-
-    findPositionToMaintainLeftmost(rotatedShape) {
-        const piece = this.game.currentPiece;
-        const board = this.game.board;
-        const targetX = piece.x;
-        
-        if (targetX >= 0 && board.canMove({ ...piece, x: targetX }, 0, 0, rotatedShape)) {
-            return targetX;
-        }
-        
-        const maxX = board.width - this.getShapeWidth(rotatedShape);
-        for (let x = targetX + 1; x <= maxX; x++) {
-            if (board.canMove({ ...piece, x }, 0, 0, rotatedShape)) return x;
-        }
-        
-        return piece.x;
-    }
-
-    tryRotationAtPosition(targetX, rotatedShape) {
-        const piece = this.game.currentPiece;
-        const testPiece = { ...piece, x: targetX };
-        
-        if (this.game.board.canMove(testPiece, 0, 0, rotatedShape)) {
-            this.applyRotation(targetX, piece.y, rotatedShape);
-            return true;
-        }
-        
-        return false;
     }
 
     getShapeWidth(shape) {
