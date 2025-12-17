@@ -353,19 +353,14 @@ export class Controls {
             currentY++;
             const testPiece = { ...this.game.currentPiece, y: currentY };
             
-            // Check if the current position would be under a hanging block
-            if (this.wouldBeUnderHangingBlock(testPiece)) {
+            // Check if current position would be under a hanging block
+            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) {
                 break; // Stop here - piece is actually at the position where it could be moved under hanging block
             }
         }
 
         return currentY;
     }
-    wouldBeUnderHangingBlock(piece) {
-        if (!piece) return false;
-        return this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(piece);
-    }
-    countFilledBlocksAbove(piece) { return this.game.pieceMovement.countFilledBlocksAbove(piece); }
     animateHardDrop(startY, endY) {
         const duration = 200, startTime = performance.now();
         const piece = this.game.currentPiece;
