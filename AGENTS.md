@@ -1,7 +1,7 @@
 # Patriotic Tetris - Agent Guidelines
 
 ## Commands
-- **Start dev server**: `python3 -m http.server 8000`
+- **Start dev server**: `python3 -m http.server 8000` (DO NOT RUN - hangs the agent)
 - **Run single test**: Open `http://localhost:8000` in browser
 - **Lint JS**: `tsc --noEmit --project jsconfig.json`
 - **Complexity check**: `npx eslint assets/js/` (errors if CCN > 10, max-depth > 4, max-params > 5, max-lines > 400)
