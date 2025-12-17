@@ -38,6 +38,7 @@ class Game {
         this.lastDrop = 0;
         this.isAnimating = false;
         this.showGhostPiece = true;
+        this.animationsEnabled = true;
         this.lockDelay = 0;
 
         // Time tracking (mm:ss) - counts only while playing (not paused / not game over)
@@ -86,6 +87,7 @@ class Game {
         this.gameOver = false;
         this.paused = false;
         this.isAnimating = false;
+        this.animationsEnabled = true;
         this.speedBoost = 0;
         this.dropTime = this.pieceMovement.calcDropTime();
         this.lockDelay = 0;
@@ -110,6 +112,15 @@ class Game {
         if (ghostStatus) {
             ghostStatus.textContent = this.showGhostPiece ? 'ON' : 'OFF';
         }
+        
+        // Initialize animation status
+        const animationStatus = document.getElementById('animation-toggle');
+        if (animationStatus) {
+            animationStatus.textContent = this.animationsEnabled ? 'ON' : 'OFF';
+        }
+        
+        // Initialize CSS animation class
+        document.body.classList.toggle('no-animations', !this.animationsEnabled);
         this.requestRender();
     }
 
@@ -217,6 +228,17 @@ class Game {
 
     toggleGhostPiece() {
         this.ui.toggleGhostPiece();
+    }
+
+    toggleAnimations() {
+        this.animationsEnabled = !this.animationsEnabled;
+        const statusElement = document.getElementById('animation-toggle');
+        if (statusElement) {
+            statusElement.textContent = this.animationsEnabled ? 'ON' : 'OFF';
+        }
+        
+        // Add/remove CSS class to disable visual animations
+        document.body.classList.toggle('no-animations', !this.animationsEnabled);
     }
 
     setScrollLock() {

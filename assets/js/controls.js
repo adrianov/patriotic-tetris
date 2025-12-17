@@ -59,7 +59,7 @@ export class Controls {
     isMovementKey(key) { return key === 'arrowleft' || key === 'arrowright'; }
     isRotationKey(key) { return key === 'arrowup' || key === 'arrowdown'; }
     isGameOverAllowedKey(key) {
-        const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п'];
+        const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п', 'a', 'ф'];
         return allowedKeys.includes(key);
     }
     handleKeyUp(e) {
@@ -122,7 +122,9 @@ export class Controls {
             'm': () => this.game.audio.toggleMute(),
             'ь': () => this.game.audio.toggleMute(),
             'g': () => this.game.ui.toggleGhostPiece(),
-            'п': () => this.game.ui.toggleGhostPiece()
+            'п': () => this.game.ui.toggleGhostPiece(),
+            'a': () => this.game.toggleAnimations(),
+            'ф': () => this.game.toggleAnimations()
         };
     }
     movePiece(dx, dy) {
@@ -353,8 +355,20 @@ export class Controls {
         return currentY;
     }
     animateHardDrop(startY, endY) {
-        const duration = 200, startTime = performance.now();
         const piece = this.game.currentPiece;
+        
+        // Skip animation if animations are disabled
+        if (!this.game.animationsEnabled) {
+            piece.y = endY;
+            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
+                this.game.pieceMovement.startLockDelay();
+            } else {
+                this.game.pieceMovement.lockPiece();
+            }
+            return;
+        }
+        
+        const duration = 200, startTime = performance.now();
         this.game.isAnimating = true;
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
