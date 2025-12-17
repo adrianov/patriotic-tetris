@@ -23,6 +23,10 @@ export class Board {
 
         this.theme = this.readTheme();
         
+        // Color generation state
+        this.currentGenerationColor = null;
+        this.currentTheme = null;
+        
         // Initialize renderer
         this.renderer = new BoardRenderer(this);
 
@@ -80,9 +84,54 @@ export class Board {
     }
 
     getRandomPaletteColor() {
-        const palette = this.theme?.palette;
-        if (!Array.isArray(palette) || palette.length === 0) return '#FFFFFF';
-        return palette[Math.floor(Math.random() * palette.length)];
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'modern';
+        
+        // Initialize if theme changed or first time
+        if (this.currentTheme !== currentTheme || !this.currentGenerationColor) {
+            this.currentTheme = currentTheme;
+            this.currentGenerationColor = this.getDefaultColorForTheme(currentTheme);
+            return this.currentGenerationColor;
+        }
+        
+        return this.currentGenerationColor;
+    }
+    
+    cycleGenerationColor() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'modern';
+        if (this.currentGenerationColor) {
+            const themeColors = this.getThemeColors(currentTheme);
+            const currentIndex = themeColors.indexOf(this.currentGenerationColor);
+            const nextIndex = (currentIndex + 1) % themeColors.length;
+            this.currentGenerationColor = themeColors[nextIndex];
+        }
+    }
+    
+
+    
+    getThemeColors(theme) {
+        switch (theme) {
+            case 'modern':
+                return ['#D52B1E', '#0039A6', '#FFFFFF'];
+            case 'imperial':
+                return ['#FFFFFF', '#B58E24', '#0B0B0B'];
+            case 'soviet':
+                return ['#B64F4F', '#C85A5A', '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#8A0303'];
+            default:
+                return ['#D52B1E', '#0039A6', '#FFFFFF'];
+        }
+    }
+    
+    getDefaultColorForTheme(theme) {
+        switch (theme) {
+            case 'modern':
+                return '#D52B1E';
+            case 'imperial':
+                return '#FFFFFF';
+            case 'soviet':
+                return '#B64F4F';
+            default:
+                return '#D52B1E';
+        }
     }
 
     reset() {
@@ -225,6 +274,12 @@ export class Board {
         }
 
         const cleared = this.height - remaining.length;
+        
+        // Cycle color if 3 or 4 lines were cleared
+        if (cleared === 3 || cleared === 4) {
+            this.cycleGenerationColor();
+        }
+        
         for (let i = 0; i < cleared; i++) {
             remaining.unshift(Array(this.width).fill(0));
         }
