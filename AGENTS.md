@@ -1,42 +1,45 @@
 # Patriotic Tetris - Agent Guidelines
 
-## Commands
+## Development Workflow
 - **Start dev server**: `python3 -m http.server 8000` (DO NOT RUN - hangs the agent)
-- **Run single test**: Open `http://localhost:8000` in browser
-- **Lint JS**: `tsc --noEmit --project jsconfig.json`
-- **Complexity check**: `npx eslint assets/js/` (errors if CCN > 10, max-depth > 4, max-params > 5, max-lines > 400)
-- **Test audio**: Press M to toggle mute, use arrow keys to test sounds
-- **Fix parsing error**: Parsing errors affect the whole file, so to fix them, read the file as a whole, do not read it with limits or partials. And then rewrite file as a whole syntaxically correct.
-- **Fix ESLint errors**: Must fix all ESLint errors before committing changes
-- **Too many lines error**: When ESLint reports "File has too many lines", do NOT fix by removing blank lines or merging lines. Instead fix by removing dead code, removing duplicate code, and refactoring. When refactoring for file length, re-read the file in full as it requires comprehensive restructuring. For modules that need to fit within line restrictions, read the entire module, remove obsolete/unneeded code, reduce code duplication, and apply proper refactoring methods rather than deleting formatting.
-- **Bug fixing rule**: If user reports that an issue is not fixed after a fix attempt, re-read the current git diff to understand what changed, analyze the logic, and find the actual bug before attempting another fix.
+- **Run tests**: Open `http://localhost:8000` in browser
+- **Lint/Type check**: `tsc --noEmit --project jsconfig.json`
+- **Complexity check**: `npx eslint assets/js/` (CCN > 10, max-depth > 4, max-params > 5, max-lines > 400)
+- **Test audio**: Press M to toggle mute, arrow keys to test sounds
+
+## Code Quality Rules
+- **ESLint errors**: Must fix all before committing
+- **Parsing errors**: Read entire file, rewrite as complete syntactically-correct unit
+- **Module length**: Break into smaller logical modules when exceeding linter limits
+- **File refactoring**: For line limit violations, remove dead code, reduce duplication, apply proper refactoring
+- **Bug fixing**: If issue persists, check git diff, analyze logic changes before retrying
 
 ## Project Hygiene
-- **TODO.md**: Do **not** remove finished items; mark them as completed instead (use `[x]` or `✅`).
+- **TODO.md**: Mark completed items with `[x]` or `✅`, never remove
 
-## Code Style Guidelines
+## Code Standards
 
 ### JavaScript
-- **Imports**: ES6 modules at top, use relative paths (`./module.js`)
+- **Imports**: ES6 modules, relative paths (`./module.js`)
 - **Classes**: PascalCase, export class declarations
 - **Methods**: camelCase, use `this.` for instance methods
-- **Constants**: UPPER_SNAKE_CASE for colors, dimensions
+- **Constants**: UPPER_SNAKE_CASE for colors/dimensions
 - **Error handling**: Check null/undefined before property access
 - **Comments**: Single line `//` for brief descriptions
 
 ### CSS
-- **Colors**: Use CSS custom properties (`var(--white)`)
-- **Naming**: kebab-case for classes and IDs
+- **Colors**: CSS custom properties (`var(--white)`)
+- **Naming**: kebab-case for classes/IDs
 - **Units**: `rem` for typography, `px` for game elements
-- **Responsive**: Mobile-first with `@media` queries
+- **Responsive**: Mobile-first `@media` queries
 
 ### File Structure
 - **Modules**: One class per file, export at bottom
 - **Assets**: SVG in `assets/svg/`, JS in `assets/js/`
-- **No build tools**: Vanilla JS runs directly in browser
+- **Build**: No build tools, vanilla JS runs directly
 
-### Game Specific
-- **Canvas**: Use `getContext('2d')`, clear before each frame
-- **Audio**: Web Audio API with synthesized sounds only
-- **Colors**: Patriotic theme - white (#FFFFFF), blue (#0039A6), red (#D52B1E)
-- **Performance**: Target 60 FPS, use `requestAnimationFrame`
+### Game Development
+- **Canvas**: `getContext('2d')`, clear before each frame
+- **Audio**: Web Audio API, synthesized sounds only
+- **Theme**: Patriotic colors - white (#FFFFFF), blue (#0039A6), red (#D52B1E)
+- **Performance**: Target 60 FPS with `requestAnimationFrame`
