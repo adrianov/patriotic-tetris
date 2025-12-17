@@ -1,7 +1,5 @@
-
 import { WallKickSystem } from './wallKicks.js';
 import { TouchControls } from './touchControls.js';
-
 export class Controls {
     constructor() {
         this.game = null;
@@ -11,115 +9,83 @@ export class Controls {
         this.pressedKeys = new Set();
         this.setupKeyboardListeners();
     }
-
     setup(game) {
         this.game = game;
         this.keyMap = this.buildKeyMap();
         this.touchControls = new TouchControls(game);
         this.touchControls.setup();
     }
-
     setupKeyboardListeners() {
         document.addEventListener('keydown', (e) => {
             this.handleKeyDown(e);
         });
-
         document.addEventListener('keyup', (e) => {
             this.handleKeyUp(e);
         });
     }
-
     handleKeyDown(e) {
         if (!this.game) return;
-
         const key = e.key.toLowerCase();
         const action = this.getActionForKey(key, e);
         if (!action) return;
-
-
         if (this.game.gameOver && !this.isGameOverAllowedKey(key)) return;
-
         e.preventDefault();
-
-
         if (this.pressedKeys.has(key)) {
-
             if (this.isMovementKey(key)) {
                 this.executeKeyAction(key, action);
             }
         } else {
-
             this.pressedKeys.add(key);
             this.executeKeyAction(key, action);
         }
     }
-
     getActionForKey(key, e) {
         const action = this.keyMap[key] || this.keyMap[e.key] || this.keyMap[e.code];
         if (!action) return null;
-
-
         if (key === 'r' && (e.ctrlKey || e.metaKey)) return null;
-
         return action;
     }
-
     executeKeyAction(key, action) {
-
         if (this.isMovementKey(key)) {
             this.handleArrowKeyRepeat(key, action);
         } else if (this.isRotationKey(key)) {
-
             action();
             this.game.ui.hideCursor();
         } else {
-
             action();
             this.game.ui.hideCursor();
         }
     }
-
     isMovementKey(key) { return key === 'arrowleft' || key === 'arrowright'; }
     isRotationKey(key) { return key === 'arrowup' || key === 'arrowdown'; }
-
     isGameOverAllowedKey(key) {
         const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п'];
         return allowedKeys.includes(key);
     }
-
     handleKeyUp(e) {
         const key = e.key.toLowerCase();
         
-
         this.pressedKeys.delete(key);
         
-
         if (this.isMovementKey(key)) {
             this.clearRepeatTimer(key);
         }
     }
-
     handleArrowKeyRepeat(key, action) {
         this.clearRepeatTimer(key);
-
-
         action();
         this.game.ui.hideCursor();
-
-
         this.setupRepeatTimer(key, () => {
             action();
             this.game.ui.hideCursor();
         });
     }
-
     clearRepeatTimer(key) {
         const t = this.holdTimers.get(key);
         if (t?.timeoutId) clearTimeout(t.timeoutId);
         if (t?.intervalId) clearInterval(t.intervalId);
         this.holdTimers.delete(key);
     }
-
     getRepeatDelays() {
         // Adapt repeat speed to game level - faster at higher levels
         const level = this.game?.level || 1;
@@ -129,7 +95,6 @@ export class Controls {
         const intervalMs = Math.max(35, 60 - (level - 1) * 3);
         return { initialDelayMs, intervalMs };
     }
-
     setupRepeatTimer(key, action) {
         // Get delays adapted to current level
         const { initialDelayMs, intervalMs } = this.getRepeatDelays();
@@ -140,7 +105,6 @@ export class Controls {
         }, initialDelayMs);
         this.holdTimers.set(key, { timeoutId, intervalId: null });
     }
-
     buildKeyMap() {
         return {
             '+': () => this.game.pieceMovement.increaseSpeed(),
@@ -161,31 +125,23 @@ export class Controls {
             'п': () => this.game.ui.toggleGhostPiece()
         };
     }
-
     movePiece(dx, dy) {
-
         if (dy === 0 && dx !== 0) {
             this.moveSide(dx);
         }
     }
-
     moveSide(dx) {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-
         const canMoveSide = this.game.board.canMove(this.game.currentPiece, dx, 0);
-
         if (canMoveSide) {
             this.game.currentPiece.x += dx;
             this.game.lockDelay = 0;
             this.game.audio.playMove();
             this.game.requestRender();
         }
-
     }
-
     softDrop() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
@@ -194,17 +150,12 @@ export class Controls {
             this.game.requestRender();
             return;
         }
-
-
         this.game.pieceMovement.lockPiece();
     }
-
     rotatePiece() { this.rotateWithOffset('counterClockwise'); }
     rotatePieceClockwise() { this.rotateWithOffset('clockwise'); }
-
     rotateWithOffset(direction) {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-
         const rotatedShape = this.getRotatedShape(direction);
         const piece = this.game.currentPiece;
         
@@ -212,7 +163,6 @@ export class Controls {
         const targetX = direction === 'clockwise' 
             ? this.findPositionToMaintainRightmost(rotatedShape)
             : this.findPositionToMaintainLeftmost(rotatedShape);
-
         // Try rotation at the aligned position first
         if (this.tryRotationAt(targetX, piece.y, rotatedShape)) return;
         
@@ -224,7 +174,6 @@ export class Controls {
         
         // If nothing works locally, rotation fails (no teleportation)
     }
-
     tryRotationAt(x, y, rotatedShape) {
         if (!this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
             return false;
@@ -238,7 +187,6 @@ export class Controls {
         this.applyRotation(x, y, rotatedShape);
         return true;
     }
-
     isRotationPathClear(startX, endX, rotatedShape) {
         const distance = Math.abs(endX - startX);
         if (distance <= 1) return true; // Small moves are safe
@@ -263,7 +211,6 @@ export class Controls {
         
         return true;
     }
-
     isIEdgeRotation(startX, endX, rotatedShape) {
         const piece = this.game.currentPiece;
         const board = this.game.board;
@@ -288,28 +235,27 @@ export class Controls {
         
         return leftEdge <= 1 || rightEdge >= board.width - 2;
     }
-
     tryLocalRotation(targetX, direction, rotatedShape) {
         const piece = this.game.currentPiece;
         const board = this.game.board;
         
-        // For I-piece at edge, search from current position if target is out of bounds
+        // For I-piece at edge, use edge-appropriate starting position
         let searchStartX = targetX;
         if (targetX < 0 || targetX > board.width - this.getShapeWidth(rotatedShape)) {
-            searchStartX = piece.x;
+            const rotatedWidth = this.getShapeWidth(rotatedShape);
+            if (targetX < 0) {
+                searchStartX = 0; // Start from left edge
+            } else {
+                searchStartX = board.width - rotatedWidth; // Start from right edge
+            }
         }
         
         // Simple search pattern: try closest positions first
         const positions = [0, 1, -1, 2, -2];
         
-        // Add extra kicks for I-piece edge cases
-        if (piece.type === 'I') {
-            if (direction === 'clockwise') {
-                positions.push(-3); // Horizontal to vertical at right edge
-            } else {
-                positions.push(-3); // Vertical to horizontal at right edge
-                positions.push(-4); // Extra safety for edge cases
-            }
+        // Add targeted kicks for I-piece right edge rotation
+        if (piece.type === 'I' && searchStartX >= board.width - 3) {
+            positions.push(-2, -3); // Right edge kicks
         }
         
         for (const dx of positions) {
@@ -323,19 +269,11 @@ export class Controls {
         
         return false;
     }
-
     getRotatedShape(direction) {
         return direction === 'clockwise' 
             ? this.game.pieces.rotatePiece(this.game.currentPiece)
             : this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
     }
-
-
-
-
-
-
-
     trySimpleWallKicks(piece, rotatedShape) {
         // Only allow very basic kicks that don't risk teleportation
         // This prevents pieces from jumping through walls
@@ -363,23 +301,14 @@ export class Controls {
         
         return false;
     }
-
-
-
     findPositionToMaintainRightmost(rotatedShape) {
         const piece = this.game.currentPiece;
         const currentRightmost = piece.x + this.getShapeWidth(piece.shape) - 1;
         return currentRightmost - (this.getShapeWidth(rotatedShape) - 1);
     }
-
     findPositionToMaintainLeftmost(rotatedShape) {
         return this.game.currentPiece.x;
     }
-
-
-
-
-
     applyRotation(x, y, shape) {
         this.game.currentPiece.x = x;
         this.game.currentPiece.y = y;
@@ -388,7 +317,6 @@ export class Controls {
         this.game.audio.playRotate();
         this.game.requestRender();
     }
-
     getShapeWidth(shape) {
         let maxWidth = 0;
         for (let row = 0; row < shape.length; row++) {
@@ -399,25 +327,21 @@ export class Controls {
         }
         return maxWidth;
     }
-
     hardDrop() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
         
         const startY = this.game.currentPiece.y;
         const targetY = this.findOptimalDropPosition();
         const dropDistance = targetY - startY;
-
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
             this.game.pieceMovement.addDropPoints(dropDistance * 2);
-
             this.animateHardDrop(startY, targetY);
             this.game.requestRender();
         } else {
             this.game.pieceMovement.lockPiece();
         }
     }
-
     findOptimalDropPosition() {
         const startY = this.game.currentPiece.y;
         let currentY = startY;

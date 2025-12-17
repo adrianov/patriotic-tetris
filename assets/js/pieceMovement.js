@@ -219,4 +219,38 @@ export class PieceMovement {
         this.addPoints(points);
         this.game.ui.updateUI();
     }
+
+    animateHardDrop(startY, endY) {
+        const duration = 200, startTime = performance.now();
+        const piece = this.game.currentPiece;
+        this.game.isAnimating = true;
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            piece.y = startY + (endY - startY) * easeProgress;
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                if (this.hasMoreFilledBlocksAboveAfterMove()) {
+                    this.startLockDelay();
+                } else {
+                    this.lockPiece();
+                }
+                this.game.isAnimating = false;
+            }
+        };
+        requestAnimationFrame(animate);
+    }
+
+    findOptimalDropPosition() {
+        const startY = this.game.currentPiece.y;
+        let currentY = startY;
+        while (this.game.board.canMove(this.game.currentPiece, 0, currentY - startY + 1)) {
+            currentY++;
+            const testPiece = { ...this.game.currentPiece, y: currentY };
+            if (this.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) break;
+        }
+        return currentY;
+    }
 }
