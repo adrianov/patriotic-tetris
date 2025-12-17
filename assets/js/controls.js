@@ -211,12 +211,18 @@ export class Controls {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         const rotatedShape = this.getRotatedShape(direction);
-        const offset = this.getRotationOffset(direction);
-        const adjustedPiece = this.createAdjustedPiece(offset);
+        
+        // Calculate target position to maintain the appropriate edge
+        const targetX = direction === 'clockwise' 
+            ? this.findPositionToMaintainRightmost(rotatedShape)
+            : this.findPositionToMaintainLeftmost(rotatedShape);
 
-        if (this.tryDirectRotation(adjustedPiece, rotatedShape)) return;
+        // Try to rotate and move to the target position
+        if (this.tryRotationAtPosition(targetX, rotatedShape)) return;
+        
+        // Fallback to current position if target position doesn't work
         if (this.tryDirectRotation(this.game.currentPiece, rotatedShape)) return;
-        this.tryWallKicks(adjustedPiece, rotatedShape);
+        this.tryWallKicks(this.game.currentPiece, rotatedShape);
     }
 
     getRotatedShape(direction) {
@@ -278,6 +284,63 @@ export class Controls {
         this.game.requestRender();
     }
 
+    findPositionToMaintainRightmost(rotatedShape) {
+        const piece = this.game.currentPiece;
+        const board = this.game.board;
+        const currentRightmost = piece.x + this.getShapeWidth(piece.shape) - 1;
+        const targetX = currentRightmost - (this.getShapeWidth(rotatedShape) - 1);
+        
+        if (targetX >= 0 && board.canMove({ ...piece, x: targetX }, 0, 0, rotatedShape)) {
+            return targetX;
+        }
+        
+        for (let x = targetX; x >= 0; x--) {
+            if (board.canMove({ ...piece, x }, 0, 0, rotatedShape)) return x;
+        }
+        
+        return piece.x;
+    }
+
+    findPositionToMaintainLeftmost(rotatedShape) {
+        const piece = this.game.currentPiece;
+        const board = this.game.board;
+        const targetX = piece.x;
+        
+        if (targetX >= 0 && board.canMove({ ...piece, x: targetX }, 0, 0, rotatedShape)) {
+            return targetX;
+        }
+        
+        const maxX = board.width - this.getShapeWidth(rotatedShape);
+        for (let x = targetX + 1; x <= maxX; x++) {
+            if (board.canMove({ ...piece, x }, 0, 0, rotatedShape)) return x;
+        }
+        
+        return piece.x;
+    }
+
+    tryRotationAtPosition(targetX, rotatedShape) {
+        const piece = this.game.currentPiece;
+        const testPiece = { ...piece, x: targetX };
+        
+        if (this.game.board.canMove(testPiece, 0, 0, rotatedShape)) {
+            this.applyRotation(targetX, piece.y, rotatedShape);
+            return true;
+        }
+        
+        return false;
+    }
+
+    getShapeWidth(shape) {
+        let maxWidth = 0;
+        for (let row = 0; row < shape.length; row++) {
+            const rowWidth = shape[row].length;
+            if (rowWidth > maxWidth) {
+                maxWidth = rowWidth;
+            }
+        }
+        return maxWidth;
+    }
+
     hardDrop() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
         let dropDistance = 0;
@@ -307,27 +370,19 @@ export class Controls {
         }
     }
     animateHardDrop(startY, endY) {
-        const duration = 200; // ms
-        const startTime = performance.now();
+        const duration = 200, startTime = performance.now();
         const piece = this.game.currentPiece;
-
-        // Set animation flag
         this.game.isAnimating = true;
 
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-
-            // Easing function for smooth animation
             const easeProgress = 1 - Math.pow(1 - progress, 3);
-
             piece.y = startY + (endY - startY) * easeProgress;
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Hard drop locks immediately unless moving left, right, or rotating
-                // would result in more filled blocks right above it
                 if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
                     this.game.pieceMovement.startLockDelay();
                 } else {
