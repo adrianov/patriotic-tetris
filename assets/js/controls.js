@@ -226,18 +226,9 @@ export class Controls {
             : this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
     }
 
-    getRotationOffset(direction) {
 
-        return { x: 0, y: 0 };
-    }
 
-    createAdjustedPiece(offset) {
-        return {
-            ...this.game.currentPiece,
-            x: this.game.currentPiece.x + offset.x,
-            y: this.game.currentPiece.y + offset.y
-        };
-    }
+
 
     tryDirectRotation(piece, rotatedShape) {
         if (this.game.board.canMove(piece, 0, 0, rotatedShape)) {
@@ -257,6 +248,11 @@ export class Controls {
         );
 
         for (const [dx, dy] of kickTests) {
+            // Check if the kick path is clear to prevent teleportation through blocks
+            if (!WallKickSystem.isKickPathClear(this.game.board, this.game.currentPiece, dx, dy, rotatedShape)) {
+                continue; // Skip this kick as it would teleport through blocks
+            }
+
             const testPiece = { ...adjustedPiece };
             if (this.game.board.canMove(testPiece, dx, dy, rotatedShape)) {
                 this.applyRotation(testPiece.x + dx, testPiece.y + dy, rotatedShape);
@@ -350,7 +346,6 @@ export class Controls {
             this.animateHardDrop(startY, targetY);
             this.game.requestRender();
         } else {
-
             this.game.pieceMovement.lockPiece();
         }
     }
@@ -358,18 +353,11 @@ export class Controls {
     findOptimalDropPosition() {
         const startY = this.game.currentPiece.y;
         let currentY = startY;
-
-        // Check each line from current position downwards
         while (this.game.board.canMove(this.game.currentPiece, 0, currentY - startY + 1)) {
             currentY++;
             const testPiece = { ...this.game.currentPiece, y: currentY };
-            
-            // Check if current position would be under a hanging block
-            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) {
-                break; // Stop here - piece is actually at the position where it could be moved under hanging block
-            }
+            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) break;
         }
-
         return currentY;
     }
     animateHardDrop(startY, endY) {

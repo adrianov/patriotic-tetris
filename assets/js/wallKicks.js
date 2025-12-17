@@ -3,6 +3,12 @@ export class WallKickSystem {
     static getWallKickTests(pieceType, currentShape) {
         // Standard wall kick patterns for different piece types
         // Based on SRS (Super Rotation System) with simplified patterns
+        // Filter kicks to ensure no piece moves more than 3 blocks away
+        const allKicks = this.getAllPotentialKicks(pieceType, currentShape);
+        return this.filterKicksByDistance(allKicks, 3);
+    }
+
+    static getAllPotentialKicks(pieceType, currentShape) {
         switch (pieceType) {
             case 'I':
                 // I-piece has special extended kicks based on current orientation
@@ -38,6 +44,42 @@ export class WallKickSystem {
                     [-1, -1], [1, -1] // Diagonal kicks
                 ];
         }
+    }
+
+    static filterKicksByDistance(kicks, maxDistance) {
+        return kicks.filter(([dx, dy]) => {
+            // Calculate Manhattan distance from origin
+            const distance = Math.abs(dx) + Math.abs(dy);
+            return distance <= maxDistance;
+        });
+    }
+
+    static isKickPathClear(board, piece, dx, dy, rotatedShape) {
+        // For kicks that move more than 1 block, ensure the path is clear
+        if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
+            return true; // Single block moves are always allowed
+        }
+
+        // Check if the kick path would go through existing blocks
+        // We check intermediate positions along the kick path
+        const steps = Math.max(Math.abs(dx), Math.abs(dy));
+        const stepX = dx / steps;
+        const stepY = dy / steps;
+
+        for (let i = 1; i < steps; i++) {
+            const intermediateX = Math.round(piece.x + stepX * i);
+            const intermediateY = Math.round(piece.y + stepY * i);
+            
+            // Create a test piece at the intermediate position with original shape
+            const testPiece = { ...piece, x: intermediateX, y: intermediateY };
+            
+            // Check if the original shape can exist at this intermediate position
+            if (!board.canMove(testPiece, 0, 0)) {
+                return false; // Path is blocked
+            }
+        }
+
+        return true; // Path is clear
     }
 
     static hasNearbyObstructions(board, piece, rotatedShape) {
