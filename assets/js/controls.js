@@ -217,7 +217,13 @@ export class Controls {
         }
 
         // Try wall kicks if normal rotation fails
-        const kickTests = WallKickSystem.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
+        const kickTests = WallKickSystem.getPrioritizedKickTests(
+            this.game.currentPiece.type, 
+            this.game.currentPiece.shape, 
+            this.game.board, 
+            this.game.currentPiece, 
+            rotatedShape
+        );
 
         for (const [dx, dy] of kickTests) {
             if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
@@ -252,7 +258,13 @@ export class Controls {
         }
 
         // Try wall kicks if normal rotation fails
-        const kickTests = WallKickSystem.getWallKickTests(this.game.currentPiece.type, this.game.currentPiece.shape);
+        const kickTests = WallKickSystem.getPrioritizedKickTests(
+            this.game.currentPiece.type, 
+            this.game.currentPiece.shape, 
+            this.game.board, 
+            this.game.currentPiece, 
+            rotatedShape
+        );
 
         for (const [dx, dy] of kickTests) {
             if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
