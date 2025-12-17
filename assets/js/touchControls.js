@@ -140,6 +140,21 @@ export class TouchControls {
 
     rotatePiece() {
         if (this.game.controls) {
+            // Check if current piece is near right side for position-based rotation
+            const piece = this.game.currentPiece;
+            if (piece) {
+                const pieceWidth = piece.shape[0].length;
+                const rightmostX = piece.x + pieceWidth;
+                const isNearRightSide = rightmostX >= this.game.board.width - 1;
+                
+                if (isNearRightSide) {
+                    // Use clockwise rotation when piece is near right side
+                    this.game.controls.rotatePieceClockwise();
+                    return;
+                }
+            }
+            
+            // Default behavior
             this.game.controls.rotatePiece();
         }
     }
