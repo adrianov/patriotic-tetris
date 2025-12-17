@@ -1,4 +1,4 @@
-// Controls Module - Input Handling v2
+
 import { WallKickSystem } from './wallKicks.js';
 import { TouchControls } from './touchControls.js';
 
@@ -36,19 +36,19 @@ export class Controls {
         const action = this.getActionForKey(key, e);
         if (!action) return;
 
-        // Block game controls during game over, but allow restart, mute, and ghost toggle
+
         if (this.game.gameOver && !this.isGameOverAllowedKey(key)) return;
 
         e.preventDefault();
 
-        // Track pressed keys to prevent repeat for rotation keys
+
         if (this.pressedKeys.has(key)) {
-            // Key is already pressed, only allow repeat for movement keys
+
             if (this.isMovementKey(key)) {
                 this.executeKeyAction(key, action);
             }
         } else {
-            // First time pressing this key
+
             this.pressedKeys.add(key);
             this.executeKeyAction(key, action);
         }
@@ -58,63 +58,55 @@ export class Controls {
         const action = this.keyMap[key] || this.keyMap[e.key] || this.keyMap[e.code];
         if (!action) return null;
 
-        // R key: ignore if ctrl/cmd held (browser refresh)
+
         if (key === 'r' && (e.ctrlKey || e.metaKey)) return null;
 
         return action;
     }
 
     executeKeyAction(key, action) {
-        // For movement arrow keys (left, right), use repeat logic
+
         if (this.isMovementKey(key)) {
             this.handleArrowKeyRepeat(key, action);
         } else if (this.isRotationKey(key)) {
-            // For rotation keys, execute immediately but don't repeat
+
             action();
             this.game.ui.hideCursor();
         } else {
-            // For all other keys, execute immediately
+
             action();
             this.game.ui.hideCursor();
         }
     }
 
-    isMovementKey(key) {
-        return key === 'arrowleft' || key === 'arrowright';
-    }
-
-    isRotationKey(key) {
-        return key === 'arrowup' || key === 'arrowdown';
-    }
+    isMovementKey(key) { return key === 'arrowleft' || key === 'arrowright'; }
+    isRotationKey(key) { return key === 'arrowup' || key === 'arrowdown'; }
 
     isGameOverAllowedKey(key) {
-        // Allow these keys to work even during game over
-        const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п']; // Restart, mute, ghost toggle (English and Russian)
+        const allowedKeys = ['r', 'к', 'm', 'ь', 'g', 'п'];
         return allowedKeys.includes(key);
     }
 
     handleKeyUp(e) {
         const key = e.key.toLowerCase();
         
-        // Remove from pressed keys set
+
         this.pressedKeys.delete(key);
         
-        // Only clear timers for movement arrow keys (left, right)
-        // Rotation keys don't have timers, so no need to clear them
+
         if (this.isMovementKey(key)) {
             this.clearRepeatTimer(key);
         }
     }
 
     handleArrowKeyRepeat(key, action) {
-        // Clear any existing timer for this key
         this.clearRepeatTimer(key);
 
-        // Execute action immediately on first press
+
         action();
         this.game.ui.hideCursor();
 
-        // Set up repeat timers using the same logic as touch controls
+
         this.setupRepeatTimer(key, () => {
             action();
             this.game.ui.hideCursor();
@@ -129,16 +121,12 @@ export class Controls {
     }
 
     setupRepeatTimer(key, action) {
-        // Get delays adapted to current level
         const { initialDelayMs, intervalMs } = this.getRepeatDelays();
-
-        // Set up repeat timers
         const timeoutId = setTimeout(() => {
             const intervalId = setInterval(action, intervalMs);
             const prev = this.holdTimers.get(key) || {};
             this.holdTimers.set(key, { ...prev, intervalId });
         }, initialDelayMs);
-
         this.holdTimers.set(key, { timeoutId, intervalId: null });
     }
 
@@ -148,23 +136,23 @@ export class Controls {
             '=': () => this.game.pieceMovement.increaseSpeed(),
             'NumpadAdd': () => this.game.pieceMovement.increaseSpeed(),
             'p': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); },
-            'з': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); }, // Russian з for pause
+            'з': () => { this.game.pause(); if (this.game.paused) this.game.ui.showCursor(); },
             'arrowleft': () => this.moveSide(-1),
             'arrowright': () => this.moveSide(1),
             'arrowdown': () => this.rotatePieceClockwise(),
             'arrowup': () => this.rotatePiece(),
             ' ': () => this.hardDrop(),
             'r': () => this.game.startNewGame(),
-            'к': () => this.game.startNewGame(), // Russian к for restart
+            'к': () => this.game.startNewGame(),
             'm': () => this.game.audio.toggleMute(),
-            'ь': () => this.game.audio.toggleMute(), // Russian ь for mute
+            'ь': () => this.game.audio.toggleMute(),
             'g': () => this.game.ui.toggleGhostPiece(),
-            'п': () => this.game.ui.toggleGhostPiece(), // Russian п for ghost piece
+            'п': () => this.game.ui.toggleGhostPiece()
         };
     }
 
     movePiece(dx, dy) {
-        // Down arrow is now used for clockwise rotation, not soft drop
+
         if (dy === 0 && dx !== 0) {
             this.moveSide(dx);
         }
@@ -181,7 +169,7 @@ export class Controls {
             this.game.audio.playMove();
             this.game.requestRender();
         }
-        // Removed: immediate locking on failed horizontal moves - now only applies to hard drops
+
     }
 
     softDrop() {
@@ -196,31 +184,27 @@ export class Controls {
             return;
         }
 
-        // If the player asks to move down but it's impossible, lock immediately.
+
         this.game.pieceMovement.lockPiece();
     }
 
-    rotatePiece() {
-        this.rotateWithOffset('counterClockwise');
-    }
-    rotatePieceClockwise() {
-        this.rotateWithOffset('clockwise');
-    }
+    rotatePiece() { this.rotateWithOffset('counterClockwise'); }
+    rotatePieceClockwise() { this.rotateWithOffset('clockwise'); }
 
     rotateWithOffset(direction) {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
         const rotatedShape = this.getRotatedShape(direction);
         
-        // Calculate target position to maintain the appropriate edge
+
         const targetX = direction === 'clockwise' 
             ? this.findPositionToMaintainRightmost(rotatedShape)
             : this.findPositionToMaintainLeftmost(rotatedShape);
 
-        // Try to rotate and move to the target position
+
         if (this.tryRotationAtPosition(targetX, rotatedShape)) return;
         
-        // Fallback to current position if target position doesn't work
+
         if (this.tryDirectRotation(this.game.currentPiece, rotatedShape)) return;
         this.tryWallKicks(this.game.currentPiece, rotatedShape);
     }
@@ -232,7 +216,7 @@ export class Controls {
     }
 
     getRotationOffset(direction) {
-        // No special I-piece handling
+
         return { x: 0, y: 0 };
     }
 
@@ -343,43 +327,54 @@ export class Controls {
 
     hardDrop() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-        let dropDistance = 0;
+        
         const startY = this.game.currentPiece.y;
-
-        // Create a temporary piece to calculate final position
-        const tempPiece = {
-            ...this.game.currentPiece,
-            y: startY
-        };
-
-        // Calculate final position
-        while (this.game.board.canMove(tempPiece, 0, 1)) {
-            tempPiece.y++;
-            dropDistance++;
-        }
+        const targetY = this.findOptimalDropPosition();
+        const dropDistance = targetY - startY;
 
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
             this.game.pieceMovement.addDropPoints(dropDistance * 2);
-            // Animate the drop
-            this.animateHardDrop(startY, tempPiece.y);
+
+            this.animateHardDrop(startY, targetY);
             this.game.requestRender();
         } else {
-            // Already at bottom and can't move down - lock immediately
+
             this.game.pieceMovement.lockPiece();
         }
     }
+
+    findOptimalDropPosition() {
+        const startY = this.game.currentPiece.y;
+        let currentY = startY;
+
+        // Check each line from current position downwards
+        while (this.game.board.canMove(this.game.currentPiece, 0, currentY - startY + 1)) {
+            currentY++;
+            const testPiece = { ...this.game.currentPiece, y: currentY };
+            
+            // Check if the current position would be under a hanging block
+            if (this.wouldBeUnderHangingBlock(testPiece)) {
+                break; // Stop here - piece is actually at the position where it could be moved under hanging block
+            }
+        }
+
+        return currentY;
+    }
+    wouldBeUnderHangingBlock(piece) {
+        if (!piece) return false;
+        return this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(piece);
+    }
+    countFilledBlocksAbove(piece) { return this.game.pieceMovement.countFilledBlocksAbove(piece); }
     animateHardDrop(startY, endY) {
         const duration = 200, startTime = performance.now();
         const piece = this.game.currentPiece;
         this.game.isAnimating = true;
-
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const easeProgress = 1 - Math.pow(1 - progress, 3);
             piece.y = startY + (endY - startY) * easeProgress;
-
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {

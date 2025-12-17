@@ -64,16 +64,17 @@ export class PieceMovement {
     }
 
     hasMoreFilledBlocksAboveAfterMove() {
-        if (!this.game.currentPiece) return false;
+        return this.hasMoreFilledBlocksAboveAfterMoveForPiece(this.game.currentPiece);
+    }
 
-        // Can't be on the ground for this check
-        if (this.game.board.canMove(this.game.currentPiece, 0, 1)) return false;
+    hasMoreFilledBlocksAboveAfterMoveForPiece(piece) {
+        if (!piece) return false;
 
-        const currentAboveCount = this.countFilledBlocksAbove(this.game.currentPiece);
+        const currentAboveCount = this.countFilledBlocksAbove(piece);
 
         // Check if moving left would result in more filled blocks above
-        if (this.game.board.canMove(this.game.currentPiece, -1, 0)) {
-            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x - 1 };
+        if (this.game.board.canMove(piece, -1, 0)) {
+            const testPiece = { ...piece, x: piece.x - 1 };
             const leftAboveCount = this.countFilledBlocksAbove(testPiece);
             if (leftAboveCount > currentAboveCount) {
                 return true;
@@ -81,8 +82,8 @@ export class PieceMovement {
         }
 
         // Check if moving right would result in more filled blocks above
-        if (this.game.board.canMove(this.game.currentPiece, 1, 0)) {
-            const testPiece = { ...this.game.currentPiece, x: this.game.currentPiece.x + 1 };
+        if (this.game.board.canMove(piece, 1, 0)) {
+            const testPiece = { ...piece, x: piece.x + 1 };
             const rightAboveCount = this.countFilledBlocksAbove(testPiece);
             if (rightAboveCount > currentAboveCount) {
                 return true;
@@ -90,10 +91,10 @@ export class PieceMovement {
         }
 
         // Check if rotating would result in more filled blocks above
-        if (this.game.currentPiece.type !== 'O') {
-            const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
-            if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
-                const testPiece = { ...this.game.currentPiece, shape: rotatedShape };
+        if (piece.type !== 'O') {
+            const rotatedShape = this.game.pieces.rotatePiece(piece);
+            if (this.game.board.canMove(piece, 0, 0, rotatedShape)) {
+                const testPiece = { ...piece, shape: rotatedShape };
                 const rotatedAboveCount = this.countFilledBlocksAbove(testPiece);
                 if (rotatedAboveCount > currentAboveCount) {
                     return true;
