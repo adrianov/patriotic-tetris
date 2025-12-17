@@ -201,63 +201,52 @@ export class Controls {
     }
 
     rotatePiece() {
-        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-
-        // Use counter-clockwise rotation
-        const rotatedShape = this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
-        const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
-
-        if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
-            // Normal rotation succeeds
-            this.game.currentPiece.shape = rotatedShape;
-            this.game.lockDelay = 0;
-            this.game.audio.playRotate();
-            this.game.requestRender();
-            return;
-        }
-
-        // Try wall kicks if normal rotation fails
-        const kickTests = WallKickSystem.getPrioritizedKickTests(
-            this.game.currentPiece.type, 
-            this.game.currentPiece.shape, 
-            this.game.board, 
-            this.game.currentPiece, 
-            rotatedShape
-        );
-
-        for (const [dx, dy] of kickTests) {
-            if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
-                // Apply wall kick
-                this.game.currentPiece.x += dx;
-                this.game.currentPiece.y += dy;
-                this.game.currentPiece.shape = rotatedShape;
-                this.game.lockDelay = 0;
-                this.game.audio.playRotate();
-                this.game.requestRender();
-                break;
-            }
-        }
-
-        // Removed: immediate locking on failed rotations - now only applies to hard drops
+        this.rotateWithOffset('counterClockwise');
     }
-     
     rotatePieceClockwise() {
+        this.rotateWithOffset('clockwise');
+    }
+
+    rotateWithOffset(direction) {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
 
-        // Use clockwise rotation (original rotatePiece function)
-        const rotatedShape = this.game.pieces.rotatePiece(this.game.currentPiece);
-        const onGround = !this.game.board.canMove(this.game.currentPiece, 0, 1);
+        const rotatedShape = this.getRotatedShape(direction);
+        const offset = this.getRotationOffset(direction);
+        const adjustedPiece = this.createAdjustedPiece(offset);
 
-        if (this.game.board.canMove(this.game.currentPiece, 0, 0, rotatedShape)) {
-            // Normal rotation succeeds
-            this.game.currentPiece.shape = rotatedShape;
-            this.game.lockDelay = 0;
-            this.game.audio.playRotate();
-            this.game.requestRender();
-            return;
+        if (this.tryDirectRotation(adjustedPiece, rotatedShape)) return;
+        if (this.tryDirectRotation(this.game.currentPiece, rotatedShape)) return;
+        this.tryWallKicks(adjustedPiece, rotatedShape);
+    }
+
+    getRotatedShape(direction) {
+        return direction === 'clockwise' 
+            ? this.game.pieces.rotatePiece(this.game.currentPiece)
+            : this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
+    }
+
+    getRotationOffset(direction) {
+        // No special I-piece handling
+        return { x: 0, y: 0 };
+    }
+
+    createAdjustedPiece(offset) {
+        return {
+            ...this.game.currentPiece,
+            x: this.game.currentPiece.x + offset.x,
+            y: this.game.currentPiece.y + offset.y
+        };
+    }
+
+    tryDirectRotation(piece, rotatedShape) {
+        if (this.game.board.canMove(piece, 0, 0, rotatedShape)) {
+            this.applyRotation(piece.x, piece.y, rotatedShape);
+            return true;
         }
+        return false;
+    }
 
-        // Try wall kicks if normal rotation fails
+    tryWallKicks(adjustedPiece, rotatedShape) {
         const kickTests = WallKickSystem.getPrioritizedKickTests(
             this.game.currentPiece.type, 
             this.game.currentPiece.shape, 
@@ -267,19 +256,26 @@ export class Controls {
         );
 
         for (const [dx, dy] of kickTests) {
+            const testPiece = { ...adjustedPiece };
+            if (this.game.board.canMove(testPiece, dx, dy, rotatedShape)) {
+                this.applyRotation(testPiece.x + dx, testPiece.y + dy, rotatedShape);
+                return;
+            }
+            
             if (this.game.board.canMove(this.game.currentPiece, dx, dy, rotatedShape)) {
-                // Apply wall kick
-                this.game.currentPiece.x += dx;
-                this.game.currentPiece.y += dy;
-                this.game.currentPiece.shape = rotatedShape;
-                this.game.lockDelay = 0;
-                this.game.audio.playRotate();
-                this.game.requestRender();
-                break;
+                this.applyRotation(this.game.currentPiece.x + dx, this.game.currentPiece.y + dy, rotatedShape);
+                return;
             }
         }
+    }
 
-        // Removed: immediate locking on failed rotations - now only applies to hard drops
+    applyRotation(x, y, shape) {
+        this.game.currentPiece.x = x;
+        this.game.currentPiece.y = y;
+        this.game.currentPiece.shape = shape;
+        this.game.lockDelay = 0;
+        this.game.audio.playRotate();
+        this.game.requestRender();
     }
 
     hardDrop() {
@@ -310,7 +306,6 @@ export class Controls {
             this.game.pieceMovement.lockPiece();
         }
     }
-
     animateHardDrop(startY, endY) {
         const duration = 200; // ms
         const startTime = performance.now();
@@ -341,9 +336,6 @@ export class Controls {
                 this.game.isAnimating = false;
             }
         };
-
         requestAnimationFrame(animate);
     }
-
-
 }

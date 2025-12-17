@@ -75,6 +75,8 @@ export class Pieces {
         
         return rotated;
     }
+
+
     
     rotatePieceCounterClockwise(piece) {
         const rotated = [];
@@ -102,6 +104,8 @@ export class Pieces {
         return rotated;
     }
     
+    
+
     renderPiece(ctx, piece, board) {
         const color = piece.color || '#FFFFFF';
         for (let y = 0; y < piece.shape.length; y++) {
