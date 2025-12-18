@@ -48,13 +48,7 @@ export class UIManager {
             if (e.persisted) handleResize();
         });
 
-        // Prevent accidental scroll gestures during play on mobile.
-        document.addEventListener('touchmove', (e) => {
-            if (!document.body.classList.contains('no-scroll')) return;
-            if (e.target && e.target.closest && e.target.closest('.game-container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
+
 
         // Hide cursor on game board during active gameplay (desktop only)
         this.game.canvas.addEventListener('mousemove', () => this.showCursor());
@@ -62,20 +56,12 @@ export class UIManager {
         // Control panel click handlers
         this.setupControlPanelClickHandlers();
 
-        // Mobile browsers can suspend WebAudio after interruptions; re-resume on any gesture.
-        const resumeAudio = () => this.game.audio.resumeContext();
-        document.addEventListener('pointerdown', resumeAudio, { passive: true });
-        document.addEventListener('touchstart', resumeAudio, { passive: true });
-        document.addEventListener('keydown', resumeAudio);
-
-        // Start audio after first user gesture (required by browsers).
-        this.bindFirstAudioGesture();
-
-        // If the browser suspends audio (tab switch / interruption), the next user gesture
-        // will re-arm it via bindFirstAudioGesture listeners; this makes resume quicker.
+        // Mobile browsers can suspend WebAudio after interruptions; re-resume on visibility change
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) this.game.audio.resumeContext();
         });
+
+        this.bindFirstAudioGesture();
     }
 
     setupControlPanelClickHandlers() {
