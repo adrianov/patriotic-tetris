@@ -314,6 +314,13 @@ body {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* Stronger zoom prevention */
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Main Container */
@@ -1230,12 +1237,34 @@ body {
 }
 
 
-/* Prevent accidental page scroll while playing on mobile */
-body.no-scroll {
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: none;
-}
+    /* Prevent accidental page scroll while playing on mobile */
+    body.no-scroll {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+    }
+
+    /* Additional zoom prevention for mobile */
+    html {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Prevent zoom on all interactive elements */
+    button, canvas, .game-container, .touch-controls {
+        touch-action: manipulation;
+        -ms-touch-action: manipulation;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+    }
 
 /* Ghost Piece Status */
 #ghost-toggle {
