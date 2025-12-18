@@ -17,6 +17,7 @@ class Game {
         this.nextCtx = this.nextCanvas.getContext('2d');
 
         this.board = new Board();
+        this.board.game = this;
         this.pieces = new Pieces();
         this.pieces.board = this.board;
         this.controls = new Controls();

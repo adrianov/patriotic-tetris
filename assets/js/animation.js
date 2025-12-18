@@ -27,16 +27,28 @@ export class AnimationManager {
         const duration = Math.sqrt(2 * distance / GRAVITY_ACCELERATION) * 1000;
         const startTime = performance.now();
         
+        // Store animation offset for smooth rendering
+        this.game.hardDropAnimation = {
+            startY,
+            endY,
+            startTime,
+            duration,
+            GRAVITY_ACCELERATION
+        };
+        
+        // Set piece to final position immediately for logic correctness
+        piece.y = endY;
+        
         this.game.isAnimating = true;
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const gravityPosition = 0.5 * GRAVITY_ACCELERATION * (elapsed / 1000) * (elapsed / 1000);
-            piece.y = startY + gravityPosition;
+            
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                piece.y = endY;
+                // Animation complete
+                delete this.game.hardDropAnimation;
                 if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
                     this.game.pieceMovement.startLockDelay();
                 } else {
