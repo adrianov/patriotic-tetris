@@ -10,9 +10,6 @@ export class TouchControls {
     }
 
     setupTouchControls() {
-        document.querySelectorAll('.touch-dpad-btn, .touch-toggle-btn').forEach(btn => {
-            btn.addEventListener('contextmenu', e => e.preventDefault());
-        });
 
         this.bindHoldRepeat(document.getElementById('touch-left'), () => this.movePiece(-1, 0));
         this.bindHoldRepeat(document.getElementById('touch-right'), () => this.movePiece(1, 0));
@@ -29,15 +26,14 @@ export class TouchControls {
         const btn = document.getElementById(id);
         if (!btn) return;
         btn.addEventListener('pointerdown', (e) => {
-            e?.preventDefault?.();
-            e?.stopPropagation?.();
             action();
-        }, { passive: false });
-        btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); }, { capture: true });
+        }, { passive: true });
     }
 
     bindClick(id, action) {
-        document.getElementById(id)?.addEventListener('click', action);
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', action, { passive: true });
     }
 
     setupGhostToggle() {
@@ -47,7 +43,7 @@ export class TouchControls {
         btn.addEventListener('click', () => {
             this.game.ui.toggleGhostPiece();
             btn.classList.toggle('active', this.game.showGhostPiece);
-        });
+        }, { passive: true });
     }
 
     setupSoundToggle() {
@@ -58,7 +54,7 @@ export class TouchControls {
             this.game.audio.toggleMute();
             btn.querySelector('.touch-toggle-icon').textContent = this.game.audio.isMuted ? '🔇' : '🔊';
             btn.classList.toggle('active', !this.game.audio.isMuted);
-        });
+        }, { passive: true });
     }
 
     getRepeatDelays() {
@@ -80,8 +76,6 @@ export class TouchControls {
         };
 
         const start = (e) => {
-            if (e?.cancelable) e.preventDefault();
-            e?.stopPropagation?.();
             clear();
 
             // First move immediately on press.
@@ -91,17 +85,10 @@ export class TouchControls {
             this.setupRepeatTimer(key, action);
         };
 
-        buttonEl.addEventListener('pointerdown', start, { passive: false });
+        buttonEl.addEventListener('pointerdown', start, { passive: true });
         buttonEl.addEventListener('pointerup', clear, { passive: true });
         buttonEl.addEventListener('pointercancel', clear, { passive: true });
         buttonEl.addEventListener('pointerleave', clear, { passive: true });
-
-        // Some browsers synthesize a click after pointer events; swallow it so rapid taps
-        // can't accidentally activate adjacent UI (e.g. restart).
-        buttonEl.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }, { capture: true });
     }
 
     clearRepeatTimer(key) {
