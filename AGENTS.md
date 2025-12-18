@@ -14,6 +14,32 @@
 - **File refactoring**: For line limit violations, remove dead code, reduce duplication, apply proper refactoring
 - **Bug fixing**: If issue persists, check git diff, analyze logic changes before retrying
 
+## SOLID Principles
+- **S - Single Responsibility**: Each class/module has one reason to change. Move methods to appropriate modules based on their primary responsibility.
+- **O - Open/Closed**: Open for extension, closed for modification. Use interfaces/abstract patterns when adding new features.
+- **L - Liskov Substitution**: Derived classes must be substitutable for their base classes without altering correctness.
+- **I - Interface Segregation**: Clients shouldn't depend on interfaces they don't use. Keep interfaces focused and minimal.
+- **D - Dependency Inversion**: High-level modules shouldn't depend on low-level modules. Both should depend on abstractions.
+
+## DRY Principle (Don't Repeat Yourself)
+- **Eliminate duplication**: When same logic exists in multiple places, extract to shared utility or base class.
+- **Prefer composition over inheritance**: Use composition for code reuse when appropriate.
+- **Parameterize differences**: Instead of copy-pasting similar code, use parameters to handle variations.
+- **Shared constants**: Move magic numbers and repeated values to constants or configuration.
+
+## YAGNI Principle (You Aren't Gonna Need It)
+- **Avoid over-engineering**: Don't add code for hypothetical future requirements.
+- **Implement what's needed now**: Build the simplest solution that meets current requirements.
+- **Defer complexity**: Add complexity only when actual requirements demand it.
+- **Prefer explicit to clever**: Simple, readable code is better than clever but unnecessary abstractions.
+
+## Refactoring Guidelines
+- **When module is too big (>400 lines)**: Break into focused modules based on single responsibility.
+- **When methods don't belong**: Move methods to the module that best represents their domain responsibility.
+- **Before refactoring**: Identify method responsibilities, determine target modules, update imports.
+- **After refactoring**: Run linting, type checking, and functional tests to ensure no regressions.
+- **Extract patterns**: Common patterns (animations, scoring, state management) should be separate modules.
+
 ## Project Hygiene
 - **TODO.md**: Mark completed items with `[x]` or `✅`, never remove
 
