@@ -310,6 +310,10 @@ body {
     /* Additional zoom prevention */
     -webkit-user-select: none;
     user-select: none;
+    /* Prevent zoom and scroll behaviors */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 /* Main Container */
@@ -1189,6 +1193,10 @@ body {
         /* Prevent double-tap zoom on all interactive elements */
         touch-action: manipulation;
         -ms-touch-action: manipulation;
+        /* Prevent iOS zoom on input focus */
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        text-size-adjust: 100%;
     }
 }
 
