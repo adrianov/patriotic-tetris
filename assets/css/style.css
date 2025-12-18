@@ -477,6 +477,27 @@ body {
     border-radius: 3px;
     border-left: 3px solid var(--red);
     font-size: var(--sidebar-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.control-item:hover {
+    background: var(--btn-border-active);
+    border-left-color: var(--gold);
+    transform: translateX(2px);
+    color: var(--white);
+}
+
+.control-item:active {
+    transform: translateX(1px);
+    background: var(--btn-bg);
+    color: var(--text-dark);
+}
+
+.control-item:hover .key {
+    background: var(--white);
+    color: var(--btn-border-active);
 }
 
 .key {

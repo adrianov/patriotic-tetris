@@ -59,6 +59,9 @@ export class UIManager {
         // Hide cursor on game board during active gameplay (desktop only)
         this.game.canvas.addEventListener('mousemove', () => this.showCursor());
 
+        // Control panel click handlers
+        this.setupControlPanelClickHandlers();
+
         // Mobile browsers can suspend WebAudio after interruptions; re-resume on any gesture.
         const resumeAudio = () => this.game.audio.resumeContext();
         document.addEventListener('pointerdown', resumeAudio, { passive: true });
@@ -72,6 +75,56 @@ export class UIManager {
         // will re-arm it via bindFirstAudioGesture listeners; this makes resume quicker.
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) this.game.audio.resumeContext();
+        });
+    }
+
+    setupControlPanelClickHandlers() {
+        // Get all control items that should be clickable
+        const controlItems = document.querySelectorAll('.control-item');
+        
+        controlItems.forEach(item => {
+            const textContent = item.textContent;
+            
+            // Add click handler based on the control text
+            if (textContent.includes('Ghost Piece')) {
+                item.addEventListener('click', () => {
+                    this.game.ui.toggleGhostPiece();
+                });
+            } else if (textContent.includes('Animations')) {
+                item.addEventListener('click', () => {
+                    this.game.toggleAnimations();
+                });
+            } else if (textContent.includes('Speed Up')) {
+                item.addEventListener('click', () => {
+                    this.game.pieceMovement.increaseSpeed();
+                });
+            } else if (textContent.includes('Mute')) {
+                item.addEventListener('click', () => {
+                    this.game.audio.toggleMute();
+                });
+            } else if (textContent.includes('Restart')) {
+                item.addEventListener('click', () => {
+                    this.game.startNewGame();
+                });
+            } else if (textContent.includes('Pause')) {
+                item.addEventListener('click', () => {
+                    this.game.pause();
+                    if (this.game.paused) this.game.ui.showCursor();
+                });
+            } else if (textContent.includes('Drop')) {
+                item.addEventListener('click', () => {
+                    this.game.controls.hardDrop();
+                });
+            } else if (textContent.includes('Clockwise')) {
+                item.addEventListener('click', () => {
+                    this.game.controls.rotatePieceClockwise();
+                });
+            } else if (textContent.includes('Rotate')) {
+                item.addEventListener('click', () => {
+                    this.game.controls.rotatePiece();
+                });
+            }
+            // Skip "Move" as it has ambiguous arrows
         });
     }
 
