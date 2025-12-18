@@ -155,7 +155,7 @@ export class PieceMovement {
             // Skip animation if animations are disabled
             if (!this.game.animationsEnabled) {
                 this.game.board.clearLines(lines);
-                this.updateScore(lines.length);
+                this.game.scoreManager.updateScore(lines.length);
                 this.spawnNextPiece();
                 this.game.requestRender();
                 return;
@@ -164,23 +164,7 @@ export class PieceMovement {
             // Animate line clear before removing rows & spawning next piece.
             this.game.isAnimating = true;
             this.game.board.startLineClear(lines);
-
-            const start = performance.now();
-            const duration = this.game.board.lineClear?.duration || 260;
-            const step = (now) => {
-                if (now - start >= duration) {
-                    this.game.board.clearLines(lines);
-                    this.game.board.stopLineClear();
-                    this.updateScore(lines.length);
-                    this.spawnNextPiece();
-                    this.game.isAnimating = false;
-                    this.game.requestRender();
-                    return;
-                }
-                requestAnimationFrame(step);
-            };
-
-            requestAnimationFrame(step);
+            this.game.animationManager.animateLineClear(lines);
             return;
         }
 
@@ -197,62 +181,9 @@ export class PieceMovement {
         }
     }
 
-    updateScore(clearedLines) {
-        const points = [0, 100, 300, 500, 800];
-        this.addPoints(points[clearedLines] * this.game.level);
-        this.game.lines += clearedLines;
 
-        // Level up every 10 lines
-        const newLevel = Math.floor(this.game.lines / 10) + 1;
-        if (newLevel > this.game.level) {
-            this.game.level = newLevel;
-            this.game.board.cycleGenerationColor();
-            this.applyDropTime();
-        }
 
-        this.game.ui.updateUI();
-    }
 
-    addPoints(points) {
-        const p = Math.floor(Number(points));
-        if (!Number.isFinite(p) || p <= 0) return;
-        this.game.score += p;
-        if (this.game.score > this.game.highScore) {
-            this.game.highScore = this.game.score;
-            this.game.isNewHighScore = true;
-            this.game.saveHighScore();
-            this.game.ui.updateHighScoreUI();
-        }
-    }
-
-    addDropPoints(points) {
-        if (this.game.gameOver || this.game.paused) return;
-        this.addPoints(points);
-        this.game.ui.updateUI();
-    }
-
-    animateHardDrop(startY, endY) {
-        const duration = 200, startTime = performance.now();
-        const piece = this.game.currentPiece;
-        this.game.isAnimating = true;
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            piece.y = startY + (endY - startY) * easeProgress;
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                if (this.hasMoreFilledBlocksAboveAfterMove()) {
-                    this.startLockDelay();
-                } else {
-                    this.lockPiece();
-                }
-                this.game.isAnimating = false;
-            }
-        };
-        requestAnimationFrame(animate);
-    }
 
     findOptimalDropPosition() {
         const startY = this.game.currentPiece.y;

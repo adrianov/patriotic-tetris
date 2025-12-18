@@ -148,7 +148,7 @@ export class Controls {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
             this.game.audio.playDrop();
-            this.game.pieceMovement.addDropPoints(1);
+            this.game.scoreManager.addDropPoints(1);
             this.game.requestRender();
             return;
         }
@@ -337,8 +337,8 @@ export class Controls {
         const dropDistance = targetY - startY;
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
-            this.game.pieceMovement.addDropPoints(dropDistance * 2);
-            this.animateHardDrop(startY, targetY);
+            this.game.scoreManager.addDropPoints(dropDistance * 2);
+            this.game.animationManager.animateHardDrop(startY, targetY);
             this.game.requestRender();
         } else {
             this.game.pieceMovement.lockPiece();
@@ -354,38 +354,5 @@ export class Controls {
         }
         return currentY;
     }
-    animateHardDrop(startY, endY) {
-        const piece = this.game.currentPiece;
-        
-        // Skip animation if animations are disabled
-        if (!this.game.animationsEnabled) {
-            piece.y = endY;
-            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
-                this.game.pieceMovement.startLockDelay();
-            } else {
-                this.game.pieceMovement.lockPiece();
-            }
-            return;
-        }
-        
-        const duration = 200, startTime = performance.now();
-        this.game.isAnimating = true;
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            piece.y = startY + (endY - startY) * easeProgress;
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
-                    this.game.pieceMovement.startLockDelay();
-                } else {
-                    this.game.pieceMovement.lockPiece();
-                }
-                this.game.isAnimating = false;
-            }
-        };
-        requestAnimationFrame(animate);
-    }
+
 }

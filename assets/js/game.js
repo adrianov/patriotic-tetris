@@ -6,6 +6,8 @@ import { AudioEngine } from './audio.js';
 import { initTheme } from './theme.js';
 import { UIManager } from './ui.js';
 import { PieceMovement } from './pieceMovement.js';
+import { ScoreManager } from './scoreManager.js';
+import { AnimationManager } from './animation.js';
 
 class Game {
     constructor() {
@@ -20,9 +22,11 @@ class Game {
         this.controls = new Controls();
         this.audio = new AudioEngine();
 
-        // Initialize UI and PieceMovement managers
+        // Initialize managers
         this.ui = new UIManager(this);
         this.pieceMovement = new PieceMovement(this);
+        this.scoreManager = new ScoreManager(this);
+        this.animationManager = new AnimationManager(this);
 
         this.score = 0;
         this.level = 1;
