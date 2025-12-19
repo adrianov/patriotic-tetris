@@ -93,19 +93,7 @@ export class AudioEngine {
         return this.resumePromise;
     }
 
-    // Play a silent buffer to unlock iOS audio during user gesture
-    unlockWithSilence() {
-        if (this.didUnlock || !this.audioContext) return;
-        this.didUnlock = true;
 
-        try {
-            const buffer = this.audioContext.createBuffer(1, 1, this.audioContext.sampleRate);
-            const source = this.audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(this.audioContext.destination);
-            source.start(0);
-        } catch { /* ignore */ }
-    }
 
     hookFlushAfterResume() {
         if (this.flushHooked || !this.audioContext) return;
