@@ -185,14 +185,5 @@ export class PieceMovement {
 
 
 
-    findOptimalDropPosition() {
-        const startY = this.game.currentPiece.y;
-        let currentY = startY;
-        while (this.game.board.canMove(this.game.currentPiece, 0, currentY - startY + 1)) {
-            currentY++;
-            const testPiece = { ...this.game.currentPiece, y: currentY };
-            if (this.canSlideUnderHangingBlocks(testPiece)) break;
-        }
-        return currentY;
-    }
+
 }
