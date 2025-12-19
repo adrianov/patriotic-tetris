@@ -267,26 +267,24 @@ export class Pieces {
             for (let x = 0; x < ghost.shape[y].length; x++) {
                 if (!ghost.shape[y][x]) continue;
                 const bx = ghost.x + x, by = ghost.y + y;
-                if (board.isCellFree(bx, by)) this.drawGhostCell(ctx, bx, by, color, board);
+                if (board.isCellFree(bx, by)) {
+                    const pixelX = bx * board.cellSize;
+                    const pixelY = by * board.cellSize;
+                    const c = color.toUpperCase();
+                    const isLight = c === '#FFFFFF' || c === '#FFFDF6' || c === '#FFF3E0';
+                    ctx.save();
+                    ctx.globalAlpha = isLight ? board.theme.ghostAlphaLight : board.theme.ghostAlpha;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(pixelX, pixelY, board.cellSize, board.cellSize);
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = board.theme.cellBorder;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(pixelX, pixelY, board.cellSize, board.cellSize);
+                    ctx.restore();
+                }
             }
         }
     }
     
-    drawGhostCell(ctx, x, y, color, board) {
-        const pixelX = x * board.cellSize;
-        const pixelY = y * board.cellSize;
 
-        const c = color.toUpperCase();
-        const isLight = c === '#FFFFFF' || c === '#FFFDF6' || c === '#FFF3E0';
-        ctx.save();
-        ctx.globalAlpha = isLight ? board.theme.ghostAlphaLight : board.theme.ghostAlpha;
-        ctx.fillStyle = color;
-        ctx.fillRect(pixelX, pixelY, board.cellSize, board.cellSize);
-
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = board.theme.cellBorder;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(pixelX, pixelY, board.cellSize, board.cellSize);
-        ctx.restore();
-    }
 }
