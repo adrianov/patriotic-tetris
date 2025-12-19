@@ -30,7 +30,9 @@ A classic Tetris game with a patriotic Russian theme, built with vanilla HTML5, 
 
 ### Modern Features
 - **High score tracking** with localStorage persistence
-- **Mobile-responsive design** with touch controls
+- **Fully responsive design** with device capability detection (not pixel-based breakpoints)
+- **Touch-optimized controls** for mobile and tablet devices
+- **Accessibility-first** - All sizes use relative units (rem/em) respecting user font preferences
 - **Pause/Resume** functionality
 - **Speed boost** control (+ key for 20% faster gameplay)
 - **60 FPS smooth rendering** using Canvas API
@@ -49,10 +51,11 @@ A classic Tetris game with a patriotic Russian theme, built with vanilla HTML5, 
 - **G** - Toggle ghost piece
 - **+** - Increase speed (+20% per press)
 
-### Mobile
+### Touch Devices
 - **Touch D-Pad** - Move and rotate pieces
 - **Touch buttons** - Pause, restart, toggle ghost, sound control
-- **Swipe gestures** - Intuitive piece control
+- **Adaptive layout** - Automatically detects touch capability (works on phones, tablets, and touch-enabled devices)
+- **Optimized for all screen sizes** - From small phones to large tablets
 
 ## 🚀 Quick Start
 
@@ -79,20 +82,33 @@ That's it! No npm install, no build process - just open and play.
 ```
 patriotic-tetris/
 ├── index.html              # Main game HTML
+├── favicon.ico             # Browser favicon
 ├── assets/
 │   ├── css/
 │   │   └── style.css       # Game styles and themes
 │   ├── js/
 │   │   ├── game.js         # Main game controller
 │   │   ├── board.js        # Game board management
+│   │   ├── boardRenderer.js # Canvas rendering logic
 │   │   ├── pieces.js       # Tetromino definitions
-│   │   ├── controls.js     # Input handling
+│   │   ├── pieceMovement.js # Piece movement and collision
+│   │   ├── wallKicks.js    # Wall kick mechanics
+│   │   ├── controls.js     # Keyboard input handling
+│   │   ├── touchControls.js # Touch input handling
+│   │   ├── scoreManager.js # Scoring system
+│   │   ├── animation.js    # Line clearing animations
 │   │   ├── audio.js        # Sound synthesis engine
-│   │   └── theme.js        # Theme switching logic
+│   │   ├── theme.js        # Theme switching logic
+│   │   └── ui.js           # User interface management
 │   └── svg/
-│       └── eagle.svg       # Russian two-headed eagle
+│       ├── eagle.svg       # Russian two-headed eagle
+│       └── soviet.svg      # Soviet emblem
+├── jsconfig.json           # JavaScript configuration
+├── eslint.config.js        # ESLint configuration
 ├── SPEC.md                 # Detailed game specification
 ├── TODO.md                 # Development roadmap
+├── AGENTS.md               # Agent development guidelines
+├── LICENSE                 # MIT License
 └── README.md               # This file
 ```
 
@@ -113,6 +129,8 @@ Level increases every 10 lines cleared, making pieces fall faster.
 - **ES6+ modules** with clean class-based architecture
 - **PascalCase** for classes, **camelCase** for methods
 - **CSS custom properties** for theming
+- **Responsive units** - All CSS uses `rem`, `em`, and `clamp()` (no pixel sizes)
+- **Device capability queries** - Media queries use `(hover: hover)` and `(hover: none)` instead of width breakpoints
 - **No external dependencies** - pure vanilla JavaScript
 
 ### Testing
@@ -132,8 +150,9 @@ tsc --noEmit --project jsconfig.json
 ### Performance Optimizations
 - **RequestAnimationFrame** for smooth 60 FPS rendering
 - **Efficient canvas rendering** with minimal redraws
-- **Viewport-aware responsive design** for mobile browsers
+- **Viewport-aware responsive design** for all devices
 - **Memory-efficient** game state management
+- **Device capability-based layout** - No arbitrary pixel breakpoints, adapts to actual device capabilities
 
 ### Audio Engineering
 - **Web Audio API** for real-time sound synthesis
@@ -142,10 +161,14 @@ tsc --noEmit --project jsconfig.json
 - **Cross-browser audio compatibility**
 
 ### Responsive Design
+- **Device capability detection** - Uses `(hover: hover)` and `(hover: none)` media queries instead of pixel breakpoints
+- **Fully responsive units** - All sizes use `rem`, `em`, and `clamp()` for accessibility and scalability
 - **Mobile-first** approach with touch controls
-- **Viewport units** for consistent scaling
-- **Flexible layout** adapting to all screen sizes
-- **Touch-friendly** interface elements
+- **Viewport units** for consistent scaling across devices
+- **Flexible layout** adapting to all screen sizes (phones, tablets, desktops)
+- **Touch-friendly** interface elements with proper sizing
+- **Accessibility-focused** - Respects user font size preferences
+- **Future-proof** - Works correctly on foldable devices, tablets with keyboards, and any screen size
 
 ## 🤝 Contributing
 
