@@ -178,7 +178,7 @@ export class Board {
     }
 
     setupDpr() {
-        this.isMobile = window.matchMedia?.('(max-width: 768px)').matches || false;
+        this.isMobile = window.matchMedia?.('(hover: none)').matches || false;
         this.dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? 2 : 3);
         this.cssWidth = this.cellSize * this.width;
         this.cssHeight = this.cellSize * this.height;

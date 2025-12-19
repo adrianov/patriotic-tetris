@@ -234,7 +234,7 @@ export class UIManager {
     }
 
     setScrollLock() {
-        const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        const isMobile = window.matchMedia && window.matchMedia('(hover: none)').matches;
         const shouldLock = isMobile && !this.game.paused && !this.game.gameOver;
         document.body.classList.toggle('no-scroll', shouldLock);
     }
