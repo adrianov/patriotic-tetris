@@ -13,7 +13,7 @@ export class AnimationManager {
         while (this.game.board.canMove(piece, 0, targetY - piece.y + 1)) {
             targetY++;
             const testPiece = { ...piece, y: targetY };
-            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) break;
+            if (this.game.pieceMovement.canSlideUnderHangingBlocks(testPiece)) break;
         }
         
         // Skip animation if disabled
@@ -50,7 +50,18 @@ export class AnimationManager {
             if (progress >= 1) {
                 piece.y = targetY;
                 this.game.hardDropAnimation = false;
-                this.game.pieceMovement.lockPiece();
+                
+                // Check if piece can move further down - if not, handle locking
+                if (this.game.board.canMove(piece, 0, 1)) {
+                    // Piece can still move down, let normal game logic handle it
+                    this.game.lockDelay = 0;
+                } else if (this.game.pieceMovement.canSlideUnderHangingBlocks(piece)) {
+                    // Piece can move under hanging blocks to go deeper, start lock delay
+                    this.game.pieceMovement.startLockDelay();
+                } else {
+                    // Piece cannot go deeper, lock it immediately
+                    this.game.pieceMovement.lockPiece();
+                }
             } else {
                 requestAnimationFrame(animate);
             }

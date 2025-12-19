@@ -63,11 +63,9 @@ export class PieceMovement {
         return true;
     }
 
-    hasMoreFilledBlocksAboveAfterMove() {
-        return this.hasMoreFilledBlocksAboveAfterMoveForPiece(this.game.currentPiece);
-    }
 
-    hasMoreFilledBlocksAboveAfterMoveForPiece(piece) {
+
+    canSlideUnderHangingBlocks(piece) {
         if (!piece) return false;
 
         const currentAboveCount = this.countFilledBlocksAbove(piece);
@@ -104,6 +102,8 @@ export class PieceMovement {
 
         return false;
     }
+
+
 
     countFilledBlocksAbove(piece) {
         let filledCount = 0;
@@ -191,7 +191,7 @@ export class PieceMovement {
         while (this.game.board.canMove(this.game.currentPiece, 0, currentY - startY + 1)) {
             currentY++;
             const testPiece = { ...this.game.currentPiece, y: currentY };
-            if (this.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) break;
+            if (this.canSlideUnderHangingBlocks(testPiece)) break;
         }
         return currentY;
     }
