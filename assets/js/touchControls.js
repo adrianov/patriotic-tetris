@@ -26,8 +26,10 @@ export class TouchControls {
         const btn = document.getElementById(id);
         if (!btn) return;
         btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             action();
-        }, { passive: true });
+        }, { passive: false });
     }
 
     bindClick(id, action) {
@@ -76,16 +78,18 @@ export class TouchControls {
         };
 
         const start = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             clear();
 
             // First move immediately on press.
             action();
 
-            // Set up repeat timers using the shared method
+            // Set up repeat timers using a shared method
             this.setupRepeatTimer(key, action);
         };
 
-        buttonEl.addEventListener('pointerdown', start, { passive: true });
+        buttonEl.addEventListener('pointerdown', start, { passive: false });
         buttonEl.addEventListener('pointerup', clear, { passive: true });
         buttonEl.addEventListener('pointercancel', clear, { passive: true });
         buttonEl.addEventListener('pointerleave', clear, { passive: true });
