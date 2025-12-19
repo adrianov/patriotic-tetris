@@ -290,10 +290,7 @@ export class Board {
         return !this.canMove(piece, 0, 0);
     }
 
-    // Returns true if piece should lock immediately: clean landing AND no fillable gap
-    shouldLockClean(piece) {
-        return this.isCleanLanding(piece) && !this.hasFillableGap(piece);
-    }
+
 
     // Check if every bottom-edge cell has support (block below or at board bottom)
     isCleanLanding(piece) {
