@@ -13,6 +13,8 @@
 - **Module length**: Break into smaller logical modules when exceeding linter limits
 - **File refactoring**: For line limit violations, remove dead code, reduce duplication, apply proper refactoring
 - **Bug fixing**: If issue persists, check git diff, analyze logic changes before retrying
+- **Persistent issues**: When user asks to fix same thing several times and solution doesn't work, read entire file and all dependencies to gain full context
+- **Wrapper functions**: Remove trivial functions that only call another function without adding value
 
 ## SOLID Principles
 - **S - Single Responsibility**: Each class/module has one reason to change. Move methods to appropriate modules based on their primary responsibility.
