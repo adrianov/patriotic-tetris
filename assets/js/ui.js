@@ -1,4 +1,5 @@
 // UI Management Module - Patriotic Tetris
+import { isMobileDevice } from './utils/device.js';
 export class UIManager {
     constructor(game) {
         this.game = game;
@@ -234,7 +235,7 @@ export class UIManager {
     }
 
     setScrollLock() {
-        const isMobile = window.matchMedia && window.matchMedia('(hover: none)').matches;
+        const isMobile = isMobileDevice();
         const shouldLock = isMobile && !this.game.paused && !this.game.gameOver;
         document.body.classList.toggle('no-scroll', shouldLock);
     }

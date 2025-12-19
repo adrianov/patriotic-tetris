@@ -1,5 +1,6 @@
 // Board Module - Game Board Management
 import { BoardRenderer } from './boardRenderer.js';
+import { isMobileDevice } from './utils/device.js';
 
 export class Board {
     constructor() {
@@ -178,7 +179,7 @@ export class Board {
     }
 
     setupDpr() {
-        this.isMobile = window.matchMedia?.('(hover: none)').matches || false;
+        this.isMobile = isMobileDevice();
         this.dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? 2 : 3);
         this.cssWidth = this.cellSize * this.width;
         this.cssHeight = this.cellSize * this.height;
