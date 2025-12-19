@@ -167,23 +167,10 @@ export class Pieces {
 
     renderPiece(ctx, piece, board) {
         const color = piece.color || '#FFFFFF';
-        
-        // Check if there's a hard drop animation in progress
-        let yOffset = 0;
-        if (board.game?.hardDropAnimation && piece === board.game.currentPiece) {
-            const anim = board.game.hardDropAnimation;
-            const elapsed = performance.now() - anim.startTime;
-            const progress = Math.min(elapsed / anim.duration, 1);
-            if (progress < 1) {
-                const gravityPosition = 0.5 * anim.GRAVITY_ACCELERATION * (elapsed / 1000) * (elapsed / 1000);
-                yOffset = gravityPosition - (anim.endY - anim.startY);
-            }
-        }
-        
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    this.drawCellWithOffset(ctx, piece.x + x, piece.y + y, yOffset, color, board);
+                    this.drawCell(ctx, piece.x + x, piece.y + y, color, board);
                 }
             }
         }
@@ -213,13 +200,6 @@ export class Pieces {
     drawCell(ctx, x, y, color, board) {
         const pixelX = x * board.cellSize;
         const pixelY = y * board.cellSize;
-        
-        this.drawCellScaled(ctx, { x: pixelX, y: pixelY, size: board.cellSize, color }, board);
-    }
-
-    drawCellWithOffset(ctx, x, y, yOffset, color, board) {
-        const pixelX = x * board.cellSize;
-        const pixelY = (y + yOffset) * board.cellSize;
         
         this.drawCellScaled(ctx, { x: pixelX, y: pixelY, size: board.cellSize, color }, board);
     }

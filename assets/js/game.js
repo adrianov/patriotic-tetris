@@ -45,6 +45,7 @@ class Game {
         this.showGhostPiece = true;
         this.animationsEnabled = true;
         this.lockDelay = 0;
+        this.hardDropAnimation = false;
 
         // Time tracking (mm:ss) - counts only while playing (not paused / not game over)
         this.elapsedMs = 0;
@@ -96,6 +97,7 @@ class Game {
         this.speedBoost = 0;
         this.dropTime = this.pieceMovement.calcDropTime();
         this.lockDelay = 0;
+        this.hardDropAnimation = false;
 
         this.elapsedMs = 0;
         this.lastFrameTime = 0;
@@ -262,7 +264,7 @@ class Game {
         this.board.render(this.ctx);
 
         const canRender = this.currentPiece && !this.gameOver && !this.paused;
-        if (canRender && this.showGhostPiece && !this.isAnimating) {
+        if (canRender && this.showGhostPiece && !this.isAnimating && !this.hardDropAnimation) {
             this.pieces.renderGhostPiece(this.ctx, this.currentPiece, this.board);
         }
         if (canRender) {

@@ -4,57 +4,55 @@ export class AnimationManager {
         this.game = game;
     }
 
-    animateHardDrop(startY, endY) {
+    animateHardDrop(startY) {
         const piece = this.game.currentPiece;
+        if (!piece) return;
         
-        // Skip animation if animations are disabled
+        // Calculate target position exactly like controls.js does (with hanging detection)
+        let targetY = piece.y;
+        while (this.game.board.canMove(piece, 0, targetY - piece.y + 1)) {
+            targetY++;
+            const testPiece = { ...piece, y: targetY };
+            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMoveForPiece(testPiece)) break;
+        }
+        
+        // Skip animation if disabled
         if (!this.game.animationsEnabled) {
-            piece.y = endY;
-            if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
-                this.game.pieceMovement.startLockDelay();
-            } else {
-                this.game.pieceMovement.lockPiece();
-            }
+            piece.y = targetY;
+            this.game.pieceMovement.lockPiece();
             return;
         }
         
-        const distance = endY - startY;
+        // Set hard drop animation flag
+        this.game.hardDropAnimation = true;
         
-        // Constant gravity acceleration (cells/s²): a = 2*d/t² = 1000 for 20 cells in 200ms
-        const GRAVITY_ACCELERATION = 1000;
+        const distance = targetY - startY;
+        if (distance <= 0) {
+            this.game.pieceMovement.lockPiece();
+            return;
+        }
         
-        // Calculate time needed for this distance: t = sqrt(2 * d / a)
-        const duration = Math.sqrt(2 * distance / GRAVITY_ACCELERATION) * 1000;
+        const initialY = piece.y;
+        const GRAVITY = 1500; // cells/s² - for natural acceleration
+        const maxTime = Math.sqrt(2 * distance / GRAVITY) * 1000; // time to fall distance
         const startTime = performance.now();
         
-        // Store animation offset for smooth rendering
-        this.game.hardDropAnimation = {
-            startY,
-            endY,
-            startTime,
-            duration,
-            GRAVITY_ACCELERATION
-        };
-        
-        // Set piece to final position immediately for logic correctness
-        piece.y = endY;
-        
-        this.game.isAnimating = true;
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
+            const progress = Math.min(elapsed / maxTime, 1);
             
-            if (progress < 1) {
-                requestAnimationFrame(animate);
+            // Apply gravity acceleration formula: d = 0.5 * a * t²
+            const dropDistance = 0.5 * GRAVITY * (elapsed / 1000) * (elapsed / 1000);
+            piece.y = initialY + dropDistance;
+            
+            this.game.requestRender();
+            
+            if (progress >= 1) {
+                piece.y = targetY;
+                this.game.hardDropAnimation = false;
+                this.game.pieceMovement.lockPiece();
             } else {
-                // Animation complete
-                delete this.game.hardDropAnimation;
-                if (this.game.pieceMovement.hasMoreFilledBlocksAboveAfterMove()) {
-                    this.game.pieceMovement.startLockDelay();
-                } else {
-                    this.game.pieceMovement.lockPiece();
-                }
-                this.game.isAnimating = false;
+                requestAnimationFrame(animate);
             }
         };
         requestAnimationFrame(animate);

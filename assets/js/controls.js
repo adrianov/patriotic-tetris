@@ -133,7 +133,8 @@ export class Controls {
         }
     }
     moveSide(dx) {
-        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
+        if (this.game.paused || !this.game.currentPiece) return;
+        
         const canMoveSide = this.game.board.canMove(this.game.currentPiece, dx, 0);
         if (canMoveSide) {
             this.game.currentPiece.x += dx;
@@ -143,7 +144,8 @@ export class Controls {
         }
     }
     softDrop() {
-        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
+        if (this.game.paused || !this.game.currentPiece) return;
+        
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
@@ -157,7 +159,8 @@ export class Controls {
     rotatePiece() { this.rotateWithOffset('counterClockwise'); }
     rotatePieceClockwise() { this.rotateWithOffset('clockwise'); }
     rotateWithOffset(direction) {
-        if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
+        if (this.game.paused || !this.game.currentPiece) return;
+        
         const rotatedShape = this.getRotatedShape(direction);
         const piece = this.game.currentPiece;
         
@@ -338,7 +341,7 @@ export class Controls {
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
             this.game.scoreManager.addDropPoints(dropDistance * 2);
-            this.game.animationManager.animateHardDrop(startY, targetY);
+            this.game.animationManager.animateHardDrop(startY);
             this.game.requestRender();
         } else {
             this.game.pieceMovement.lockPiece();
