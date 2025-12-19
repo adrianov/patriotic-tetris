@@ -350,8 +350,8 @@ body {
     border-radius: clamp(0.5rem, 1.5vw, 0.625rem);
     padding: var(--sidebar-pad);
     box-shadow: 0 clamp(0.1875rem, 0.8vw, 0.25rem) clamp(0.625rem, 2vw, 0.9375rem) var(--shadow-ui);
-    min-width: clamp(7.5rem, 12vw, 8.75rem);
-    max-width: clamp(8.75rem, 14vw, 10rem);
+    min-width: clamp(9rem, 15vw, 10.5rem);
+    max-width: clamp(11rem, 18vw, 12rem);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -504,6 +504,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
+    overflow: hidden;
 }
 
 .control-item:hover {
@@ -1248,15 +1249,15 @@ body {
     }
 }
 
-/* Ghost Piece Status */
+    /* Ghost Piece Status */
 #ghost-toggle {
     color: var(--blue);
     font-weight: bold;
     margin-left: 0.5rem;
     display: inline-block;
-    width: 1.875rem;
+    width: 3rem;
     /* Fixed width to prevent layout shift */
-    text-align: left;
+    text-align: right;
 }
 
 #animation-toggle {
@@ -1267,6 +1268,7 @@ body {
     width: 1.875rem;
     /* Fixed width to prevent layout shift */
     text-align: left;
+}
 }
 
 /* Disable animations when animations are turned off */
@@ -1291,14 +1293,4 @@ body.no-animations .restart-btn:hover,
 body.no-animations .touch-toggle-btn:active,
 body.no-animations .touch-dpad-btn:active {
     transform: none;
-}
-
-#animation-toggle {
-    color: var(--blue);
-    font-weight: bold;
-    margin-left: 0.5rem;
-    display: inline-block;
-    width: 1.875rem;
-    /* Fixed width to prevent layout shift */
-    text-align: left;
 }
