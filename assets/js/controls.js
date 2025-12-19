@@ -143,19 +143,7 @@ export class Controls {
             this.game.requestRender();
         }
     }
-    softDrop() {
-        if (this.game.paused || !this.game.currentPiece) return;
-        
-        if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
-            this.game.currentPiece.y++;
-            this.game.lockDelay = 0;
-            this.game.audio.playDrop();
-            this.game.scoreManager.addDropPoints(1);
-            this.game.requestRender();
-            return;
-        }
-        this.game.pieceMovement.lockPiece();
-    }
+
     rotatePiece() { this.rotateWithOffset('counterClockwise'); }
     rotatePieceClockwise() { this.rotateWithOffset('clockwise'); }
     rotateWithOffset(direction) {
@@ -279,33 +267,7 @@ export class Controls {
             ? this.game.pieces.rotatePiece(this.game.currentPiece)
             : this.game.pieces.rotatePieceCounterClockwise(this.game.currentPiece);
     }
-    trySimpleWallKicks(piece, rotatedShape) {
-        // Only allow very basic kicks that don't risk teleportation
-        // This prevents pieces from jumping through walls
-        
-        const basicKicks = [
-            [-1, 0], [1, 0],   // Basic left/right kicks
-            [0, -1],           // Basic up kick
-        ];
-        
-        // For I-piece, add slightly more options but still very limited
-        if (piece.type === 'I') {
-            basicKicks.push([-2, 0], [2, 0]); // Extra kicks for I-piece only
-        }
-        
-        for (const [dx, dy] of basicKicks) {
-            // Only allow kicks that move at most 2 blocks in any direction
-            if (Math.abs(dx) > 2 || Math.abs(dy) > 2) continue;
-            
-            // Check if the target position is valid for the rotated shape
-            if (this.game.board.canMove(piece, dx, dy, rotatedShape)) {
-                this.applyRotation(piece.x + dx, piece.y + dy, rotatedShape);
-                return true;
-            }
-        }
-        
-        return false;
-    }
+
     findPositionToMaintainRightmost(rotatedShape) {
         const piece = this.game.currentPiece;
         const currentRightmost = piece.x + this.getShapeWidth(piece.shape) - 1;
