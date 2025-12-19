@@ -231,7 +231,8 @@ export class Board {
                     const boardY = piece.y + y;
                     const boardX = piece.x + x;
 
-                    if (boardY >= 0) {
+                    // Only lock if within board bounds
+                    if (boardY >= 0 && boardY < this.height && boardX >= 0 && boardX < this.width && this.grid[boardY]) {
                         // Store actual color so already-placed blocks do NOT change on theme switch.
                         this.grid[boardY][boardX] = piece.color;
                     }
