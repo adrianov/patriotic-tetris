@@ -9,7 +9,26 @@ export class TouchControls {
         this.setupTouchControls();
     }
 
+    setupContainerEventPrevention() {
+        const touchControls = document.querySelector('.touch-controls');
+        if (!touchControls) return;
+        
+        // Combined handler that prevents pinch zoom and container background events
+        const preventTouchEvents = (e) => {
+            // Prevent if pinch zoom OR single finger on container background
+            if (e.touches.length > 1 || !e.target.closest('.touch-dpad-btn, .touch-toggle')) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+        
+        // Add single handler for each event type
+        touchControls.addEventListener('touchstart', preventTouchEvents, { passive: false });
+        touchControls.addEventListener('touchmove', preventTouchEvents, { passive: false });
+    }
+
     setupTouchControls() {
+        this.setupContainerEventPrevention();
 
         this.bindHoldRepeat(document.getElementById('touch-left'), () => this.movePiece(-1, 0));
         this.bindHoldRepeat(document.getElementById('touch-right'), () => this.movePiece(1, 0));
