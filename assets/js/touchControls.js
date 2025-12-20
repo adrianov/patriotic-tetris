@@ -13,7 +13,7 @@ export class TouchControls {
         const touchControls = document.querySelector('.touch-controls');
         if (!touchControls) return;
         
-        // Combined handler that prevents pinch zoom and container background events
+        // Touch events handler for pinch zoom prevention
         const preventTouchEvents = (e) => {
             // Prevent if pinch zoom OR single finger on container background
             if (e.touches.length > 1 || !e.target.closest('.touch-dpad-btn, .touch-toggle')) {
@@ -22,11 +22,20 @@ export class TouchControls {
             }
         };
         
-        // Add single handler for each event type
+        // Pointer events handler for background prevention
+        const preventPointerEvents = (e) => {
+            // Prevent single finger on container background
+            if (!e.target.closest('.touch-dpad-btn, .touch-toggle')) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+        
+        // Add event handlers
         touchControls.addEventListener('touchstart', preventTouchEvents, { passive: false });
         touchControls.addEventListener('touchmove', preventTouchEvents, { passive: false });
-        touchControls.addEventListener('pointerstart', preventTouchEvents, { passive: false });
-        touchControls.addEventListener('pointermove', preventTouchEvents, { passive: false });
+        touchControls.addEventListener('pointerstart', preventPointerEvents, { passive: false });
+        touchControls.addEventListener('pointermove', preventPointerEvents, { passive: false });
         
         // Prevent context menu and magnification on long press
         this.addContextMenuPrevention(touchControls);
