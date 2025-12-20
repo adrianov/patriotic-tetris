@@ -25,6 +25,7 @@ export class TouchControls {
         // Add single handler for each event type
         touchControls.addEventListener('touchstart', preventTouchEvents, { passive: false });
         touchControls.addEventListener('touchmove', preventTouchEvents, { passive: false });
+        touchControls.addEventListener('pointerstart', preventTouchEvents, { passive: false });
         touchControls.addEventListener('pointermove', preventTouchEvents, { passive: false });
     }
 
