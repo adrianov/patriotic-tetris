@@ -40,6 +40,18 @@ export class TouchControls {
         // Prevent context menu and magnification on long press
         this.addContextMenuPrevention(touchControls);
         
+        // Prevent text selection and magnifying glass
+        touchControls.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, { passive: false });
+        touchControls.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, { passive: false });
+        
         // Prevent context menu and pinch on all touch control buttons
         this.setupButtonEventPrevention();
     }
@@ -100,10 +112,6 @@ export class TouchControls {
     bindTouchAction(id, action) {
         const btn = document.getElementById(id);
         if (!btn) return;
-        
-        // Prevent context menu and pinch zoom
-        this.addContextMenuPrevention(btn);
-        this.addPinchPrevention(btn);
         
         btn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
@@ -168,10 +176,6 @@ export class TouchControls {
             // Set up repeat timers using a shared method
             this.setupRepeatTimer(key, action);
         };
-
-        // Prevent context menu and pinch zoom
-        this.addContextMenuPrevention(buttonEl);
-        this.addPinchPrevention(buttonEl);
         
         buttonEl.addEventListener('pointerdown', start, { passive: false });
         buttonEl.addEventListener('pointerup', clear, { passive: true });
