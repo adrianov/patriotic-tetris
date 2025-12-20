@@ -29,10 +29,49 @@ export class TouchControls {
         touchControls.addEventListener('pointermove', preventTouchEvents, { passive: false });
         
         // Prevent context menu and magnification on long press
-        touchControls.addEventListener('contextmenu', (e) => {
+        this.addContextMenuPrevention(touchControls);
+        
+        // Prevent context menu and pinch on all touch control buttons
+        this.setupButtonEventPrevention();
+    }
+    
+    setupButtonEventPrevention() {
+        // Prevent context menu and touch events on all touch buttons
+        const touchButtons = [
+            '.touch-dpad-btn',
+            '.touch-toggle-btn',
+            '.theme-btn',
+            '.touch-controls button'
+        ];
+        
+        touchButtons.forEach(selector => {
+            const buttons = document.querySelectorAll(selector);
+            buttons.forEach(button => {
+                this.addContextMenuPrevention(button);
+                this.addPinchPrevention(button);
+            });
+        });
+    }
+    
+    // Helper method to prevent context menu
+    addContextMenuPrevention(element) {
+        element.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             e.stopPropagation();
         }, { passive: false });
+    }
+    
+    // Helper method to prevent pinch zoom
+    addPinchPrevention(element) {
+        const preventPinch = (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+        
+        element.addEventListener('touchstart', preventPinch, { passive: false });
+        element.addEventListener('touchmove', preventPinch, { passive: false });
     }
 
     setupTouchControls() {
@@ -52,6 +91,11 @@ export class TouchControls {
     bindTouchAction(id, action) {
         const btn = document.getElementById(id);
         if (!btn) return;
+        
+        // Prevent context menu and pinch zoom
+        this.addContextMenuPrevention(btn);
+        this.addPinchPrevention(btn);
+        
         btn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -116,6 +160,10 @@ export class TouchControls {
             this.setupRepeatTimer(key, action);
         };
 
+        // Prevent context menu and pinch zoom
+        this.addContextMenuPrevention(buttonEl);
+        this.addPinchPrevention(buttonEl);
+        
         buttonEl.addEventListener('pointerdown', start, { passive: false });
         buttonEl.addEventListener('pointerup', clear, { passive: true });
         buttonEl.addEventListener('pointercancel', clear, { passive: true });
