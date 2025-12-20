@@ -27,6 +27,12 @@ export class TouchControls {
         touchControls.addEventListener('touchmove', preventTouchEvents, { passive: false });
         touchControls.addEventListener('pointerstart', preventTouchEvents, { passive: false });
         touchControls.addEventListener('pointermove', preventTouchEvents, { passive: false });
+        
+        // Prevent context menu and magnification on long press
+        touchControls.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
     }
 
     setupTouchControls() {
