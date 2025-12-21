@@ -124,8 +124,22 @@ export class UIManager {
         this.game.didBindAudio = true;
 
         const start = () => {
-            this.game.audio.resumeContext();
-            this.game.audio.playBackgroundMusic();
+            const resumePromise = this.game.audio.resumeContext();
+            
+            // Wait for context to resume, then build buffers and play confirmation sound
+            if (resumePromise) {
+                resumePromise.then(() => {
+                    // Build buffers after context is ready
+                    this.game.audio.buildSfxBuffers().then(() => {
+                        // Play confirmation sound once everything is ready
+                        this.game.audio.playMove();
+                        // Then play background music
+                        this.game.audio.playBackgroundMusic();
+                    }).catch(error => {
+                        console.warn('Failed to build audio buffers:', error);
+                    });
+                });
+            }
         };
 
         const onFirst = () => {
