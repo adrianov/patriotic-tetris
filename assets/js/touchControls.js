@@ -9,94 +9,17 @@ export class TouchControls {
         this.setupTouchControls();
     }
 
-    setupContainerEventPrevention() {
-        const touchControls = document.querySelector('.touch-controls');
-        if (!touchControls) return;
-        
-        // Touch events handler for pinch zoom prevention
-        const preventTouchEvents = (e) => {
-            // Prevent if pinch zoom OR single finger on container background
-            if (e.touches.length > 1 || !e.target.closest('.touch-dpad-btn, .touch-toggle')) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
-        
-        // Pointer events handler for background prevention
-        const preventPointerEvents = (e) => {
-            // Prevent single finger on container background
-            if (!e.target.closest('.touch-dpad-btn, .touch-toggle')) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
-        
-        // Add event handlers
-        touchControls.addEventListener('touchstart', preventTouchEvents, { passive: false });
-        touchControls.addEventListener('touchmove', preventTouchEvents, { passive: false });
-        touchControls.addEventListener('pointerstart', preventPointerEvents, { passive: false });
-        touchControls.addEventListener('pointermove', preventPointerEvents, { passive: false });
-        
-        // Prevent context menu and magnification on long press
-        this.addContextMenuPrevention(touchControls);
-        
-        // Prevent text selection and magnifying glass
-        touchControls.addEventListener('selectstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }, { passive: false });
-        touchControls.addEventListener('dragstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }, { passive: false });
-        
-        // Prevent context menu and pinch on all touch control buttons
-        this.setupButtonEventPrevention();
-    }
-    
-    setupButtonEventPrevention() {
-        // Prevent context menu and touch events on all touch buttons
-        const touchButtons = [
-            '.touch-dpad-btn',
-            '.touch-toggle-btn',
-            '.theme-btn',
-            '.touch-controls button'
-        ];
-        
-        touchButtons.forEach(selector => {
-            const buttons = document.querySelectorAll(selector);
-            buttons.forEach(button => {
-                this.addContextMenuPrevention(button);
-                this.addPinchPrevention(button);
-            });
-        });
-    }
-    
-    // Helper method to prevent context menu
-    addContextMenuPrevention(element) {
-        element.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }, { passive: false });
-    }
-    
-    // Helper method to prevent pinch zoom
-    addPinchPrevention(element) {
-        const preventPinch = (e) => {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
-        
-        element.addEventListener('touchstart', preventPinch, { passive: false });
-        element.addEventListener('touchmove', preventPinch, { passive: false });
-    }
+
 
     setupTouchControls() {
-        this.setupContainerEventPrevention();
+        // Simple global touchmove prevention in touch controls area
+        const touchControls = document.querySelector('.touch-controls');
+        if (touchControls) {
+            touchControls.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+        }
 
         this.bindHoldRepeat(document.getElementById('touch-left'), () => this.movePiece(-1, 0));
         this.bindHoldRepeat(document.getElementById('touch-right'), () => this.movePiece(1, 0));
@@ -113,11 +36,26 @@ export class TouchControls {
         const btn = document.getElementById(id);
         if (!btn) return;
         
-        btn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        const handler = (e) => {
+            e.preventDefault(); // Prevent scrolling
+            btn.classList.add('pressed');
             action();
-        }, { passive: false });
+        };
+
+        const end = (e) => {
+            e.preventDefault(); // Prevent scrolling
+            btn.classList.remove('pressed');
+        };
+        
+        // Touch events for mobile
+        btn.addEventListener('touchstart', handler, { passive: false });
+        btn.addEventListener('touchend', end, { passive: false });
+        btn.addEventListener('touchcancel', end, { passive: false });
+        
+        // Keep existing mouse events unchanged
+        btn.addEventListener('mousedown', handler, { passive: false });
+        btn.addEventListener('mouseup', end, { passive: true });
+        btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'), { passive: true });
     }
 
     bindClick(id, action) {
@@ -163,12 +101,12 @@ export class TouchControls {
 
         const clear = () => {
             this.clearRepeatTimer(key);
+            buttonEl.classList.remove('pressed');
         };
 
         const start = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clear();
+            e.preventDefault(); // Prevent scrolling
+            buttonEl.classList.add('pressed');
 
             // First move immediately on press.
             action();
@@ -176,11 +114,21 @@ export class TouchControls {
             // Set up repeat timers using a shared method
             this.setupRepeatTimer(key, action);
         };
+
+        const end = (e) => {
+            e.preventDefault(); // Prevent scrolling
+            clear();
+        };
         
-        buttonEl.addEventListener('pointerdown', start, { passive: false });
-        buttonEl.addEventListener('pointerup', clear, { passive: true });
-        buttonEl.addEventListener('pointercancel', clear, { passive: true });
-        buttonEl.addEventListener('pointerleave', clear, { passive: true });
+        // Touch events for mobile
+        buttonEl.addEventListener('touchstart', start, { passive: false });
+        buttonEl.addEventListener('touchend', end, { passive: false });
+        buttonEl.addEventListener('touchcancel', end, { passive: false });
+        
+        // Keep existing mouse events unchanged
+        buttonEl.addEventListener('mousedown', start, { passive: false });
+        buttonEl.addEventListener('mouseup', end, { passive: true });
+        buttonEl.addEventListener('mouseleave', clear, { passive: true });
     }
 
     clearRepeatTimer(key) {
