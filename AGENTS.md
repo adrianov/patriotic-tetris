@@ -71,3 +71,4 @@
 - **Audio**: Web Audio API, synthesized sounds only
 - **Theme**: Patriotic colors - white (#FFFFFF), blue (#0039A6), red (#D52B1E)
 - **Performance**: Target 60 FPS with `requestAnimationFrame`
+- **Touch controls**: To prevent browser magnifying glass/zoom during touch manipulation, use `event.preventDefault()` on touchmove events
