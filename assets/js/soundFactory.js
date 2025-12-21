@@ -37,7 +37,9 @@ export class SoundFactory {
     }
 
     createMoveSound() {
-        this.audioEngine.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
+        setTimeout(() => {
+            this.audioEngine.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
+        }, 0);
     }
 
     createRotateSound() {
