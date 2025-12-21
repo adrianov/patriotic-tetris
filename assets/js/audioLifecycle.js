@@ -22,9 +22,7 @@ export class AudioLifecycleManager {
 
         const resumePromise = this.audioEngine.contextManager.resumeContext();
         if (resumePromise) {
-            resumePromise.then(() => {
-                this.audioEngine.queueManager.clear();
-            }).catch(() => {
+            resumePromise.catch(() => {
                 setTimeout(() => {
                     if (!this.audioEngine.contextManager.isRunning) {
                         this.audioEngine.contextManager.resumeContext();

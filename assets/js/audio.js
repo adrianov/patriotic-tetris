@@ -1,6 +1,5 @@
 // Audio Engine - Synthesized Sound Effects
 import { AudioContextManager } from './audioContext.js';
-import { AudioQueueManager } from './audioQueue.js';
 import { AudioLifecycleManager } from './audioLifecycle.js';
 import { SoundFactory } from './soundFactory.js';
 
@@ -9,7 +8,6 @@ export class AudioEngine {
         this.masterVolume = 0.5;
         this.isMuted = false;
         this.contextManager = new AudioContextManager();
-        this.queueManager = new AudioQueueManager(this.contextManager);
         this.lifecycleManager = new AudioLifecycleManager(this);
         this.soundFactory = new SoundFactory(this.contextManager, this);
     }
@@ -46,20 +44,14 @@ export class AudioEngine {
         return { end: end + release };
     }
 
-    resumeContext() {
-        return this.contextManager.resumeContext();
-    }
-
     createOscillator(freq, opts = {}) {
-        const { type = 'sine', start = 0, dur = 0.1, vol = 0.1, fromQueue = false } = opts;
+        const { type = 'sine', start = 0, dur = 0.1, vol = 0.1 } = opts;
         if (!this.canPlay()) return null;
 
-        if (this.queueManager.shouldQueue(fromQueue)) {
-            this.queueManager.enqueuePlay(() => this.createOscillator(freq, { ...opts, fromQueue: true }), this.isMuted);
-            return null;
-        }
+        const audioContext = this.contextManager.audioContext;
+        if (!audioContext || audioContext.state !== 'running') return null;
 
-        const osc = this.contextManager.audioContext.createOscillator();
+        const osc = audioContext.createOscillator();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, this.contextManager.currentTime + start);
 
@@ -91,10 +83,11 @@ export class AudioEngine {
     }
 
     ensureContextReady() {
-        if (!this.contextManager.isRunning) {
-            this.contextManager.createAudioContext();
-            this.resumeContext()?.then(() => this.playBackgroundMusic());
-        }
+        if (this.contextManager.isRunning) return;
+        this.contextManager.createAudioContext();
+        this.contextManager.resumeContext()?.then(() => {
+            this.playBackgroundMusic();
+        });
     }
 
     playMove() {
@@ -156,8 +149,6 @@ export class AudioEngine {
             // Create audio context when unmuting (user interaction event)
             this.contextManager.createAudioContext();
             this.contextManager.resumeContext();
-            // Clear queue when unmuting
-            this.queueManager.clear();
         }
 
         return this.isMuted;
