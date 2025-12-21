@@ -2,6 +2,7 @@
 import { AudioContextManager } from './audioContext.js';
 import { AudioQueueManager } from './audioQueue.js';
 import { AudioLifecycleManager } from './audioLifecycle.js';
+import { SoundFactory } from './soundFactory.js';
 
 export class AudioEngine {
     constructor() {
@@ -13,6 +14,7 @@ export class AudioEngine {
         this.contextManager = new AudioContextManager();
         this.queueManager = new AudioQueueManager(this.contextManager);
         this.lifecycleManager = new AudioLifecycleManager(this);
+        this.soundFactory = new SoundFactory(this.contextManager, this);
     }
 
     static RAMP_ATTACK_S = 0.004;
@@ -51,8 +53,6 @@ export class AudioEngine {
         const promise = this.contextManager.resumeContext();
         return promise;
     }
-
-
 
     createOscillator(freq, opts = {}) {
         const { type = 'sine', start = 0, dur = 0.1, vol = 0.1, fromQueue = false } = opts;
@@ -105,80 +105,42 @@ export class AudioEngine {
 
     playMove() {
         this.ensureContextReady();
-        this.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
+        this.soundFactory.playSound('move');
     }
 
     playRotate() {
         this.ensureContextReady();
-        this.createOscillator(1318.51, { dur: 0.018, vol: 0.5 }); // E6
+        this.soundFactory.playSound('rotate');
     }
 
     playDrop() {
         this.ensureContextReady();
-        this.createOscillator(783.99, { dur: 0.04, vol: 0.6 }); // G5
+        this.soundFactory.playSound('drop');
     }
 
     playHardDrop() {
         this.ensureContextReady();
-        this.createOscillator(523.25, { dur: 0.06, vol: 0.7 }); // C5
+        this.soundFactory.playSound('hardDrop');
     }
-
-
 
     playLineClear(lines) {
         this.ensureContextReady();
-        const chords = [
-            [523.25, 659.25, 783.99], [587.33, 739.99, 880.00],
-            [659.25, 830.61, 987.77], [783.99, 987.77, 1174.66]
-        ];
-
-        for (let i = 0; i < lines; i++) {
-            const chord = chords[i % chords.length];
-            setTimeout(() => {
-                chord.forEach((freq, idx) => {
-                    setTimeout(() => {
-                        this.createOscillator(freq, { type: 'triangle', dur: 0.4, vol: 0.7 });
-                        this.createOscillator(freq * 0.89, { dur: 0.3, vol: 0.4 });
-                    }, idx * 30);
-                });
-            }, i * 150);
-        }
+        this.soundFactory.playSound('lineClear', lines);
     }
 
     playGameOver() {
         this.ensureContextReady();
-        const melody = [
-            { freq: 1046.50, dur: 0.3 }, { freq: 880.00, dur: 0.2 }, { freq: 783.99, dur: 0.4 },
-            { freq: 622.25, dur: 0.2 }, { freq: 523.25, dur: 0.5 }, { freq: 392.00, dur: 0.3 },
-            { freq: 349.23, dur: 0.4 }, { freq: 261.63, dur: 0.8 }
-        ];
-
-        let t = 0;
-        melody.forEach((n, i) => {
-            setTimeout(() => {
-                this.createOscillator(n.freq, { type: i % 2 === 0 ? 'triangle' : 'sine', dur: n.dur, vol: 0.7 });
-                if (i % 2 === 0) this.createOscillator(n.freq * 0.75, { dur: n.dur * 0.8, vol: 0.4 });
-            }, t * 1000);
-            t += n.dur * 0.8;
-        });
+        this.soundFactory.playSound('gameOver');
     }
 
     playHighScore() {
         this.ensureContextReady();
-        const notes = [
-            { freq: 523.25, dur: 0.12 }, { freq: 659.25, dur: 0.12 }, { freq: 783.99, dur: 0.14 },
-            { freq: 1046.50, dur: 0.20 }, { freq: 987.77, dur: 0.14 }, { freq: 1046.50, dur: 0.28 }
-        ];
+        this.soundFactory.playSound('highScore');
+    }
 
-        let t = 0;
-        notes.forEach((n, i) => {
-            setTimeout(() => {
-                this.createOscillator(n.freq, { type: 'triangle', dur: n.dur, vol: 0.7 });
-                if (i >= 2) this.createOscillator(n.freq * 2, { dur: Math.max(0.08, n.dur * 0.8), vol: 0.25 });
-                if (i >= notes.length - 2) this.createOscillator(n.freq * 0.75, { dur: n.dur * 0.9, vol: 0.25 });
-            }, t * 1000);
-            t += n.dur * 0.9;
-        });
+    playBackgroundMusic() {
+        this.ensureContextReady();
+        this.soundFactory.playSound('backgroundMusic');
     }
 
     setVolume(volume) {
@@ -206,24 +168,4 @@ export class AudioEngine {
 
         return this.isMuted;
     }
-
-    playBackgroundMusic() {
-        this.ensureContextReady();
-        if (!this.canPlay()) return;
-
-        const melody = [
-            { freq: 261.63, dur: 0.4 }, { freq: 311.13, dur: 0.2 }, { freq: 329.63, dur: 0.3 },
-            { freq: 392.00, dur: 0.2 }, { freq: 466.16, dur: 0.3 }, { freq: 523.25, dur: 0.8 },
-            { freq: 392.00, dur: 0.3 }, { freq: 349.23, dur: 0.2 }, { freq: 329.63, dur: 0.3 },
-            { freq: 261.63, dur: 0.6 }
-        ];
-
-        let t = 0.05;
-        melody.forEach(n => {
-            this.createOscillator(n.freq, { type: 'triangle', start: t, dur: n.dur });
-            t += n.dur;
-        });
-    }
-
-
 }

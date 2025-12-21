@@ -47,29 +47,36 @@ export class AudioContextManager {
         this.initAudioContext();
         if (!this.audioContext) return null;
 
-        const state = this.audioContext.state;
-        if (state === 'closed') {
-            this.didInit = false;
-            this.initAudioContext();
+        if (this.audioContext.state === 'closed') {
+            this.reinitializeClosedContext();
             if (!this.audioContext) return null;
         }
 
-        if (this.audioContext && this.audioContext.state !== 'running') {
-            try {
-                this.resumePromise = this.audioContext.resume();
-                // unlockWithSilence will be called after resume completes
-                if (this.resumePromise && typeof this.resumePromise.then === 'function') {
-                    this.resumePromise.then(() => {
-                        this.unlockWithSilence();
-                    }).catch(() => {});
-                } else {
+        if (this.audioContext.state !== 'running') {
+            return this.attemptResume();
+        }
+
+        this.resumePromise = Promise.resolve();
+        return this.resumePromise;
+    }
+
+    reinitializeClosedContext() {
+        this.didInit = false;
+        this.initAudioContext();
+    }
+
+    attemptResume() {
+        try {
+            this.resumePromise = this.audioContext.resume();
+            if (this.resumePromise && typeof this.resumePromise.then === 'function') {
+                this.resumePromise.then(() => {
                     this.unlockWithSilence();
-                }
-            } catch (error) {
-                this.resumePromise = null;
+                }).catch(() => {});
+            } else {
+                this.unlockWithSilence();
             }
-        } else if (this.audioContext && this.audioContext.state === 'running') {
-            this.resumePromise = Promise.resolve();
+        } catch (error) {
+            this.resumePromise = null;
         }
         return this.resumePromise;
     }
