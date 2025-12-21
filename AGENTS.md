@@ -41,6 +41,8 @@
 - **Before refactoring**: Identify method responsibilities, determine target modules, update imports.
 - **After refactoring**: Run linting, type checking, and functional tests to ensure no regressions.
 - **Extract patterns**: Common patterns (animations, scoring, state management) should be separate modules.
+- **Module reduction**: Never remove functionality or comments to make modules shorter. Extract functions to other modules instead.
+- **Comprehensive extraction**: When extracting a module, analyze both edited modules (all and new) in full and make extraction comprehensive, following SOLID principles: each module should have one reason to change, be open for extension but closed for modification, depend on abstractions, and not depend on methods they don't use.
 
 ## Project Hygiene
 - **TODO.md**: Mark completed items with `[x]` or `✅`, never remove
