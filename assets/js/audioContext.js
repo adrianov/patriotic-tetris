@@ -25,6 +25,24 @@ export class AudioContextManager {
         }
     }
 
+    createAudioContext() {
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            return this.audioContext;
+        }
+        try {
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+            this.masterGain = this.audioContext.createGain();
+            this.masterGain.gain.value = 1;
+            this.masterGain.connect(this.audioContext.destination);
+            this.didInit = true;
+            return this.audioContext;
+        } catch (error) {
+            console.warn('Web Audio API not supported:', error);
+            return null;
+        }
+    }
+
     resumeContext() {
         this.initAudioContext();
         if (!this.audioContext) return null;

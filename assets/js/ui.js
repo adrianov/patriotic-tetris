@@ -76,82 +76,73 @@ export class UIManager {
         controlItems.forEach(item => {
             const textContent = item.textContent;
             
-            // Add click handler based on the control text
-            if (textContent.includes('Ghost Piece')) {
-                item.addEventListener('click', () => {
-                    this.game.ui.toggleGhostPiece();
-                });
-            } else if (textContent.includes('Animations')) {
-                item.addEventListener('click', () => {
-                    this.game.toggleAnimations();
-                });
-            } else if (textContent.includes('Speed Up')) {
-                item.addEventListener('click', () => {
-                    this.game.pieceMovement.increaseSpeed();
-                });
-            } else if (textContent.includes('Mute')) {
-                item.addEventListener('click', () => {
-                    this.game.audio.toggleMute();
-                });
-            } else if (textContent.includes('Restart')) {
-                item.addEventListener('click', () => {
-                    this.game.startNewGame();
-                });
-            } else if (textContent.includes('Pause')) {
-                item.addEventListener('click', () => {
-                    this.game.pause();
-                    if (this.game.paused) this.game.ui.showCursor();
-                });
-            } else if (textContent.includes('Drop')) {
-                item.addEventListener('click', () => {
-                    this.game.controls.hardDrop();
-                });
-            } else if (textContent.includes('Clockwise')) {
-                item.addEventListener('click', () => {
-                    this.game.controls.rotatePieceClockwise();
-                });
-            } else if (textContent.includes('Rotate')) {
-                item.addEventListener('click', () => {
-                    this.game.controls.rotatePiece();
-                });
-            }
             // Skip "Move" as it has ambiguous arrows
+            if (textContent.includes('Move')) return;
+            
+            // Add click handler based on the control text
+            const action = this.getControlAction(textContent);
+            if (action) {
+                item.addEventListener('click', action);
+            }
         });
+    }
+
+    getControlAction(textContent) {
+        const actions = {
+            'Ghost Piece': () => this.game.ui.toggleGhostPiece(),
+            'Animations': () => this.game.toggleAnimations(),
+            'Speed Up': () => this.game.pieceMovement.increaseSpeed(),
+            'Mute': () => this.game.audio.toggleMute(),
+            'Restart': () => this.game.startNewGame(),
+            'Pause': () => {
+                this.game.pause();
+                if (this.game.paused) this.game.ui.showCursor();
+            },
+            'Drop': () => this.game.controls.hardDrop(),
+            'Clockwise': () => this.game.controls.rotatePieceClockwise(),
+            'Rotate': () => this.game.controls.rotatePiece(),
+            'Reset High': () => this.game.resetHighScore()
+        };
+
+        for (const [key, action] of Object.entries(actions)) {
+            if (textContent.includes(key)) return action;
+        }
+        return null;
     }
 
     bindFirstAudioGesture() {
         if (this.game.didBindAudio) return;
         this.game.didBindAudio = true;
 
-        const start = () => {
-            const resumePromise = this.game.audio.resumeContext();
-            
-            // Wait for context to resume, then build buffers and play confirmation sound
-            if (resumePromise) {
-                resumePromise.then(() => {
-                    // Build buffers after context is ready
-                    this.game.audio.buildSfxBuffers().then(() => {
-                        // Play confirmation sound once everything is ready
-                        this.game.audio.playMove();
-                        // Then play background music
-                        this.game.audio.playBackgroundMusic();
-                    }).catch(error => {
-                        console.warn('Failed to build audio buffers:', error);
-                    });
+        const initAudioImmediately = (e) => {
+            if (!this.game.audio.initialized) {
+                // Remove listeners immediately
+                document.removeEventListener('pointerdown', initAudioImmediately, { capture: true });
+                document.removeEventListener('keydown', initAudioImmediately, { capture: true });
+                document.removeEventListener('touchstart', initAudioImmediately, { capture: true });
+                document.removeEventListener('click', initAudioImmediately, { capture: true });
+                
+                this.game.audio.initialized = true;
+                
+                // Create AudioContext IMMEDIATELY during this gesture
+                this.game.audio.contextManager.createAudioContext();
+                
+                // Play a test sound immediately in same gesture
+                this.game.audio.createOscillator(440, { dur: 0.1, vol: 0.5 });
+                
+                // Resume context and build buffers after
+                this.game.audio.resumeContext().then(() => {
+                    this.game.audio.buildSfxBuffers();
+                    this.game.audio.playBackgroundMusic();
                 });
             }
         };
 
-        const onFirst = () => {
-            document.removeEventListener('pointerdown', onFirst);
-            document.removeEventListener('keydown', onFirst);
-            document.removeEventListener('touchstart', onFirst);
-            start();
-        };
-
-        document.addEventListener('pointerdown', onFirst, { passive: true });
-        document.addEventListener('keydown', onFirst);
-        document.addEventListener('touchstart', onFirst, { passive: true });
+        // Add event listeners with capture to get first dibs on any interaction
+        document.addEventListener('pointerdown', initAudioImmediately, { passive: true, capture: true });
+        document.addEventListener('keydown', initAudioImmediately, { capture: true });
+        document.addEventListener('touchstart', initAudioImmediately, { capture: true });
+        document.addEventListener('click', initAudioImmediately, { capture: true });
     }
 
     updateUI() {

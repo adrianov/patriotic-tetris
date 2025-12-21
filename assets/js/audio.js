@@ -9,6 +9,7 @@ export class AudioEngine {
         this.isMuted = false;
         this.sfxBuffers = new Map();
         this.isBuildingSfx = false;
+        this.initialized = false;
         
         // Composition instead of inheritance - delegate responsibilities
         this.contextManager = new AudioContextManager();
@@ -169,33 +170,25 @@ export class AudioEngine {
     }
     
     playMove() {
-        if (!this.contextManager.isRunning) {
-            this.resumeContext();
-        }
+        this.resumeContext();
         if (this.playBuffer('move', 0.4)) return;
         this.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
     }
 
     playRotate() {
-        if (!this.contextManager.isRunning) {
-            this.resumeContext();
-        }
+        this.resumeContext();
         if (this.playBuffer('rotate', 0.5)) return;
         this.createOscillator(1318.51, { dur: 0.018, vol: 0.5 }); // E6
     }
 
     playDrop() {
-        if (!this.contextManager.isRunning) {
-            this.resumeContext();
-        }
+        this.resumeContext();
         if (this.playBuffer('drop', 0.6)) return;
         this.createOscillator(783.99, { dur: 0.04, vol: 0.6 }); // G5
     }
 
     playHardDrop() {
-        if (!this.contextManager.isRunning) {
-            this.resumeContext();
-        }
+        this.resumeContext();
         if (this.playBuffer('hardDrop', 0.7)) return;
         this.createOscillator(523.25, { dur: 0.06, vol: 0.7 }); // C5
     }
