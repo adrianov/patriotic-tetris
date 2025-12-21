@@ -51,13 +51,21 @@ export class AudioContextManager {
         if (state === 'closed') {
             this.didInit = false;
             this.initAudioContext();
+            if (!this.audioContext) return null;
         }
 
         if (this.audioContext && this.audioContext.state !== 'running') {
             try {
                 this.resumePromise = this.audioContext.resume();
-                this.unlockWithSilence();
-            } catch {
+                // unlockWithSilence will be called after resume completes
+                if (this.resumePromise && typeof this.resumePromise.then === 'function') {
+                    this.resumePromise.then(() => {
+                        this.unlockWithSilence();
+                    }).catch(() => {});
+                } else {
+                    this.unlockWithSilence();
+                }
+            } catch (error) {
                 this.resumePromise = null;
             }
         } else if (this.audioContext && this.audioContext.state === 'running') {

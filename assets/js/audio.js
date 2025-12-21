@@ -10,7 +10,7 @@ export class AudioEngine {
         this.sfxBuffers = new Map();
         this.isBuildingSfx = false;
         this.initialized = false;
-        
+
         // Composition instead of inheritance - delegate responsibilities
         this.contextManager = new AudioContextManager();
         this.queueManager = new AudioQueueManager(this.contextManager);
@@ -48,7 +48,7 @@ export class AudioEngine {
         gainParam.linearRampToValueAtTime(0, end + release);
         return { end: end + release };
     }
-    
+
     resumeContext() {
         const promise = this.contextManager.resumeContext();
         if (promise) {
@@ -168,35 +168,44 @@ export class AudioEngine {
     connectToOutput(node) {
         node.connect(this.contextManager.masterGain || this.contextManager.audioContext.destination);
     }
-    
+
+    ensureContextReady() {
+        if (!this.contextManager.audioContext) {
+            this.contextManager.createAudioContext();
+        }
+        if (this.contextManager.audioContext && this.contextManager.audioContext.state !== 'running') {
+            this.resumeContext();
+        }
+    }
+
     playMove() {
-        this.resumeContext();
+        this.ensureContextReady();
         if (this.playBuffer('move', 0.4)) return;
         this.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
     }
 
     playRotate() {
-        this.resumeContext();
+        this.ensureContextReady();
         if (this.playBuffer('rotate', 0.5)) return;
         this.createOscillator(1318.51, { dur: 0.018, vol: 0.5 }); // E6
     }
 
     playDrop() {
-        this.resumeContext();
+        this.ensureContextReady();
         if (this.playBuffer('drop', 0.6)) return;
         this.createOscillator(783.99, { dur: 0.04, vol: 0.6 }); // G5
     }
 
     playHardDrop() {
-        this.resumeContext();
+        this.ensureContextReady();
         if (this.playBuffer('hardDrop', 0.7)) return;
         this.createOscillator(523.25, { dur: 0.06, vol: 0.7 }); // C5
     }
-    
 
-    
+
+
     playLineClear(lines) {
-        this.resumeContext();
+        this.ensureContextReady();
         const chords = [
             [523.25, 659.25, 783.99], [587.33, 739.99, 880.00],
             [659.25, 830.61, 987.77], [783.99, 987.77, 1174.66]
@@ -214,9 +223,9 @@ export class AudioEngine {
             }, i * 150);
         }
     }
-    
+
     playGameOver() {
-        this.resumeContext();
+        this.ensureContextReady();
         const melody = [
             { freq: 1046.50, dur: 0.3 }, { freq: 880.00, dur: 0.2 }, { freq: 783.99, dur: 0.4 },
             { freq: 622.25, dur: 0.2 }, { freq: 523.25, dur: 0.5 }, { freq: 392.00, dur: 0.3 },
@@ -234,7 +243,7 @@ export class AudioEngine {
     }
 
     playHighScore() {
-        this.resumeContext();
+        this.ensureContextReady();
         const notes = [
             { freq: 523.25, dur: 0.12 }, { freq: 659.25, dur: 0.12 }, { freq: 783.99, dur: 0.14 },
             { freq: 1046.50, dur: 0.20 }, { freq: 987.77, dur: 0.14 }, { freq: 1046.50, dur: 0.28 }
@@ -250,11 +259,11 @@ export class AudioEngine {
             t += n.dur * 0.9;
         });
     }
-    
+
     setVolume(volume) {
         this.masterVolume = Math.max(0, Math.min(1, volume));
     }
-    
+
     toggleMute() {
         this.isMuted = !this.isMuted;
         const muteBtn = document.getElementById('mute-btn');
@@ -262,18 +271,18 @@ export class AudioEngine {
             muteBtn.textContent = this.isMuted ? '🔇 Sound Off' : '🔊 Sound On';
             muteBtn.style.background = this.isMuted ? '#999' : '';
         }
-        
+
         // Clear queue when unmuting
         if (!this.isMuted) {
             this.buildSfxBuffers();
             this.queueManager.clear();
         }
-        
+
         return this.isMuted;
     }
 
     playBackgroundMusic() {
-        this.resumeContext();
+        this.ensureContextReady();
         if (!this.canPlay()) return;
 
         const melody = [
