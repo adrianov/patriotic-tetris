@@ -99,4 +99,19 @@ export class AudioContextManager {
     get sampleRate() {
         return this.audioContext?.sampleRate || 44100;
     }
+
+    destroyAudioContext() {
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            try {
+                this.audioContext.close();
+                this.audioContext = null;
+                this.masterGain = null;
+                this.didInit = false;
+                this.didUnlock = false;
+                this.resumePromise = null;
+            } catch (error) {
+                console.warn('Error closing audio context:', error);
+            }
+        }
+    }
 }

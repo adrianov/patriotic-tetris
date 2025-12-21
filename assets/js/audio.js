@@ -78,6 +78,10 @@ export class AudioEngine {
         return this.contextManager.canPlay && !this.isMuted;
     }
 
+    shouldHaveContext() {
+        return !this.isMuted;
+    }
+
     setupGainEnvelope(source, startTime, duration, volume) {
         const gain = this.contextManager.audioContext.createGain();
         const env = this.scheduleOneShotGain(gain.gain, startTime, Math.max(0.001, duration), this.masterVolume * volume);
@@ -189,8 +193,14 @@ export class AudioEngine {
             muteBtn.style.background = this.isMuted ? '#999' : '';
         }
 
-        // Clear queue when unmuting
-        if (!this.isMuted) {
+        if (this.isMuted) {
+            // Destroy audio context when muting
+            this.contextManager.destroyAudioContext();
+        } else {
+            // Create audio context when unmuting (user interaction event)
+            this.contextManager.createAudioContext();
+            this.contextManager.resumeContext();
+            // Clear queue when unmuting
             this.queueManager.clear();
         }
 
