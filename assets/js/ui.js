@@ -67,20 +67,18 @@ export class UIManager {
                 }
             }
         });
-
-        this.bindFirstAudioGesture();
     }
 
     setupControlPanelClickHandlers() {
         // Get all control items that should be clickable
         const controlItems = document.querySelectorAll('.control-item');
-        
+
         controlItems.forEach(item => {
             const textContent = item.textContent;
-            
+
             // Skip "Move" as it has ambiguous arrows
             if (textContent.includes('Move')) return;
-            
+
             // Add click handler based on the control text
             const action = this.getControlAction(textContent);
             if (action) {
@@ -110,41 +108,6 @@ export class UIManager {
             if (textContent.includes(key)) return action;
         }
         return null;
-    }
-
-    bindFirstAudioGesture() {
-        if (this.game.didBindAudio) return;
-        this.game.didBindAudio = true;
-
-        const initAudioImmediately = (e) => {
-            if (!this.game.audio.initialized) {
-                // Remove listeners immediately
-                document.removeEventListener('pointerdown', initAudioImmediately, { capture: true });
-                document.removeEventListener('keydown', initAudioImmediately, { capture: true });
-                document.removeEventListener('touchstart', initAudioImmediately, { capture: true });
-                document.removeEventListener('click', initAudioImmediately, { capture: true });
-                
-                this.game.audio.initialized = true;
-                
-                // Create AudioContext IMMEDIATELY during this gesture
-                this.game.audio.contextManager.createAudioContext();
-                
-                // Play a test sound immediately in same gesture
-                this.game.audio.createOscillator(440, { dur: 0.1, vol: 0.5 });
-                
-                // Resume context and start background music after
-                this.game.audio.resumeContext().then(() => {
-                    this.game.audio.playBackgroundMusic();
-                });
-            }
-        };
-
-        // Add event listeners with capture to get first dibs on any interaction
-        // touchstart must be non-passive to ensure synchronous execution during gesture
-        document.addEventListener('pointerdown', initAudioImmediately, { passive: true, capture: true });
-        document.addEventListener('keydown', initAudioImmediately, { capture: true });
-        document.addEventListener('touchstart', initAudioImmediately, { passive: false, capture: true });
-        document.addEventListener('click', initAudioImmediately, { capture: true });
     }
 
     updateUI() {
