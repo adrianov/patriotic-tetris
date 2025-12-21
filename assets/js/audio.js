@@ -7,8 +7,6 @@ export class AudioEngine {
     constructor() {
         this.masterVolume = 0.5;
         this.isMuted = false;
-        this.sfxBuffers = new Map();
-        this.isBuildingSfx = false;
         this.initialized = false;
 
         // Composition instead of inheritance - delegate responsibilities
@@ -51,87 +49,10 @@ export class AudioEngine {
 
     resumeContext() {
         const promise = this.contextManager.resumeContext();
-        if (promise) {
-            this.contextManager.resumePromise?.then(() => {
-                this.buildSfxBuffers();
-            });
-        }
         return promise;
     }
 
-    buildSfxBuffers() {
-        if (this.isBuildingSfx || !this.contextManager.canPlay) return Promise.resolve();
-        if (this.sfxBuffers.size > 0) return Promise.resolve();
 
-        this.isBuildingSfx = true;
-
-        const sampleRate = this.contextManager.sampleRate;
-        const tones = [
-            ['move', { freq: 1046.50, type: 'sine', dur: 0.02 }],
-            ['rotate', { freq: 1318.51, type: 'sine', dur: 0.018 }],
-            ['drop', { freq: 783.99, type: 'sine', dur: 0.04 }],
-            ['hardDrop', { freq: 523.25, type: 'sine', dur: 0.06 }]
-        ];
-
-        return Promise.all(tones.map(([key, t]) => this.renderToneBuffer(sampleRate, t).then((b) => [key, b])))
-            .then((pairs) => {
-                pairs.forEach(([key, buffer]) => {
-                    if (buffer) this.sfxBuffers.set(key, buffer);
-                });
-            })
-            .finally(() => {
-                this.isBuildingSfx = false;
-            });
-    }
-
-    async renderToneBuffer(sampleRate, { freq, type, dur }) {
-        // Pre-render a short tone with an envelope into an AudioBuffer.
-        try {
-            const tail = 0.03;
-            const lengthSec = Math.max(0.02, dur + tail);
-            const ctx = new OfflineAudioContext(1, Math.ceil(sampleRate * lengthSec), sampleRate);
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = type || 'sine';
-            osc.frequency.setValueAtTime(freq, 0);
-
-            // Match our live ADSR-ish shape but with normalized amplitude.
-            const end = Math.max(0.008, Number(dur) || 0);
-            const stopAt = Math.min(lengthSec, end + tail);
-            this.scheduleOneShotGain(gain.gain, 0, end, 0.3);
-            gain.gain.setValueAtTime(0, stopAt);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(0);
-            osc.stop(stopAt);
-
-            return await ctx.startRendering();
-        } catch {
-            return null;
-        }
-    }
-
-    playBuffer(key, volume = 0.5, fromQueue = false) {
-        if (!this.canPlay()) return false;
-        const buffer = this.sfxBuffers.get(key);
-        if (!buffer) return false;
-
-        if (this.queueManager.shouldQueue(fromQueue)) {
-            this.queueManager.enqueuePlay(() => this.playBuffer(key, volume, true), this.isMuted);
-            return true;
-        }
-
-        const src = this.contextManager.audioContext.createBufferSource();
-        src.buffer = buffer;
-        const now = this.contextManager.currentTime + AudioEngine.START_LOOKAHEAD_S;
-        const env = this.setupGainEnvelope(src, now, buffer.duration || 0.001, volume);
-        src.start(now);
-        try { src.stop(env.end); } catch { /* ignore */ }
-        return true;
-    }
 
     createOscillator(freq, opts = {}) {
         const { type = 'sine', start = 0, dur = 0.1, vol = 0.1, fromQueue = false } = opts;
@@ -180,25 +101,21 @@ export class AudioEngine {
 
     playMove() {
         this.ensureContextReady();
-        if (this.playBuffer('move', 0.4)) return;
         this.createOscillator(1046.50, { dur: 0.02, vol: 0.4 }); // C6
     }
 
     playRotate() {
         this.ensureContextReady();
-        if (this.playBuffer('rotate', 0.5)) return;
         this.createOscillator(1318.51, { dur: 0.018, vol: 0.5 }); // E6
     }
 
     playDrop() {
         this.ensureContextReady();
-        if (this.playBuffer('drop', 0.6)) return;
         this.createOscillator(783.99, { dur: 0.04, vol: 0.6 }); // G5
     }
 
     playHardDrop() {
         this.ensureContextReady();
-        if (this.playBuffer('hardDrop', 0.7)) return;
         this.createOscillator(523.25, { dur: 0.06, vol: 0.7 }); // C5
     }
 
@@ -274,7 +191,6 @@ export class AudioEngine {
 
         // Clear queue when unmuting
         if (!this.isMuted) {
-            this.buildSfxBuffers();
             this.queueManager.clear();
         }
 
