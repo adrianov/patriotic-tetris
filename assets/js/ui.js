@@ -63,12 +63,7 @@ export class UIManager {
             if (!document.hidden) {
                 const state = this.game.audio.contextManager.audioContext?.state;
                 if (state === 'suspended' || state === 'interrupted' || !this.game.audio.contextManager.isRunning) {
-                    const resumePromise = this.game.audio.resumeContext();
-                    if (resumePromise) {
-                        resumePromise.then(() => {
-                            this.game.audio.buildSfxBuffers();
-                        }).catch(() => {});
-                    }
+                    this.game.audio.resumeContext();
                 }
             }
         });
@@ -137,9 +132,8 @@ export class UIManager {
                 // Play a test sound immediately in same gesture
                 this.game.audio.createOscillator(440, { dur: 0.1, vol: 0.5 });
                 
-                // Resume context and build buffers after
+                // Resume context and start background music after
                 this.game.audio.resumeContext().then(() => {
-                    this.game.audio.buildSfxBuffers();
                     this.game.audio.playBackgroundMusic();
                 });
             }
