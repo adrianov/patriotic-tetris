@@ -12,6 +12,9 @@ export class AudioEngine {
         this.isBuildingSfx = false;
         this.pendingPlays = [];
         this.flushHooked = false;
+        
+        // Setup page visibility handler for mobile browser audio recovery
+        this.setupVisibilityHandler();
     }
 
     // Tiny ramps prevent audible "clicks" caused by discontinuities at start/stop.
@@ -93,6 +96,18 @@ export class AudioEngine {
         return this.resumePromise;
     }
 
+    unlockWithSilence() {
+        if (!this.audioContext || this.audioContext.state !== 'running') return;
+        
+        // Create a silent buffer to fully unlock audio on iOS
+        const silentBuffer = this.audioContext.createBuffer(1, 1, 22050);
+        const source = this.audioContext.createBufferSource();
+        source.buffer = silentBuffer;
+        source.connect(this.audioContext.destination);
+        source.start(0);
+        source.stop(0);
+    }
+
 
 
     hookFlushAfterResume() {
@@ -136,7 +151,7 @@ export class AudioEngine {
     }
 
     buildSfxBuffers() {
-        if (this.isBuildingSfx || !this.audioContext || this.isMuted) return;
+        if (this.isBuildingSfx || !this.audioContext) return;
         if (this.sfxBuffers.size > 0) return;
 
         this.isBuildingSfx = true;
@@ -349,6 +364,11 @@ export class AudioEngine {
             muteBtn.style.background = this.isMuted ? '#999' : '';
         }
         
+        // Rebuild buffers when unmuting to ensure they're available
+        if (!this.isMuted) {
+            this.buildSfxBuffers();
+        }
+        
         return this.isMuted;
     }
     
@@ -368,5 +388,20 @@ export class AudioEngine {
             this.createOscillator(n.freq, { type: 'triangle', start: t, dur: n.dur });
             t += n.dur;
         });
+    }
+
+    setupVisibilityHandler() {
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.audioContext) {
+                    // Force context recovery after app switch
+                    if (this.audioContext.state !== 'running') {
+                        this.resumeContext();
+                    }
+                    // Rebuild buffers to ensure they work after interruption
+                    this.buildSfxBuffers();
+                }
+            });
+        }
     }
 }

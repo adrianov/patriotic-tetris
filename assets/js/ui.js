@@ -59,7 +59,11 @@ export class UIManager {
 
         // Mobile browsers can suspend WebAudio after interruptions; re-resume on visibility change
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) this.game.audio.resumeContext();
+            if (!document.hidden) {
+                this.game.audio.resumeContext();
+                // Rebuild SFX buffers to ensure they're available after interruption
+                this.game.audio.buildSfxBuffers();
+            }
         });
 
         this.bindFirstAudioGesture();
