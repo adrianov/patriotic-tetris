@@ -29,6 +29,9 @@ export class Controls {
         const action = this.getActionForKey(key, e);
         if (!action) return;
         if (this.game.gameOver && !this.isGameOverAllowedKey(key)) return;
+        
+
+        
         e.preventDefault();
         if (this.pressedKeys.has(key)) {
             if (this.isMovementKey(key)) {
