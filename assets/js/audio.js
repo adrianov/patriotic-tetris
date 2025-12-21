@@ -125,7 +125,7 @@ export class AudioEngine {
 
     playLineClear(lines) {
         this.ensureContextReady();
-        this.soundFactory.playSound('lineClear', lines);
+        this.soundFactory.playSound('lineClear', { lines });
     }
 
     playGameOver() {
