@@ -8,9 +8,6 @@ export class AudioEngine {
     constructor() {
         this.masterVolume = 0.5;
         this.isMuted = false;
-        this.initialized = false;
-
-        // Composition instead of inheritance - delegate responsibilities
         this.contextManager = new AudioContextManager();
         this.queueManager = new AudioQueueManager(this.contextManager);
         this.lifecycleManager = new AudioLifecycleManager(this);
@@ -50,8 +47,7 @@ export class AudioEngine {
     }
 
     resumeContext() {
-        const promise = this.contextManager.resumeContext();
-        return promise;
+        return this.contextManager.resumeContext();
     }
 
     createOscillator(freq, opts = {}) {
@@ -91,15 +87,13 @@ export class AudioEngine {
     }
 
     connectToOutput(node) {
-        node.connect(this.contextManager.masterGain || this.contextManager.audioContext.destination);
+        node.connect(this.contextManager.masterGain ?? this.contextManager.audioContext.destination);
     }
 
     ensureContextReady() {
-        if (!this.contextManager.audioContext) {
+        if (!this.contextManager.isRunning) {
             this.contextManager.createAudioContext();
-            this.resumeContext().then(() => {
-                this.playBackgroundMusic();
-            });
+            this.resumeContext()?.then(() => this.playBackgroundMusic());
         }
     }
 

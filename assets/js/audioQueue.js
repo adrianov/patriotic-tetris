@@ -47,11 +47,7 @@ export class AudioQueueManager {
     }
 
     shouldQueue(fromQueue) {
-        if (fromQueue) return false;
-        if (!this.contextManager.isRunning) {
-            return true;
-        }
-        return false;
+        return !fromQueue && !this.contextManager.isRunning;
     }
 
     clear() {

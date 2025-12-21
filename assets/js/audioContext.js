@@ -2,15 +2,12 @@
 export class AudioContextManager {
     constructor() {
         this.audioContext = null;
-        this.didInit = false;
-        this.didUnlock = false;
         this.masterGain = null;
         this.resumePromise = null;
     }
 
     initAudioContext() {
         if (this.audioContext && this.audioContext.state !== 'closed') {
-            this.didInit = true;
             return;
         }
         try {
@@ -19,28 +16,14 @@ export class AudioContextManager {
             this.masterGain = this.audioContext.createGain();
             this.masterGain.gain.value = 1;
             this.masterGain.connect(this.audioContext.destination);
-            this.didInit = true;
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
         }
     }
 
     createAudioContext() {
-        if (this.audioContext && this.audioContext.state !== 'closed') {
-            return this.audioContext;
-        }
-        try {
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioContext = new AudioContext();
-            this.masterGain = this.audioContext.createGain();
-            this.masterGain.gain.value = 1;
-            this.masterGain.connect(this.audioContext.destination);
-            this.didInit = true;
-            return this.audioContext;
-        } catch (error) {
-            console.warn('Web Audio API not supported:', error);
-            return null;
-        }
+        if (this.audioContext?.state === 'running') return;
+        this.initAudioContext();
     }
 
     resumeContext() {
@@ -48,47 +31,24 @@ export class AudioContextManager {
         if (!this.audioContext) return null;
 
         if (this.audioContext.state === 'closed') {
-            this.reinitializeClosedContext();
+            this.initAudioContext();
             if (!this.audioContext) return null;
         }
 
-        if (this.audioContext.state !== 'running') {
-            return this.attemptResume();
+        if (this.audioContext.state === 'running') {
+            this.resumePromise = Promise.resolve();
+            return this.resumePromise;
         }
 
-        this.resumePromise = Promise.resolve();
-        return this.resumePromise;
-    }
-
-    reinitializeClosedContext() {
-        this.didInit = false;
-        this.initAudioContext();
-    }
-
-    attemptResume() {
         try {
             this.resumePromise = this.audioContext.resume();
-            if (this.resumePromise && typeof this.resumePromise.then === 'function') {
-                this.resumePromise.then(() => {
-                    this.unlockWithSilence();
-                }).catch(() => {});
-            } else {
-                this.unlockWithSilence();
+            if (this.resumePromise?.then) {
+                this.resumePromise.catch(() => { });
             }
         } catch (error) {
             this.resumePromise = null;
         }
         return this.resumePromise;
-    }
-
-    unlockWithSilence() {
-        if (!this.audioContext || this.audioContext.state !== 'running') return;
-        const silentBuffer = this.audioContext.createBuffer(1, 1, 22050);
-        const source = this.audioContext.createBufferSource();
-        source.buffer = silentBuffer;
-        source.connect(this.audioContext.destination);
-        source.start(0);
-        source.stop(0);
     }
 
     get canPlay() {
@@ -108,17 +68,15 @@ export class AudioContextManager {
     }
 
     destroyAudioContext() {
-        if (this.audioContext && this.audioContext.state !== 'closed') {
+        if (this.audioContext?.state !== 'closed') {
             try {
                 this.audioContext.close();
-                this.audioContext = null;
-                this.masterGain = null;
-                this.didInit = false;
-                this.didUnlock = false;
-                this.resumePromise = null;
             } catch (error) {
                 console.warn('Error closing audio context:', error);
             }
         }
+        this.audioContext = null;
+        this.masterGain = null;
+        this.resumePromise = null;
     }
 }
