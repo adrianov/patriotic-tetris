@@ -10,6 +10,7 @@ export class AudioEngine {
         this.contextManager = new AudioContextManager();
         this.lifecycleManager = new AudioLifecycleManager(this);
         this.soundFactory = new SoundFactory(this.contextManager, this);
+        this.hasPlayedBackgroundMusic = false;
     }
 
     static RAMP_ATTACK_S = 0.004;
@@ -46,12 +47,9 @@ export class AudioEngine {
 
     createOscillator(freq, opts = {}) {
         const { type = 'sine', start = 0, dur = 0.1, vol = 0.1 } = opts;
-        if (!this.canPlay()) return null;
+        if (!this.canPlay() || !this.contextManager.isRunning) return null;
 
-        const audioContext = this.contextManager.audioContext;
-        if (!audioContext || audioContext.state !== 'running') return null;
-
-        const osc = audioContext.createOscillator();
+        const osc = this.contextManager.audioContext.createOscillator();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, this.contextManager.currentTime + start);
 
@@ -83,51 +81,63 @@ export class AudioEngine {
     }
 
     ensureContextReady() {
-        if (this.contextManager.isRunning) return;
-        this.contextManager.createAudioContext();
-        this.contextManager.resumeContext()?.then(() => {
-            this.playBackgroundMusic();
-        });
+        if (this.isMuted) return Promise.resolve();
+        const wasInitialized = this.contextManager.audioContext !== null;
+        return this.contextManager.ensureRunning().then(() => {
+            if (!wasInitialized && !this.hasPlayedBackgroundMusic) {
+                this.hasPlayedBackgroundMusic = true;
+                this.playBackgroundMusic();
+            }
+        }).catch(() => { });
     }
 
     playMove() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('move');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('move');
+        });
     }
 
     playRotate() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('rotate');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('rotate');
+        });
     }
 
     playDrop() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('drop');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('drop');
+        });
     }
 
     playHardDrop() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('hardDrop');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('hardDrop');
+        });
     }
 
     playLineClear(lines) {
-        this.ensureContextReady();
-        this.soundFactory.playSound('lineClear', { lines });
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('lineClear', { lines });
+        });
     }
 
     playGameOver() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('gameOver');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('gameOver');
+        });
     }
 
     playHighScore() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('highScore');
+        this.ensureContextReady().then(() => {
+            if (this.canPlay()) this.soundFactory.playSound('highScore');
+        });
     }
 
     playBackgroundMusic() {
-        this.ensureContextReady();
-        this.soundFactory.playSound('backgroundMusic');
+        if (!this.canPlay()) return;
+        this.contextManager.ensureRunning().then(() => {
+            this.soundFactory.playSound('backgroundMusic');
+        });
     }
 
     setVolume(volume) {
@@ -143,12 +153,15 @@ export class AudioEngine {
         }
 
         if (this.isMuted) {
-            // Destroy audio context when muting
             this.contextManager.destroyAudioContext();
+            this.hasPlayedBackgroundMusic = false;
         } else {
-            // Create audio context when unmuting (user interaction event)
-            this.contextManager.createAudioContext();
-            this.contextManager.resumeContext();
+            this.contextManager.ensureRunning().then(() => {
+                if (!this.hasPlayedBackgroundMusic) {
+                    this.hasPlayedBackgroundMusic = true;
+                    this.playBackgroundMusic();
+                }
+            });
         }
 
         return this.isMuted;

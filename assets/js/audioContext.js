@@ -11,8 +11,11 @@ export class AudioContextManager {
             return;
         }
         try {
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioContext = new AudioContext();
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                throw new Error('Web Audio API not supported');
+            }
+            this.audioContext = new AudioContextClass();
             this.masterGain = this.audioContext.createGain();
             this.masterGain.gain.value = 1;
             this.masterGain.connect(this.audioContext.destination);
@@ -21,23 +24,14 @@ export class AudioContextManager {
         }
     }
 
-    createAudioContext() {
-        if (this.audioContext?.state === 'running') return;
-        this.initAudioContext();
-    }
+    ensureRunning() {
+        if (this.isRunning) return Promise.resolve();
 
-    resumeContext() {
         this.initAudioContext();
-        if (!this.audioContext) return null;
-
-        if (this.audioContext.state === 'closed') {
-            this.initAudioContext();
-            if (!this.audioContext) return null;
-        }
+        if (!this.audioContext) return Promise.reject(new Error('Audio context unavailable'));
 
         if (this.audioContext.state === 'running') {
-            this.resumePromise = Promise.resolve();
-            return this.resumePromise;
+            return Promise.resolve();
         }
 
         try {
@@ -45,14 +39,15 @@ export class AudioContextManager {
             if (this.resumePromise?.then) {
                 this.resumePromise.catch(() => { });
             }
+            return this.resumePromise || Promise.resolve();
         } catch (error) {
             this.resumePromise = null;
+            return Promise.reject(error);
         }
-        return this.resumePromise;
     }
 
     get canPlay() {
-        return this.audioContext;
+        return this.audioContext && this.audioContext.state !== 'closed';
     }
 
     get isRunning() {
@@ -68,7 +63,7 @@ export class AudioContextManager {
     }
 
     destroyAudioContext() {
-        if (this.audioContext?.state !== 'closed') {
+        if (this.audioContext && this.audioContext.state !== 'closed') {
             try {
                 this.audioContext.close();
             } catch (error) {
@@ -78,5 +73,13 @@ export class AudioContextManager {
         this.audioContext = null;
         this.masterGain = null;
         this.resumePromise = null;
+    }
+
+    createAudioContext() {
+        this.ensureRunning();
+    }
+
+    resumeContext() {
+        return this.ensureRunning();
     }
 }

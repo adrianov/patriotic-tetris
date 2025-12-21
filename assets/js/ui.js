@@ -60,11 +60,8 @@ export class UIManager {
         // Mobile browsers can suspend WebAudio after interruptions; re-resume on visibility change
         // Note: audioLifecycle.js also handles this, but this provides additional redundancy
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                const state = this.game.audio.contextManager.audioContext?.state;
-                if (state === 'suspended' || state === 'interrupted' || !this.game.audio.contextManager.isRunning) {
-                    this.game.audio.resumeContext();
-                }
+            if (!document.hidden && this.game.audio.shouldHaveContext()) {
+                this.game.audio.contextManager.ensureRunning();
             }
         });
     }
