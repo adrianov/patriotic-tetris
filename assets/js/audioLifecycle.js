@@ -19,27 +19,17 @@ export class AudioLifecycleManager {
                 const resumePromise = this.audioEngine.contextManager.resumeContext();
                 if (resumePromise) {
                     resumePromise.then(() => {
-                        // Rebuild buffers after context is running again
-                        this.audioEngine.buildSfxBuffers();
                         // Clear any queued plays that might have been muted
                         this.audioEngine.queueManager.clear();
                     }).catch(() => {
                         // If resume fails, try again after a short delay
                         setTimeout(() => {
                             if (this.audioEngine.contextManager.audioContext?.state !== 'running') {
-                                this.audioEngine.contextManager.resumeContext()?.then(() => {
-                                    this.audioEngine.buildSfxBuffers();
-                                });
+                                this.audioEngine.contextManager.resumeContext();
                             }
                         }, 100);
                     });
-                } else {
-                    // If resumeContext returns null, context might be closed - rebuild anyway
-                    this.audioEngine.buildSfxBuffers();
                 }
-            } else if (state === 'running') {
-                // Context is running, just rebuild buffers to be safe
-                this.audioEngine.buildSfxBuffers();
             }
         }
     }
