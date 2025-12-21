@@ -97,9 +97,9 @@ export class AudioEngine {
     ensureContextReady() {
         if (!this.contextManager.audioContext) {
             this.contextManager.createAudioContext();
-        }
-        if (this.contextManager.audioContext && this.contextManager.audioContext.state !== 'running') {
-            this.resumeContext();
+            this.resumeContext().then(() => {
+                this.playBackgroundMusic();
+            });
         }
     }
 
