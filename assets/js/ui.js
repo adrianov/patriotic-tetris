@@ -58,11 +58,18 @@ export class UIManager {
         this.setupControlPanelClickHandlers();
 
         // Mobile browsers can suspend WebAudio after interruptions; re-resume on visibility change
+        // Note: audioLifecycle.js also handles this, but this provides additional redundancy
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                this.game.audio.resumeContext();
-                // Rebuild SFX buffers to ensure they're available after interruption
-                this.game.audio.buildSfxBuffers();
+                const state = this.game.audio.contextManager.audioContext?.state;
+                if (state === 'suspended' || state === 'interrupted' || !this.game.audio.contextManager.isRunning) {
+                    const resumePromise = this.game.audio.resumeContext();
+                    if (resumePromise) {
+                        resumePromise.then(() => {
+                            this.game.audio.buildSfxBuffers();
+                        }).catch(() => {});
+                    }
+                }
             }
         });
 
@@ -139,9 +146,10 @@ export class UIManager {
         };
 
         // Add event listeners with capture to get first dibs on any interaction
+        // touchstart must be non-passive to ensure synchronous execution during gesture
         document.addEventListener('pointerdown', initAudioImmediately, { passive: true, capture: true });
         document.addEventListener('keydown', initAudioImmediately, { capture: true });
-        document.addEventListener('touchstart', initAudioImmediately, { capture: true });
+        document.addEventListener('touchstart', initAudioImmediately, { passive: false, capture: true });
         document.addEventListener('click', initAudioImmediately, { capture: true });
     }
 
