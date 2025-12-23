@@ -176,13 +176,16 @@ export class TouchControls {
                 
                 if (isNearRightSide) {
                     // Use clockwise rotation when piece is near right side
-                    this.game.controls.rotatePieceClockwise();
+                    if (this.game.controls.rotatePieceClockwise()) return;
+                    // If clockwise failed, try counter-clockwise
+                    this.game.controls.rotatePiece();
                     return;
                 }
             }
             
-            // Default behavior
-            this.game.controls.rotatePiece();
+            // Default behavior: try counter-clockwise first, then clockwise if it fails
+            if (this.game.controls.rotatePiece()) return;
+            this.game.controls.rotatePieceClockwise();
         }
     }
 }
