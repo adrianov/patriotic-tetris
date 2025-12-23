@@ -147,10 +147,10 @@ export class Controls {
         }
     }
 
-    rotatePiece() { this.rotateWithOffset('counterClockwise'); }
-    rotatePieceClockwise() { this.rotateWithOffset('clockwise'); }
+    rotatePiece() { return this.rotateWithOffset('counterClockwise'); }
+    rotatePieceClockwise() { return this.rotateWithOffset('clockwise'); }
     rotateWithOffset(direction) {
-        if (this.game.paused || !this.game.currentPiece) return;
+        if (this.game.paused || !this.game.currentPiece) return false;
         
         const rotatedShape = this.getRotatedShape(direction);
         const piece = this.game.currentPiece;
@@ -160,15 +160,16 @@ export class Controls {
             ? this.findPositionToMaintainRightmost(rotatedShape)
             : this.findPositionToMaintainLeftmost(rotatedShape);
         // Try rotation at the aligned position first
-        if (this.tryRotationAt(targetX, piece.y, rotatedShape)) return;
+        if (this.tryRotationAt(targetX, piece.y, rotatedShape)) return true;
         
         // Try current position as fallback
-        if (this.tryRotationAt(piece.x, piece.y, rotatedShape)) return;
+        if (this.tryRotationAt(piece.x, piece.y, rotatedShape)) return true;
         
         // Try local positions with directional preference
-        if (this.tryLocalRotation(targetX, direction, rotatedShape)) return;
+        if (this.tryLocalRotation(targetX, direction, rotatedShape)) return true;
         
         // If nothing works locally, rotation fails (no teleportation)
+        return false;
     }
     tryRotationAt(x, y, rotatedShape) {
         if (!this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
