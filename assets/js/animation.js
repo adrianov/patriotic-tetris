@@ -76,9 +76,9 @@ export class AnimationManager {
         const step = (now) => {
             if (now - start >= duration) {
                 this.game.board.clearLines(lines);
-                this.game.board.stopLineClear();
-                this.game.scoreManager.updateScore(lines.length);
-                this.game.pieceMovement.spawnNextPiece();
+            this.game.board.stopLineClear();
+            this.game.updateScore(lines.length);
+            this.game.pieceMovement.spawnNextPiece();
                 this.game.isAnimating = false;
                 this.game.requestRender();
                 return;

@@ -158,7 +158,7 @@ export class PieceMovement {
             // Skip animation if animations are disabled
             if (!this.game.animationsEnabled) {
                 this.game.board.clearLines(lines);
-                this.game.scoreManager.updateScore(lines.length);
+                this.game.updateScore(lines.length);
                 this.spawnNextPiece();
                 this.game.requestRender();
                 return;

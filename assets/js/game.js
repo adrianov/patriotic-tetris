@@ -6,7 +6,6 @@ import { AudioEngine } from './audio.js';
 import { initTheme } from './theme.js';
 import { UIManager } from './ui.js';
 import { PieceMovement } from './pieceMovement.js';
-import { ScoreManager } from './scoreManager.js';
 import { AnimationManager } from './animation.js';
 
 class Game {
@@ -26,7 +25,6 @@ class Game {
         // Initialize managers
         this.ui = new UIManager(this);
         this.pieceMovement = new PieceMovement(this);
-        this.scoreManager = new ScoreManager(this);
         this.animationManager = new AnimationManager(this);
 
         this.score = 0;
@@ -317,6 +315,46 @@ class Game {
         }
 
         this.ui.renderNextPieceIfChanged();
+    }
+
+    getRepeatDelays() {
+        const level = this.level || 1;
+        const initialDelayMs = Math.max(80, 180 - (level - 1) * 12);
+        const intervalMs = Math.max(35, 60 - (level - 1) * 3);
+        return { initialDelayMs, intervalMs };
+    }
+
+    updateScore(clearedLines) {
+        const points = [0, 100, 300, 500, 800];
+        this.addPoints(points[clearedLines] * this.level);
+        this.lines += clearedLines;
+
+        const newLevel = Math.floor(this.lines / 10) + 1;
+        if (newLevel > this.level) {
+            this.level = newLevel;
+            this.board.cycleGenerationColor();
+            this.pieceMovement.applyDropTime();
+        }
+
+        this.ui.updateUI();
+    }
+
+    addPoints(points) {
+        const p = Math.floor(Number(points));
+        if (!Number.isFinite(p) || p <= 0) return;
+        this.score += p;
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.isNewHighScore = true;
+            this.saveHighScore();
+            this.ui.updateHighScoreUI();
+        }
+    }
+
+    addDropPoints(points) {
+        if (this.gameOver || this.paused) return;
+        this.addPoints(points);
+        this.ui.updateUI();
     }
 }
 

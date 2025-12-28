@@ -1,4 +1,3 @@
-import { WallKickSystem } from './wallKicks.js';
 import { TouchControls } from './touchControls.js';
 export class Controls {
     constructor() {
@@ -90,13 +89,7 @@ export class Controls {
         this.holdTimers.delete(key);
     }
     getRepeatDelays() {
-        // Adapt repeat speed to game level - faster at higher levels
-        const level = this.game?.level || 1;
-        // Initial delay: 180ms at level 1, down to 80ms at level 10+
-        const initialDelayMs = Math.max(80, 180 - (level - 1) * 12);
-        // Repeat interval: 60ms at level 1, down to 35ms at level 10+
-        const intervalMs = Math.max(35, 60 - (level - 1) * 3);
-        return { initialDelayMs, intervalMs };
+        return this.game.getRepeatDelays();
     }
     setupRepeatTimer(key, action) {
         // Get delays adapted to current level
@@ -309,7 +302,7 @@ export class Controls {
         const dropDistance = targetY - startY;
         if (dropDistance > 0) {
             this.game.audio.playHardDrop();
-            this.game.scoreManager.addDropPoints(dropDistance * 2);
+            this.game.addDropPoints(dropDistance * 2);
             this.game.animationManager.animateHardDrop(startY);
             this.game.requestRender();
         } else {
