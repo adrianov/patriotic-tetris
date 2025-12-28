@@ -193,6 +193,7 @@ export class UIManager {
         if (statusElement) {
             statusElement.textContent = this.game.showGhostPiece ? 'ON' : 'OFF';
         }
+        this.game.updateGhostCache();
         this.game.requestRender();
     }
 

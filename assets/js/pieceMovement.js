@@ -28,6 +28,7 @@ export class PieceMovement {
         if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
             this.game.currentPiece.y++;
             this.game.lockDelay = 0;
+            this.game.updateGhostCache();
             this.game.requestRender();
         } else if (this.hasNoPossibleMoves()) {
             this.lockPiece();
@@ -146,12 +147,14 @@ export class PieceMovement {
         this.game.board.lockPiece(this.game.currentPiece);
         this.game.currentPiece = null;
         this.game.lockDelay = 0;
+        this.game.cachedGhost = null;
+        this.game.pieceCacheDirty = true;
         this.game.requestRender();
 
         const lines = this.game.board.getFullLines();
         if (lines.length > 0) {
             this.game.audio.playLineClear(lines.length);
-            
+
             // Skip animation if animations are disabled
             if (!this.game.animationsEnabled) {
                 this.game.board.clearLines(lines);
@@ -160,7 +163,7 @@ export class PieceMovement {
                 this.game.requestRender();
                 return;
             }
-            
+
             // Animate line clear before removing rows & spawning next piece.
             this.game.isAnimating = true;
             this.game.board.startLineClear(lines);
@@ -174,6 +177,8 @@ export class PieceMovement {
     spawnNextPiece() {
         this.game.currentPiece = this.game.nextPiece;
         this.game.nextPiece = this.game.pieces.getRandomPiece();
+        this.game.updateGhostCache();
+        this.game.pieceCacheDirty = true;
         this.game.requestRender();
 
         if (this.game.board.checkGameOver(this.game.currentPiece)) {

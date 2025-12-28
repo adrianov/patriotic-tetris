@@ -40,11 +40,12 @@ export class AnimationManager {
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / maxTime, 1);
-            
+
             // Apply gravity acceleration formula: d = 0.5 * a * t²
             const dropDistance = 0.5 * GRAVITY * (elapsed / 1000) * (elapsed / 1000);
             piece.y = initialY + dropDistance;
-            
+
+            this.game.updateGhostCache();
             this.game.requestRender();
             
             if (progress >= 1) {

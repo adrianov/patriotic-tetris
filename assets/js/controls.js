@@ -137,12 +137,13 @@ export class Controls {
     }
     moveSide(dx) {
         if (this.game.paused || !this.game.currentPiece) return;
-        
+
         const canMoveSide = this.game.board.canMove(this.game.currentPiece, dx, 0);
         if (canMoveSide) {
             this.game.currentPiece.x += dx;
             this.game.lockDelay = 0;
             this.game.audio.playMove();
+            this.game.updateGhostCache();
             this.game.requestRender();
         }
     }
@@ -286,6 +287,8 @@ export class Controls {
         this.game.currentPiece.shape = shape;
         this.game.lockDelay = 0;
         this.game.audio.playRotate();
+        this.game.updateGhostCache();
+        this.game.pieceCacheDirty = true;
         this.game.requestRender();
     }
     getShapeWidth(shape) {

@@ -285,6 +285,97 @@ export class Pieces {
             }
         }
     }
+
+    renderCachedGhost(ctx, ghost, board) {
+        if (!ghost || !board) return;
+
+        const color = ghost.color || '#FFFFFF';
+        const isLightColor = this.isLightColor(color);
+
+        for (let y = 0; y < ghost.shape.length; y++) {
+            for (let x = 0; x < ghost.shape[y].length; x++) {
+                if (!ghost.shape[y][x]) continue;
+                const bx = ghost.x + x, by = ghost.y + y;
+                if (board.isCellFree(bx, by)) {
+                    this.renderGhostCell(ctx, { bx, by, color, isLight: isLightColor, theme: board.theme, cellSize: board.cellSize });
+                }
+            }
+        }
+    }
+
+    isLightColor(color) {
+        const c = color.toUpperCase();
+        return c === '#FFFFFF' || c === '#FFFDF6' || c === '#FFF3E0';
+    }
+
+    renderGhostCell(ctx, config) {
+        const { bx, by, color, isLight, theme, cellSize } = config;
+        const pixelX = bx * cellSize;
+        const pixelY = by * cellSize;
+
+        ctx.save();
+        ctx.globalAlpha = isLight ? theme.ghostAlphaLight : theme.ghostAlpha;
+        ctx.fillStyle = color;
+        ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = theme.cellBorder;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+        ctx.restore();
+    }
+
+    buildPieceCache(cacheCanvas, cacheCtx, piece, board) {
+        if (!piece || !cacheCanvas || !cacheCtx) return;
+
+        const cacheConfig = this.getCacheConfig(piece, board);
+        this.setupCacheCanvas(cacheCanvas, cacheCtx, cacheConfig);
+        this.renderPieceToCache(cacheCtx, piece, board, cacheConfig);
+    }
+
+    getCacheConfig(piece, board) {
+        const shape = piece.shape;
+        return {
+            cols: shape[0]?.length || 4,
+            rows: shape.length || 4,
+            cellSize: board.cellSize,
+            dpr: board.dpr
+        };
+    }
+
+    setupCacheCanvas(cacheCanvas, cacheCtx, config) {
+        const { cols, rows, cellSize, dpr } = config;
+        cacheCanvas.width = cols * cellSize * dpr;
+        cacheCanvas.height = rows * cellSize * dpr;
+        cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cacheCtx.clearRect(0, 0, cols * cellSize, rows * cellSize);
+    }
+
+    renderPieceToCache(cacheCtx, piece, board, config) {
+        const { cols, rows, cellSize } = config;
+        const color = piece.color || '#FFFFFF';
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (piece.shape[y][x]) {
+                    this.drawCellScaled(cacheCtx, { x: x * cellSize, y: y * cellSize, size: cellSize, color }, board);
+                }
+            }
+        }
+    }
+
+    renderPieceCached(ctx, piece, cacheCanvas, board) {
+        if (!piece || !cacheCanvas) return;
+
+        const pixelX = piece.x * board.cellSize;
+        const pixelY = piece.y * board.cellSize;
+        const cols = piece.shape[0]?.length || 4;
+        const rows = piece.shape.length || 4;
+        const width = cols * board.cellSize;
+        const height = rows * board.cellSize;
+
+        ctx.drawImage(cacheCanvas, pixelX, pixelY, width, height);
+    }
+
     
 
 }

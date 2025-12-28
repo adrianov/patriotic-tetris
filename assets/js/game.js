@@ -52,6 +52,10 @@ class Game {
         this.lastFrameTime = 0;
         this.lastTimeUiUpdate = 0;
         this.needsRender = true;
+        this.cachedGhost = null;
+        this.pieceCacheCanvas = null;
+        this.pieceCacheCtx = null;
+        this.pieceCacheDirty = true;
 
         this.init();
     }
@@ -59,11 +63,31 @@ class Game {
     resizeBoard() {
         if (!this.board || typeof this.board.resizeCanvas !== 'function') return;
         this.board.resizeCanvas();
+        this.resizePieceCache();
+        this.updateGhostCache();
+        this.pieceCacheDirty = true;
         this.requestRender();
     }
 
     requestRender() {
         this.needsRender = true;
+    }
+
+    updateGhostCache() {
+        if (!this.currentPiece) {
+            this.cachedGhost = null;
+            return;
+        }
+        this.cachedGhost = this.pieces.getGhostPiece(this.currentPiece, this.board);
+    }
+
+    updatePieceCache() {
+        if (!this.currentPiece) {
+            this.pieceCacheDirty = false;
+            return;
+        }
+        this.pieces.buildPieceCache(this.pieceCacheCanvas, this.pieceCacheCtx, this.currentPiece, this.board);
+        this.pieceCacheDirty = false;
     }
 
     init() {
@@ -72,6 +96,8 @@ class Game {
 
         // Setup UI event listeners
         this.ui.setupEventListeners();
+
+        this.setupPieceCache();
 
         this.startNewGame();
 
@@ -82,6 +108,20 @@ class Game {
         setTimeout(() => this.resizeBoard(), 150);
 
         this.gameLoop();
+    }
+
+    setupPieceCache() {
+        this.pieceCacheCanvas = document.createElement('canvas');
+        this.pieceCacheCtx = this.pieceCacheCanvas.getContext('2d');
+    }
+
+    resizePieceCache() {
+        if (!this.pieceCacheCanvas || !this.pieceCacheCtx) return;
+        const maxDim = Math.max(4, 4);
+        this.pieceCacheCanvas.width = maxDim * this.board.cellSize * this.board.dpr;
+        this.pieceCacheCanvas.height = maxDim * this.board.cellSize * this.board.dpr;
+        this.pieceCacheCtx.setTransform(this.board.dpr, 0, 0, this.board.dpr, 0, 0);
+        this.pieceCacheDirty = true;
     }
 
     startNewGame() {
@@ -129,6 +169,8 @@ class Game {
         // Initialize CSS animation class
         document.body.classList.toggle('no-animations', !this.animationsEnabled);
         this.requestRender();
+        this.updateGhostCache();
+        this.pieceCacheDirty = true;
     }
 
     loadHighScore() {
@@ -218,6 +260,8 @@ class Game {
             this.ui.showPaused();
         } else {
             this.ui.hidePaused();
+            this.updateGhostCache();
+            this.pieceCacheDirty = true;
         }
 
         this.ui.setScrollLock();
@@ -265,10 +309,11 @@ class Game {
 
         const canRender = this.currentPiece && !this.gameOver && !this.paused;
         if (canRender && this.showGhostPiece && !this.isAnimating && !this.hardDropAnimation) {
-            this.pieces.renderGhostPiece(this.ctx, this.currentPiece, this.board);
+            this.pieces.renderCachedGhost(this.ctx, this.cachedGhost, this.board);
         }
         if (canRender) {
-            this.pieces.renderPiece(this.ctx, this.currentPiece, this.board);
+            if (this.pieceCacheDirty) this.updatePieceCache();
+            this.pieces.renderPieceCached(this.ctx, this.currentPiece, this.pieceCacheCanvas, this.board);
         }
 
         this.ui.renderNextPieceIfChanged();
