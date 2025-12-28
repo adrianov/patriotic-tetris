@@ -1,5 +1,22 @@
 /* Patriotic Tetris - Themeable UI (Modern / Imperial / Soviet) */
 
+/* Local Fonts */
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/orbitron-500.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/orbitron-700.ttf') format('truetype');
+}
+
 /* Utility Classes */
 .no-select {
     -webkit-touch-callout: none;
