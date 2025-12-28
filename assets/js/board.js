@@ -1,5 +1,4 @@
 // Board Module - Game Board Management
-import { BoardRenderer } from './boardRenderer.js';
 import { isMobileDevice } from './utils/device.js';
 
 export class Board {
@@ -27,9 +26,6 @@ export class Board {
         // Color generation state
         this.currentGenerationColor = null;
         this.currentTheme = null;
-        
-        // Initialize renderer
-        this.renderer = new BoardRenderer(this);
 
         this.reset();
     }
@@ -64,8 +60,6 @@ export class Board {
     }
 
     refreshTheme() {
-        // Freeze any legacy numeric cells to their current palette color so they won't
-        // recolor on future theme switches.
         if (this.theme?.palette) {
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.width; x++) {
@@ -86,17 +80,16 @@ export class Board {
 
     getRandomPaletteColor() {
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'modern';
-        
-        // Initialize if theme changed or first time
+
         if (this.currentTheme !== currentTheme || !this.currentGenerationColor) {
             this.currentTheme = currentTheme;
             this.currentGenerationColor = this.getDefaultColorForTheme(currentTheme);
             return this.currentGenerationColor;
         }
-        
+
         return this.currentGenerationColor;
     }
-    
+
     cycleGenerationColor() {
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'modern';
         if (this.currentGenerationColor) {
@@ -106,33 +99,19 @@ export class Board {
             this.currentGenerationColor = themeColors[nextIndex];
         }
     }
-    
 
-    
     getThemeColors(theme) {
-        switch (theme) {
-            case 'modern':
-                return ['#D52B1E', '#0039A6', '#FFFFFF'];
-            case 'imperial':
-                return ['#FFFFFF', '#B58E24', '#0B0B0B'];
-            case 'soviet':
-                return ['#B64F4F', '#C85A5A', '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#8A0303'];
-            default:
-                return ['#D52B1E', '#0039A6', '#FFFFFF'];
-        }
+        const themeMap = {
+            modern: ['#D52B1E', '#0039A6', '#FFFFFF'],
+            imperial: ['#FFFFFF', '#B58E24', '#0B0B0B'],
+            soviet: ['#B64F4F', '#C85A5A', '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#8A0303']
+        };
+        return themeMap[theme] || themeMap.modern;
     }
-    
+
     getDefaultColorForTheme(theme) {
-        switch (theme) {
-            case 'modern':
-                return '#D52B1E';
-            case 'imperial':
-                return '#FFFFFF';
-            case 'soviet':
-                return '#B64F4F';
-            default:
-                return '#D52B1E';
-        }
+        const defaultMap = { modern: '#D52B1E', imperial: '#FFFFFF', soviet: '#B64F4F' };
+        return defaultMap[theme] || '#D52B1E';
     }
 
     reset() {
@@ -232,9 +211,7 @@ export class Board {
                     const boardY = piece.y + y;
                     const boardX = piece.x + x;
 
-                    // Only lock if within board bounds
                     if (boardY >= 0 && boardY < this.height && boardX >= 0 && boardX < this.width && this.grid[boardY]) {
-                        // Store actual color so already-placed blocks do NOT change on theme switch.
                         this.grid[boardY][boardX] = piece.color;
                     }
                 }
@@ -266,9 +243,6 @@ export class Board {
 
     clearLines(lines) {
         if (!Array.isArray(lines) || lines.length === 0) return 0;
-        // IMPORTANT:
-        // Do a single compaction pass. Repeated splice+unshift shifts indices and can clear
-        // the wrong rows when multiple lines are removed at once.
         const lineSet = new Set(lines);
         const remaining = [];
         for (let y = 0; y < this.height; y++) {
@@ -276,7 +250,7 @@ export class Board {
         }
 
         const cleared = this.height - remaining.length;
-        
+
         for (let i = 0; i < cleared; i++) {
             remaining.unshift(Array(this.width).fill(0));
         }
@@ -301,32 +275,24 @@ export class Board {
                 const hasShapeCellBelow = (py + 1 < piece.shape.length) && piece.shape[py + 1][px];
                 if (hasShapeCellBelow) continue;
 
-                const belowY = piece.y + py + 1;
+                const belowY = piece.y + py +1;
                 if (belowY < this.height && !this.grid[belowY]?.[piece.x + px]) return false;
             }
         }
         return true;
     }
 
-    // Check if there's a fillable gap (empty cell with block above + block further along row)
     hasFillableGap(piece) {
-        const bounds = this.getPieceBoundsPerRow(piece);
-        for (const { row, left, right } of bounds) {
-            if (this.hasGapOnSide(piece, row, left, -1)) return true;
-            if (this.hasGapOnSide(piece, row, right, 1)) return true;
-        }
-        return false;
-    }
-
-    getPieceBoundsPerRow(piece) {
-        const result = [];
         for (let py = 0; py < piece.shape.length; py++) {
             const row = piece.y + py;
             if (row < 0 || row >= this.height) continue;
             const bounds = this.getRowBounds(piece.shape[py], piece.x);
-            if (bounds) result.push({ row, ...bounds });
+            if (bounds) {
+                if (this.hasGapOnSide(piece, row, bounds.left, -1)) return true;
+                if (this.hasGapOnSide(piece, row, bounds.right, 1)) return true;
+            }
         }
-        return result;
+        return false;
     }
 
     getRowBounds(shapeRow, baseX) {
@@ -343,7 +309,10 @@ export class Board {
     hasGapOnSide(piece, row, edge, dir) {
         const adjX = edge + dir;
         if (!this.isValidGapPosition(piece, row, adjX, dir)) return false;
-        return this.hasBlockFurther(row, adjX, dir);
+        for (let x = adjX + dir; x >= 0 && x < this.width; x += dir) {
+            if (this.grid[row][x]) return true;
+        }
+        return false;
     }
 
     isValidGapPosition(piece, row, adjX, dir) {
@@ -353,14 +322,141 @@ export class Board {
         return row > 0 && this.grid[row - 1]?.[adjX];
     }
 
-    hasBlockFurther(row, startX, dir) {
-        for (let x = startX + dir; x >= 0 && x < this.width; x += dir) {
-            if (this.grid[row][x]) return true;
-        }
-        return false;
-    }
 
     render(ctx) {
-        this.renderer.render(ctx);
+        this.renderBackground(ctx);
+        this.renderBlocks(ctx);
+        this.renderLineClearEffect(ctx);
+    }
+
+    buildBackground() {
+        if (!this.bgCtx) return;
+        const ctx = this.bgCtx;
+        const boardWidth = this.cssWidth;
+        const boardHeight = this.cssHeight;
+
+        ctx.clearRect(0, 0, boardWidth, boardHeight);
+        ctx.fillStyle = this.theme.boardBg;
+        ctx.fillRect(0, 0, boardWidth, boardHeight);
+
+        if (this.theme.themeName === 'soviet') {
+            ctx.save();
+            ctx.globalAlpha = 0.08;
+            ctx.fillStyle = this.theme.gold;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${Math.floor(this.cellSize * 5)}px ${getComputedStyle(document.body).fontFamily}`;
+            ctx.fillText('☭', boardWidth / 2, boardHeight * 0.35);
+            ctx.restore();
+        }
+
+        ctx.strokeStyle = this.theme.boardGrid;
+        ctx.lineWidth = 1;
+
+        for (let x = 0; x <= this.width; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x * this.cellSize, 0);
+            ctx.lineTo(x * this.cellSize, boardHeight);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= this.height; y++) {
+            ctx.beginPath();
+            ctx.moveTo(0, y * this.cellSize);
+            ctx.lineTo(boardWidth, y * this.cellSize);
+            ctx.stroke();
+        }
+
+        this.bgDirty = false;
+    }
+
+    buildBlocks() {
+        if (!this.blocksCtx) return;
+        const ctx = this.blocksCtx;
+        const boardWidth = this.cssWidth;
+        const boardHeight = this.cssHeight;
+
+        ctx.clearRect(0, 0, boardWidth, boardHeight);
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const cell = this.grid?.[y]?.[x];
+                if (!cell) continue;
+
+                if (typeof cell === 'number') {
+                    const idx = cell - 1;
+                    const resolved = this.theme.palette?.[idx] || '#FFFFFF';
+                    this.grid[y][x] = resolved;
+                    this.drawCell(ctx, x, y, resolved);
+                } else {
+                    this.drawCell(ctx, x, y, cell);
+                }
+            }
+        }
+
+        this.blocksDirty = false;
+    }
+
+    renderBackground(ctx) {
+        if (this.bgCanvas && this.bgDirty) this.buildBackground();
+        if (this.bgCanvas) {
+            ctx.drawImage(this.bgCanvas, 0, 0, this.cssWidth, this.cssHeight);
+        } else {
+            ctx.clearRect(0, 0, this.cssWidth, this.cssHeight);
+        }
+    }
+
+    renderBlocks(ctx) {
+        if (this.blocksCanvas && this.blocksDirty) this.buildBlocks();
+        if (this.blocksCanvas) {
+            ctx.drawImage(this.blocksCanvas, 0, 0, this.cssWidth, this.cssHeight);
+        } else {
+            this.renderBlocksFallback(ctx);
+        }
+    }
+
+    renderBlocksFallback(ctx) {
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const cell = this.grid?.[y]?.[x];
+                if (cell) this.drawCell(ctx, x, y, cell);
+            }
+        }
+    }
+
+    renderLineClearEffect(ctx) {
+        if (!this.lineClear) return;
+        const t = Math.min((performance.now() - this.lineClear.start) / this.lineClear.duration, 1);
+        const pulse = 0.35 + 0.65 * Math.pow(Math.sin(t * Math.PI * 3), 2);
+        const alpha = (1 - t) * 0.6 * pulse;
+        if (alpha <= 0.01) return;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = this.theme.gold;
+        for (const y of this.lineClear.lines) {
+            ctx.fillRect(0, y * this.cellSize, this.cssWidth, this.cellSize);
+        }
+        ctx.restore();
+    }
+
+    drawCell(ctx, x, y, color) {
+        const pixelX = x * this.cellSize;
+        const pixelY = y * this.cellSize;
+        const size = this.cellSize;
+
+        ctx.fillStyle = color;
+        ctx.fillRect(pixelX, pixelY, size, size);
+
+        ctx.strokeStyle = this.theme.cellBorder;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pixelX, pixelY, size, size);
+
+        ctx.fillStyle = this.theme.cellHighlight;
+        ctx.fillRect(pixelX + 2, pixelY + 2, size - 4, 2);
+        ctx.fillRect(pixelX + 2, pixelY + 2, 2, size - 4);
+
+        ctx.fillStyle = this.theme.cellShadow;
+        ctx.fillRect(pixelX + size - 4, pixelY + 2, 2, size - 4);
+        ctx.fillRect(pixelX + 2, pixelY + size - 4, size - 4, 2);
     }
 }
