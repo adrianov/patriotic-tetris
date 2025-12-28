@@ -86,13 +86,7 @@ export class TouchControls {
     }
 
     getRepeatDelays() {
-        // Adapt repeat speed to game level - faster at higher levels
-        const level = this.game?.level || 1;
-        // Initial delay: 180ms at level 1, down to 80ms at level 10+
-        const initialDelayMs = Math.max(80, 180 - (level - 1) * 12);
-        // Repeat interval: 60ms at level 1, down to 35ms at level 10+
-        const intervalMs = Math.max(35, 60 - (level - 1) * 3);
-        return { initialDelayMs, intervalMs };
+        return this.game.getRepeatDelays();
     }
 
     bindHoldRepeat(buttonEl, action) {
