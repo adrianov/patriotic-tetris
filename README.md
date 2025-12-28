@@ -87,17 +87,17 @@ patriotic-tetris/
 │   ├── css/
 │   │   └── style.css       # Game styles and themes
 │   ├── js/
-│   │   ├── game.js         # Main game controller
-│   │   ├── board.js        # Game board management
-│   │   ├── boardRenderer.js # Canvas rendering logic
-│   │   ├── pieces.js       # Tetromino definitions
+│   │   ├── game.js         # Main game controller (includes scoring)
+│   │   ├── board.js        # Game board management (includes rendering)
+│   │   ├── pieces.js       # Tetromino definitions and piece rendering
 │   │   ├── pieceMovement.js # Piece movement and collision
-│   │   ├── wallKicks.js    # Wall kick mechanics
 │   │   ├── controls.js     # Keyboard input handling
 │   │   ├── touchControls.js # Touch input handling
-│   │   ├── scoreManager.js # Scoring system
 │   │   ├── animation.js    # Line clearing animations
 │   │   ├── audio.js        # Sound synthesis engine
+│   │   ├── audioContext.js  # Audio context management
+│   │   ├── audioLifecycle.js # Audio lifecycle handling
+│   │   ├── soundFactory.js  # Sound generation factory
 │   │   ├── theme.js        # Theme switching logic
 │   │   └── ui.js           # User interface management
 │   └── svg/
