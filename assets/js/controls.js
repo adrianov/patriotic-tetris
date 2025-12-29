@@ -131,7 +131,10 @@ export class Controls {
     moveSide(dx) {
         if (this.game.paused || !this.game.currentPiece) return;
 
-        const canMoveSide = this.game.board.canMove(this.game.currentPiece, dx, 0);
+        // Use direction-aware rounding for accurate collision during animation
+        const testX = dx > 0 ? Math.ceil(this.game.currentPiece.x) : Math.floor(this.game.currentPiece.x);
+        const testPiece = { ...this.game.currentPiece, x: testX, y: Math.ceil(this.game.currentPiece.y) };
+        const canMoveSide = this.game.board.canMove(testPiece, dx, 0);
         if (canMoveSide) {
             this.game.currentPiece.x += dx;
             this.game.lockDelay = 0;
@@ -166,15 +169,17 @@ export class Controls {
         return false;
     }
     tryRotationAt(x, y, rotatedShape) {
-        if (!this.game.board.canMove({ ...this.game.currentPiece, x }, 0, 0, rotatedShape)) {
+        // Use ceil Y position for accurate collision during animation
+        const testPiece = { ...this.game.currentPiece, x, y: Math.ceil(y), shape: rotatedShape };
+        if (!this.game.board.canMove(testPiece, 0, 0)) {
             return false;
         }
-        
+
         // Check if rotation path is clear (prevents teleportation)
         if (!this.isRotationPathClear(this.game.currentPiece.x, x, rotatedShape)) {
             return false;
         }
-        
+
         this.applyRotation(x, y, rotatedShape);
         return true;
     }

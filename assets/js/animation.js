@@ -31,8 +31,8 @@ export class AnimationManager {
             const nextY = initialY + 0.5 * GRAVITY * (elapsed / 1000) * (elapsed / 1000);
 
             // Recalculate target Y every frame (handles movement/rotation)
-            // Use integer positions for accurate collision detection
-            const currentY = Math.round(piece.y);
+            // Use ceil for accurate collision detection (cell piece is moving into)
+            const currentY = Math.ceil(piece.y);
             let targetY = currentY;
 
             // Create test piece with integer Y for collision checking
