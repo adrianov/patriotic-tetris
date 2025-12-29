@@ -19,7 +19,7 @@ export class AnimationManager {
         // Set animation flag
         this.game.isAnimating = true;
 
-        const GRAVITY = 15;
+        const GRAVITY = 1500;
         const maxTime = Math.sqrt(2 * 20 / GRAVITY) * 1000;
         const startTime = performance.now();
 
@@ -31,23 +31,27 @@ export class AnimationManager {
             const nextY = initialY + 0.5 * GRAVITY * (elapsed / 1000) * (elapsed / 1000);
 
             // Recalculate target Y every frame (handles movement/rotation)
-            // Use ceil for accurate collision detection (cell piece is moving into)
-            const currentY = Math.ceil(piece.y);
+            // Use floor for canSlide detection (current cell position)
+            const currentY = Math.floor(piece.y);
             let targetY = currentY;
 
             // Create test piece with integer Y for collision checking
-            const testPiece = { ...piece, y: currentY };
-            while (this.game.board.canMove(testPiece, 0, targetY - currentY + 1)) {
+            const testPiece = { ...piece, y: targetY };
+            while (this.game.board.canMove(testPiece, 0, 1)) {
                 targetY++;
                 testPiece.y = targetY;
-                if (this.game.pieceMovement.canSlideUnderHangingBlocks(testPiece)) break;
+                // Stop at first position where piece can slide under hanging blocks
+                if (this.game.pieceMovement.canSlideUnderHangingBlocks(testPiece)) {
+                    break;
+                }
             }
 
             // Cap to target Y
             piece.y = Math.min(nextY, targetY);
             this.game.requestRender();
 
-            if (progress >= 1) {
+            // Check if we've reached target or animation time is up
+            if (piece.y >= targetY || progress >= 1) {
                 // Animation completed - apply normal lock logic
                 piece.y = targetY;
                 this.game.isAnimating = false;
