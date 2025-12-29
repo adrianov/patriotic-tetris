@@ -4,11 +4,11 @@
 - **Start dev server**: `python3 -m http.server 8000` (DO NOT RUN - hangs the agent)
 - **Run tests**: Open `http://localhost:8000` in browser
 - **Lint/Type check**: `tsc --noEmit --project jsconfig.json`
-- **Complexity check**: `npx eslint assets/js/` (CCN > 10, max-depth > 4, max-params > 5, max-lines > 400)
+- **Complexity check**: `npx eslint assets/js/` (CCN > 10, max-depth > 4, max-params > 5, max-lines > 400) - MUST fix all ESLint errors before proceeding with work
 - **Test audio**: Press M to toggle mute, arrow keys to test sounds
 
 ## Code Quality Rules
-- **ESLint errors**: Must fix all before committing
+- **ESLint errors**: MUST fix all before proceeding with any work or committing changes
 - **Parsing errors**: Read entire file, rewrite as complete syntactically-correct unit
 - **Module length**: Break into smaller logical modules when exceeding linter limits
 - **File refactoring**: For line limit violations, remove dead code, reduce duplication, apply proper refactoring
@@ -37,9 +37,9 @@
 
 ## Refactoring Guidelines
 - **When module is too big (>400 lines)**: Break into focused modules based on single responsibility.
-- **When methods don't belong**: Move methods to the module that best represents their domain responsibility.
+- **When methods don't belong**: Move methods to module that best represents their domain responsibility.
 - **Before refactoring**: Identify method responsibilities, determine target modules, update imports.
-- **After refactoring**: Run linting, type checking, and functional tests to ensure no regressions.
+- **After refactoring**: Run linting, type checking, and functional tests to ensure no regressions. MUST fix all ESLint errors before proceeding.
 - **Extract patterns**: Common patterns (animations, scoring, state management) should be separate modules.
 - **Module reduction**: Never remove functionality or comments to make modules shorter. Extract functions to other modules instead.
 - **Comprehensive extraction**: When extracting a module, analyze both edited modules (all and new) in full and make extraction comprehensive, following SOLID principles: each module should have one reason to change, be open for extension but closed for modification, depend on abstractions, and not depend on methods they don't use.
