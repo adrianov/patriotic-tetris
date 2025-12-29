@@ -71,14 +71,15 @@ export class AnimationManager {
     }
 
     animateLineClear(lines) {
+        this.game.isAnimating = true;
         const start = performance.now();
         const duration = this.game.board.lineClear?.duration || 260;
         const step = (now) => {
             if (now - start >= duration) {
                 this.game.board.clearLines(lines);
-            this.game.board.stopLineClear();
-            this.game.updateScore(lines.length);
-            this.game.pieceMovement.spawnNextPiece();
+                this.game.board.stopLineClear();
+                this.game.updateScore(lines.length);
+                this.game.pieceMovement.spawnNextPiece();
                 this.game.isAnimating = false;
                 this.game.requestRender();
                 return;
