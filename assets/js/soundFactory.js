@@ -8,32 +8,19 @@ export class SoundFactory {
     playSound(soundType, params = {}) {
         if (!this.contextManager.canPlay) return;
 
-        switch (soundType) {
-            case 'move':
-                this.createMoveSound();
-                break;
-            case 'rotate':
-                this.createRotateSound();
-                break;
-            case 'drop':
-                this.createDropSound();
-                break;
-            case 'hardDrop':
-                this.createHardDropSound();
-                break;
-            case 'lineClear':
-                this.createLineClearSound(params.lines || 1);
-                break;
-            case 'gameOver':
-                this.createGameOverSound();
-                break;
-            case 'highScore':
-                this.createHighScoreSound();
-                break;
-            case 'backgroundMusic':
-                this.createBackgroundMusic();
-                break;
-        }
+        const soundHandlers = {
+            move: () => this.createMoveSound(),
+            rotate: () => this.createRotateSound(),
+            drop: () => this.createDropSound(),
+            hardDrop: () => this.createHardDropSound(),
+            lineClear: () => this.createLineClearSound(params.lines || 1),
+            gameOver: () => this.createGameOverSound(),
+            highScore: () => this.createHighScoreSound(),
+            backgroundMusic: () => this.createBackgroundMusic()
+        };
+
+        const handler = soundHandlers[soundType];
+        if (handler) handler();
     }
 
     createMoveSound() {
