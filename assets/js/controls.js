@@ -301,7 +301,7 @@ export class Controls {
     }
     hardDrop() {
         if (this.game.paused || this.game.isAnimating || !this.game.currentPiece) return;
-        
+
         const startY = this.game.currentPiece.y;
         const targetY = this.findOptimalDropPosition();
         const dropDistance = targetY - startY;
@@ -311,17 +311,7 @@ export class Controls {
             this.game.animationManager.animateHardDrop(startY);
             this.game.requestRender();
         } else {
-            // No movement needed, check if we should lock or start lock delay
-            if (this.game.board.canMove(this.game.currentPiece, 0, 1)) {
-                // Piece can still move down, let normal logic handle it
-                this.game.lockDelay = 0;
-            } else if (this.game.pieceMovement.canSlideUnderHangingBlocks(this.game.currentPiece)) {
-                // Piece can move under hanging blocks to go deeper, start lock delay
-                this.game.pieceMovement.startLockDelay();
-            } else {
-                // Piece cannot go deeper, lock it immediately
-                this.game.pieceMovement.lockPiece();
-            }
+            this.game.animationManager.applyHardDropLockLogic(this.game.currentPiece);
         }
     }
     findOptimalDropPosition() {

@@ -4,15 +4,27 @@ export class AnimationManager {
         this.game = game;
     }
 
+    applyHardDropLockLogic(piece) {
+        if (this.game.board.canMove(piece, 0, 1)) {
+            this.game.lockDelay = 0;
+        } else if (this.game.pieceMovement.canSlideUnderHangingBlocks(piece)) {
+            this.game.pieceMovement.startLockDelay();
+        } else {
+            this.game.pieceMovement.lockPiece();
+        }
+    }
+
     animateHardDrop(startY) {
         const piece = this.game.currentPiece;
         if (!piece) return;
 
         const initialY = piece.y;
 
-        // Skip animation if disabled
         if (!this.game.animationsEnabled) {
-            this.game.pieceMovement.lockPiece();
+            const finalY = this.findOptimalDropPosition(piece);
+            piece.y = finalY;
+            this.game.requestRender();
+            this.applyHardDropLockLogic(piece);
             return;
         }
 
@@ -50,24 +62,26 @@ export class AnimationManager {
             piece.y = Math.min(nextY, targetY);
             this.game.requestRender();
 
-            // Check if we've reached target or animation time is up
             if (piece.y >= targetY || progress >= 1) {
-                // Animation completed - apply normal lock logic
                 piece.y = targetY;
                 this.game.isAnimating = false;
-
-                if (this.game.board.canMove(piece, 0, 1)) {
-                    this.game.lockDelay = 0;
-                } else if (this.game.pieceMovement.canSlideUnderHangingBlocks(piece)) {
-                    this.game.pieceMovement.startLockDelay();
-                } else {
-                    this.game.pieceMovement.lockPiece();
-                }
+                this.applyHardDropLockLogic(piece);
             } else {
                 requestAnimationFrame(animate);
             }
         };
         requestAnimationFrame(animate);
+    }
+
+    findOptimalDropPosition(piece) {
+        const startY = piece.y;
+        let currentY = startY;
+        while (this.game.board.canMove(piece, 0, currentY - startY + 1)) {
+            currentY++;
+            const testPiece = { ...piece, y: currentY };
+            if (this.game.pieceMovement.canSlideUnderHangingBlocks(testPiece)) break;
+        }
+        return currentY;
     }
 
     animateLineClear(lines) {
