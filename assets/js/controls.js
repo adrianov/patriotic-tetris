@@ -311,7 +311,7 @@ export class Controls {
             this.game.animationManager.animateHardDrop(startY);
             this.game.requestRender();
         } else {
-            this.game.animationManager.applyHardDropLockLogic(this.game.currentPiece);
+            this.game.pieceMovement.lockPiece();
         }
     }
     findOptimalDropPosition() {

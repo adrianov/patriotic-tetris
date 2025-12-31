@@ -247,6 +247,8 @@ class Game {
     }
 
     pause() {
+        if (this.gameOver) return;
+
         this.paused = !this.paused;
 
         // Prevent a large delta on resume.
