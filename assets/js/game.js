@@ -8,6 +8,14 @@ import { UIManager } from './ui.js';
 import { PieceMovement } from './pieceMovement.js';
 import { AnimationManager } from './animation.js';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => console.log('SW registered:', registration.scope))
+      .catch(error => console.log('SW registration failed:', error));
+  });
+}
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('game-board');
