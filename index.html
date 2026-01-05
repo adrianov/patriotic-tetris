@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, viewport-fit=cover">
     <title>Patriotic Tetris</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Patriotic Tetris">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -16,7 +16,18 @@
 </head>
 
 <body>
-    <main class="game-container" role="main">
+    <!-- Launch Screen -->
+    <div id="launch-screen" class="launch-screen" role="status" aria-live="polite">
+        <div class="launch-content">
+            <img src="assets/svg/eagle.svg" alt="" class="launch-eagle" aria-hidden="true">
+            <h1 class="launch-title">Patriotic Tetris</h1>
+            <div class="launch-loader">
+                <div class="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <main class="game-container hidden" role="main">
         <section class="game-sidebar" role="complementary">
             <div class="score-panel" role="region" aria-label="Score">
                 <h2>Score</h2>

@@ -4,6 +4,27 @@ export class UIManager {
     constructor(game) {
         this.game = game;
         this.lastNextKey = '';
+        this.onLaunchScreenComplete = null;
+    }
+
+    hideLaunchScreen(callback) {
+        const launchScreen = document.getElementById('launch-screen');
+        const gameContainer = document.querySelector('.game-container');
+
+        if (launchScreen) {
+            launchScreen.classList.add('fade-out');
+
+            setTimeout(() => {
+                launchScreen.style.display = 'none';
+                if (gameContainer) {
+                    gameContainer.classList.remove('hidden');
+                }
+                if (callback) callback();
+            }, 600);
+        } else if (gameContainer) {
+            gameContainer.classList.remove('hidden');
+            if (callback) callback();
+        }
     }
 
     setupEventListeners() {

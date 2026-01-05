@@ -96,7 +96,6 @@ class Game {
     }
 
     init() {
-        this.board.setupCanvas(this.canvas);
         this.controls.setup(this);
 
         // Setup UI event listeners
@@ -106,12 +105,21 @@ class Game {
 
         this.startNewGame();
 
+        // Hide launch screen after initialization
+        this.ui.hideLaunchScreen(() => this.finalizeInitialization());
+    }
+
+    finalizeInitialization() {
+        // Setup canvas now that container is visible
+        this.board.setupCanvas(this.canvas);
+
         // Mark canvas ready to show (CSS hides it until this point)
         this.canvas.setAttribute('data-ready', '');
 
         // Mobile browsers may need a delayed resize after layout settles
         setTimeout(() => this.resizeBoard(), 150);
 
+        // Start game loop
         this.gameLoop();
     }
 
