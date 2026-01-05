@@ -11,6 +11,7 @@ export class AudioEngine {
         this.lifecycleManager = new AudioLifecycleManager(this);
         this.soundFactory = new SoundFactory(this.contextManager, this);
         this.hasPlayedBackgroundMusic = false;
+        this.activeNodes = new Map();
     }
 
     static RAMP_ATTACK_S = 0.004;
@@ -57,6 +58,13 @@ export class AudioEngine {
         const env = this.setupGainEnvelope(osc, now, dur, vol * 0.3);
         osc.start(now);
         osc.stop(env.end);
+
+        const nodeId = Symbol('osc');
+        this.activeNodes.set(nodeId, { oscillator: osc, gain: env.gain });
+        osc.onended = () => {
+            this.cleanupNodes(nodeId);
+        };
+
         return osc;
     }
 
@@ -73,11 +81,38 @@ export class AudioEngine {
         const env = this.scheduleOneShotGain(gain.gain, startTime, Math.max(0.001, duration), this.masterVolume * volume);
         source.connect(gain);
         this.connectToOutput(gain);
-        return env;
+        return { ...env, gain };
     }
 
     connectToOutput(node) {
         node.connect(this.contextManager.masterGain ?? this.contextManager.audioContext.destination);
+    }
+
+    cleanupNodes(nodeId) {
+        const nodeData = this.activeNodes.get(nodeId);
+        if (!nodeData) return;
+
+        const { oscillator, gain } = nodeData;
+
+        try {
+            if (oscillator && oscillator.disconnect) {
+                oscillator.disconnect();
+            }
+            if (gain && gain.disconnect) {
+                gain.disconnect();
+            }
+        } catch (error) {
+            console.warn('Error disconnecting audio nodes:', error);
+        }
+
+        this.activeNodes.delete(nodeId);
+    }
+
+    cleanupAllNodes() {
+        this.activeNodes.forEach((_, nodeId) => {
+            this.cleanupNodes(nodeId);
+        });
+        this.activeNodes.clear();
     }
 
     ensureContextReady() {
@@ -153,6 +188,7 @@ export class AudioEngine {
         }
 
         if (this.isMuted) {
+            this.cleanupAllNodes();
             this.contextManager.destroyAudioContext();
             this.hasPlayedBackgroundMusic = false;
         } else {

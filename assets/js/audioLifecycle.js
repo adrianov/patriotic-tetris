@@ -12,7 +12,12 @@ export class AudioLifecycleManager {
     }
 
     handleVisibilityChange() {
-        if (document.hidden || !this.audioEngine.shouldHaveContext()) return;
+        if (document.hidden) {
+            this.audioEngine.cleanupAllNodes();
+            return;
+        }
+
+        if (!this.audioEngine.shouldHaveContext()) return;
 
         if (!this.audioEngine.contextManager.canPlay || this.audioEngine.contextManager.isRunning) return;
 
